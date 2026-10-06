@@ -57,6 +57,13 @@ CREATE TABLE IF NOT EXISTS reports (
   filename TEXT,
   summary TEXT DEFAULT ''
 );
+CREATE TABLE IF NOT EXISTS claims (
+  token TEXT PRIMARY KEY,
+  email TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  expires_at INTEGER NOT NULL,
+  used INTEGER NOT NULL DEFAULT 0
+);
 `);
 
 function nid() {
@@ -94,6 +101,7 @@ function seed() {
       { title: 'budgetai → hubera-budget (cutover, pas delete volumes)', body: 'Pas de stack hubera-budget live.', project: 'budget', category: 'ops', column_id: 'later', priority: 3 },
       { title: 'Porter NOTES.md produits vers content/', body: 'Jobs 323 md, Cloudity archive 206, Music 67…', project: 'docs', category: 'docs', column_id: 'doing', priority: 2 },
       { title: 'DA couleurs / logos / icônes suite', body: 'Noté — pas maintenant.', project: 'platform', category: 'design', column_id: 'later', priority: 4 },
+      { title: 'Veille yt-dlp / YouTube / CVE → tâche + mail', body: 'Pas Watchtower sur Music. Informer Paul des MAJ à faire dans le compte / le serveur.', project: 'docs', category: 'infra', column_id: 'todo', priority: 2 },
     ];
     const tx = db.transaction(() => {
       for (const r of rows) {
@@ -102,17 +110,67 @@ function seed() {
     });
     tx();
   }
-  const nr = db.prepare('SELECT COUNT(*) AS c FROM reports').get().c;
-  if (nr === 0) {
-    const insR = db.prepare(
-      `INSERT INTO reports (id,title,kind,sent_at,filename,summary) VALUES (@id,@title,@kind,@sent_at,@filename,@summary)`,
-    );
-    const recaps = [
-      { title: 'Tests manuels par app (ordre)', kind: 'pdf', sent_at: '2026-10-06T16:50:00+02:00', filename: 'tests-manuels-hubera-2026-10-06.pdf', summary: 'Checklist Paul Music→Cook. OTA 352 expliquée.' },
-      { title: 'Architecture stream / proxy YouTube', kind: 'pdf', sent_at: '2026-10-06T16:50:00+02:00', filename: 'architecture-stream-proxy-music-2026-10-06.pdf', summary: 'Pas le PC maison. Proxies HTTP. Alternatives <2s.' },
-      { title: 'Cockpit Docs + stacks Portainer', kind: 'pdf', sent_at: '2026-10-06T17:20:00+02:00', filename: 'hubera-docs-portainer-2026-10-06.pdf', summary: 'Hubera Docs, compromis stacks, Watchtower OFF, backlog noté.' },
-    ];
-    for (const r of recaps) insR.run({ id: nid(), ...r });
+  const extra = [
+    { title: 'Hubera Admin : proxy /admin sur id.hubera.cloud', body: 'Sans ça l’app mobile reçoit le HTML Hubera ID (FormatException doctype). Fallback API cloudity.delhomme.ovh.', project: 'admin', category: 'bug', column_id: 'doing', priority: 1 },
+    { title: 'Hubera Docs PWA Nothing + login Hubera ID', body: 'Chrome → écran d’accueil. Tâches projet ici, pas dans Admin.', project: 'docs', category: 'feature', column_id: 'doing', priority: 1 },
+    { title: 'Admin web /4dm1n (cloudity.delhomme.ovh) — TLS admin.hubera.cloud plus tard', body: 'admin.hubera.cloud unrecognized name. Utiliser la console Cloudity.', project: 'admin', category: 'infra', column_id: 'later', priority: 3 },
+  ];
+  const existsTitle = db.prepare('SELECT id FROM tasks WHERE title = ?');
+  const insExtra = db.prepare(
+    `INSERT INTO tasks (id,title,body,project,category,column_id,priority,created_at,updated_at)
+     VALUES (@id,@title,@body,@project,@category,@column_id,@priority,@created_at,@updated_at)`,
+  );
+  const tExtra = now();
+  for (const r of extra) {
+    if (existsTitle.get(r.title)) continue;
+    insExtra.run({ id: nid(), ...r, created_at: tExtra, updated_at: tExtra });
+  }
+  db.prepare(`UPDATE tasks SET column_id='done', updated_at=? WHERE title=? AND column_id != 'done'`).run(
+    now(),
+    'Hubera Admin : proxy /admin sur id.hubera.cloud',
+  );
+  db.prepare(`UPDATE tasks SET column_id='done', updated_at=? WHERE title=? AND column_id != 'done'`).run(
+    now(),
+    'Hubera Docs PWA Nothing + login Hubera ID',
+  );
+  syncReportsFromDisk();
+}
+function prettyReportTitle(filename) {
+  return filename
+    .replace(/\.pdf$/i, '')
+    .replace(/\.html$/i, '')
+    .replace(/[-_]/g, ' ');
+}
+function syncReportsFromDisk() {
+  if (!existsSync(REPORTS_DIR)) return;
+  const ins = db.prepare(
+    `INSERT INTO reports (id,title,kind,sent_at,filename,summary) VALUES (@id,@title,@kind,@sent_at,@filename,@summary)`,
+  );
+  const has = db.prepare('SELECT id FROM reports WHERE filename = ?');
+  const known = {
+    'tests-manuels-hubera-2026-10-06.pdf': { title: 'Tests manuels par app (6 oct)', sent_at: '2026-10-06T16:50:00+02:00', summary: 'Checklist Music→Cook. OTA 352.' },
+    'architecture-stream-proxy-music-2026-10-06.pdf': { title: 'Architecture stream / proxy YouTube', sent_at: '2026-10-06T16:50:00+02:00', summary: 'Pas le PC maison. Proxies HTTP.' },
+    'hubera-docs-portainer-2026-10-06.pdf': { title: 'Cockpit Docs + stacks Portainer', sent_at: '2026-10-06T17:20:00+02:00', summary: 'Docs, Watchtower OFF, backlog.' },
+    'hubera-cahier-unique-2026-10-06.pdf': { title: 'Cahier unique (6 oct)', sent_at: '2026-10-06T18:15:00+02:00', summary: 'Questions stream + jargon, un seul PDF.' },
+    'Hubera-Recap-2026-09-28-maps035-fuel-suite.pdf': { title: 'Récap 28 sept Maps/Fuel', sent_at: '2026-09-28T21:13:00+02:00', summary: 'Maps 0.1.35 + Fuel + suite.' },
+    'recap-hubera-2026-09-27-maps030-music311.pdf': { title: 'Récap 27 sept Maps/Music', sent_at: '2026-09-27T20:30:00+02:00', summary: 'Maps 0.1.30 + Music 1.3.311.' },
+    'recap-hubera-2026-09-25-maps-music-pass.pdf': { title: 'Récap 25 sept Maps/Music/Pass', sent_at: '2026-09-25T21:29:00+02:00', summary: 'Trois apps.' },
+    'synthese-hubera-2026-09-21-recap.pdf': { title: 'Synthèse 21 sept', sent_at: '2026-09-21T18:00:00+02:00', summary: 'État suite.' },
+    'synthese-hubera-2026-09-20-recap.pdf': { title: 'Synthèse 20 sept', sent_at: '2026-09-20T10:38:00+02:00', summary: 'Récap journée.' },
+    'synthese-hubera-2026-09-19.pdf': { title: 'Synthèse 19 sept', sent_at: '2026-09-19T16:33:00+02:00', summary: 'Restructuration Hubera.' },
+    'plan-produits-hubera-2026-09-20.pdf': { title: 'Plan produits Hubera', sent_at: '2026-09-20T16:52:00+02:00', summary: 'Cartographie produits.' },
+    'recap-ameliorations-music-fuel-2026-09-20.pdf': { title: 'Améliorations Music/Fuel 20 sept', sent_at: '2026-09-20T18:26:00+02:00', summary: 'Correctifs.' },
+    'restructuration-hubera-2026-09-19.pdf': { title: 'Restructuration 19 sept', sent_at: '2026-09-19T16:00:00+02:00', summary: 'Organisation repos / stacks.' },
+  };
+  for (const name of readdirSync(REPORTS_DIR)) {
+    if (!name.endsWith('.pdf')) continue;
+    if (has.get(name)) continue;
+    const meta = known[name] || {
+      title: prettyReportTitle(name),
+      sent_at: new Date(statSync(join(REPORTS_DIR, name)).mtimeMs).toISOString(),
+      summary: 'PDF agent / mail.',
+    };
+    ins.run({ id: nid(), kind: 'pdf', filename: name, ...meta });
   }
 }
 seed();
@@ -138,6 +196,24 @@ function readSession(req) {
   const row = db.prepare('SELECT email, expires_at FROM sessions WHERE token = ?').get(hashSession(raw));
   if (!row || row.expires_at < Date.now()) return null;
   return { email: row.email };
+}
+
+function issueSession(res, email) {
+  const token = randomBytes(24).toString('hex');
+  const ttl = 14 * 24 * 3600 * 1000;
+  db.prepare('INSERT INTO sessions (token, email, created_at, expires_at) VALUES (?,?,?,?)').run(
+    hashSession(token),
+    email,
+    Date.now(),
+    Date.now() + ttl,
+  );
+  res.cookie('docs_session', token, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: ttl,
+    path: '/',
+  });
 }
 
 function requireAuth(req, res, next) {
@@ -177,25 +253,43 @@ app.post('/api/auth/login', async (req, res) => {
     const data = await r.json().catch(() => ({}));
     if (data.requires_2fa) return res.status(200).json({ requires_2fa: true });
     if (!r.ok || !data.access_token) return res.status(401).json({ error: 'invalid' });
-    const token = randomBytes(24).toString('hex');
-    const ttl = 14 * 24 * 3600 * 1000;
-    db.prepare('INSERT INTO sessions (token, email, created_at, expires_at) VALUES (?,?,?,?)').run(
-      hashSession(token),
-      email,
-      Date.now(),
-      Date.now() + ttl,
-    );
-    res.cookie('docs_session', token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: ttl,
-      path: '/',
-    });
+    issueSession(res, email);
     res.json({ ok: true, email });
   } catch {
     res.status(502).json({ error: 'id' });
   }
+});
+
+app.post('/api/auth/login/2fa', async (req, res) => {
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  const code = String(req.body?.code || '').trim();
+  if (!email || !code) return res.status(400).json({ error: 'champs' });
+  if (!isAdminEmail(email)) return res.status(403).json({ error: 'allowlist' });
+  try {
+    const r = await fetch(`${ID_URL}/auth/2fa/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, code }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok || !data.access_token) return res.status(401).json({ error: 'invalid' });
+    issueSession(res, email);
+    res.json({ ok: true, email });
+  } catch {
+    res.status(502).json({ error: 'id' });
+  }
+});
+
+app.get('/go', (req, res) => {
+  const raw = String(req.query.t || '');
+  if (!raw || raw.length < 16) return res.status(404).send('lien invalide');
+  const row = db.prepare('SELECT email, expires_at, used FROM claims WHERE token = ?').get(hashSession(raw));
+  if (!row || row.used || row.expires_at < Date.now()) {
+    return res.status(410).send('Lien expiré. Rouvre Hubera Docs.');
+  }
+  db.prepare('UPDATE claims SET used = 1 WHERE token = ?').run(hashSession(raw));
+  issueSession(res, row.email);
+  res.redirect(302, '/#dash');
 });
 
 app.post('/api/auth/logout', (req, res) => {
@@ -335,7 +429,7 @@ app.get('/api/gantt', requireAuth, (_req, res) => {
       { id: 'fuel', label: 'Fuel budget unique', start: '2026-09-01', end: '2026-10-30', pct: 55 },
       { id: 'id', label: 'Hubera ID partout', start: '2026-09-19', end: '2026-12-01', pct: 35 },
       { id: 'cloud', label: 'Mail/Drive/Pass cutover hors Cloudity', start: '2026-10-15', end: '2027-01-15', pct: 15 },
-      { id: 'docs', label: 'Hubera Docs cockpit', start: '2026-10-06', end: '2026-11-01', pct: 25 },
+      { id: 'docs', label: 'Hubera Docs cockpit', start: '2026-10-06', end: '2026-11-01', pct: 55 },
       { id: 'da', label: 'DA couleurs / icônes', start: '2026-11-01', end: '2026-12-15', pct: 0 },
     ],
   });
@@ -372,7 +466,16 @@ app.post('/api/remarks', requireAuth, (req, res) => {
   res.json({ remark, task });
 });
 
-app.use(express.static(WEB_DIR, { maxAge: '1h', index: false }));
+app.use(express.static(WEB_DIR, {
+  maxAge: 0,
+  etag: true,
+  index: false,
+  setHeaders(res, filePath) {
+    if (filePath.endsWith('.html') || filePath.endsWith('.js') || filePath.endsWith('.css')) {
+      res.setHeader('Cache-Control', 'no-store');
+    }
+  },
+}));
 app.get(/^(?!\/api).*/, (_req, res) => {
   res.sendFile(join(WEB_DIR, 'index.html'));
 });

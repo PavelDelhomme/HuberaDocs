@@ -2,7 +2,9 @@
   "name": "Hubera Docs",
   "short_name": "Docs",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#0e4d5c",
   "theme_color": "#0e4d5c",
   "lang": "fr"

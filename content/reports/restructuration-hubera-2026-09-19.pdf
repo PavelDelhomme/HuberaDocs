@@ -1,0 +1,420 @@
+%PDF-1.4
+%âãÏÓ
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [4 0 R 6 0 R 8 0 R 10 0 R] /Count 4 >>
+endobj
+3 0 obj
+<< /Length 2401 >>
+stream
+BT
+/F1 10 Tf
+14 TL
+50 800 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(RAPPORT ? RESTRUCTURATION HUBERA \(19 SEPTEMBRE 2026\)) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Ce document consigne les opérations effectuées pour passer Cloudity en archive et faire de) Tj
+0 -14 Td
+(Hubera le holding produits \(hubera.cloud\). Aucun docker compose down -v, aucun rename de) Tj
+0 -14 Td
+(volume/conteneur, aucune édition d?hôtes NPM existants.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(1. Objectif) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(- Meta-repo Hubera : catalogue, workspace, scripts, liens vers les clones Perso.) Tj
+0 -14 Td
+(- Cloudity : archive, submodules satellites retirés.) Tj
+0 -14 Td
+(- Nouveaux hôtes *.hubera.cloud en plus des domaines historiques.) Tj
+0 -14 Td
+(- Repos GitHub privés pour les extraits \(ID, Mail, Drive, Pass, Calendar, Contacts, Notes,) Tj
+0 -14 Td
+(Photos, Office, WordPress\).) Tj
+0 -14 Td
+(- Branding npm @hubera/* sans changer les applicationId Android ni les noms de volumes Docker.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(2. Workspace Cursor) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Hubera.code-workspace a été synchronisé depuis HuberaCloud.code-workspace et inclut Hubera ID) Tj
+0 -14 Td
+(\(products/id\).) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Dossiers ouverts : meta, Music, GasoilTracking, Jobs, Budget, Tasks, Stream, Maps, ID, Mail,) Tj
+0 -14 Td
+(Drive, Pass, VTCBuilder, www, AllInOne, Backoffice lab.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(3. Nginx Proxy Manager \(nouveaux hôtes seulement\)) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Script : scripts/npm-add-host.py.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(| Résultat | Domaine | Cible |) Tj
+0 -14 Td
+(|----------|---------|-------|) Tj
+0 -14 Td
+(| créé id=34, cert=43 | music.hubera.cloud | ytmusic:8787 |) Tj
+0 -14 Td
+(| créé id=35, cert=44 | gasoil-tracking.hubera.cloud | gasoil-tracking-web:80 |) Tj
+0 -14 Td
+(| déjà existant id=31 | jobs.hubera.cloud | jobbingtrack-prod-frontend:3000 |) Tj
+0 -14 Td
+(| déjà existant id=28 | budget.hubera.cloud | budgetai-web:80 |) Tj
+0 -14 Td
+(| déjà existant id=33 | tasks.hubera.cloud | taskflow:3003 |) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Les hôtes historiques n?ont pas été modifiés.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(4. Snapshot volumes \(VPS \)) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(- Répertoire : /home/pavel/snapshots/2026-09-19) Tj
+ET
+endstream
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 11 0 R >> >> /Contents 3 0 R >>
+endobj
+5 0 obj
+<< /Length 2632 >>
+stream
+BT
+/F1 10 Tf
+14 TL
+50 800 Td
+(- docker volume inspect ytmusic_ytmusic_data gasoil_api_data ? volumes-inspect.json \(OK\)) Tj
+0 -14 Td
+(- Espace disque au moment de l?inspect : ~609 Go libres \(46 % utilisés\) ? tar autorisé) Tj
+0 -14 Td
+(- Tar lecture seule \(alpine tar czf, volumes :ro\) : lancé ; jamais down -v) Tj
+0 -14 Td
+(- Volumes inchangés : ytmusic_ytmusic_data, gasoil_api_data) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(5. Smoke DNS / HTTP \(19 sept. 2026 ~14:17 UTC\)) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Tous les enregistrements A pointent vers .) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(| Host | HTTP |) Tj
+0 -14 Td
+(|------|------|) Tj
+0 -14 Td
+(| https://music.hubera.cloud | 200 |) Tj
+0 -14 Td
+(| https://gasoil-tracking.hubera.cloud | 200 |) Tj
+0 -14 Td
+(| https://jobs.hubera.cloud | 200 |) Tj
+0 -14 Td
+(| https://budget.hubera.cloud | 200 |) Tj
+0 -14 Td
+(| https://tasks.hubera.cloud | 502 \(backend TaskFlow, même code que l?ancien host\) |) Tj
+0 -14 Td
+(| https://plm.delhomme.ovh | 200 |) Tj
+0 -14 Td
+(| https://gasoil-tracking.delhomme.ovh | 200 |) Tj
+0 -14 Td
+(| https://jobbingtrack.com | 200 |) Tj
+0 -14 Td
+(| https://budget.delhomme.ovh | 200 |) Tj
+0 -14 Td
+(| https://taskflow.delhomme.ovh | 502 \(préexistant, non causé par les nouveaux hosts\) |) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(6. Cloudity archive) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Branche chore/restructure-platform, commit aa025c68 :) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(- .gitmodules vidé) Tj
+0 -14 Td
+(- submodules / liens satellites retirés : GasoilTracking, YTMusic, jobbing-track, maps, fuel,) Tj
+0 -14 Td
+(music) Tj
+0 -14 Td
+(- products/README.md : note d?archive Hubera) Tj
+0 -14 Td
+(- Cloudity.code-workspace : repo archive seulement) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Push : origin/chore/restructure-platform  ) Tj
+0 -14 Td
+(URL : https://github.com/PavelDelhomme/Cloudity) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(7. Branding \(repos existants, commits séparés\)) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(| Repo | Commit | Package / changement |) Tj
+0 -14 Td
+(|------|--------|----------------------|) Tj
+0 -14 Td
+(| YTMusic \(fix/stream-live-warm-247\) | 609f348 | @hubera/music |) Tj
+0 -14 Td
+(| JobbingTrack \(dev\) | 0a1c8f18 | @hubera/jobs-web |) Tj
+0 -14 Td
+(| BudgetAi \(dev\) | 172b01e | @hubera/budget |) Tj
+0 -14 Td
+(| StreamMake \(dev\) | e2341e5 | @hubera/stream, @hubera/stream-web, overlay shared-network-copy) Tj
+0 -14 Td
+(|) Tj
+0 -14 Td
+(| taskflow \(main\) | f948698 | @hubera/tasks-web |) Tj
+0 -14 Td
+(| CloudityMaps \(main\) | 353c630 | branding Hubera Maps + docker-compose.portainer.yml |) Tj
+ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 11 0 R >> >> /Contents 5 0 R >>
+endobj
+7 0 obj
+<< /Length 2530 >>
+stream
+BT
+/F1 10 Tf
+14 TL
+50 800 Td
+() Tj
+0 -14 Td
+(Aucun changement d?applicationId Android. Aucun rename de volume Docker.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(8. Repos extraits \(privés PavelDelhomme\)) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(| Produit | URL |) Tj
+0 -14 Td
+(|---------|-----|) Tj
+0 -14 Td
+(| HuberaID | https://github.com/PavelDelhomme/HuberaID |) Tj
+0 -14 Td
+(| HuberaMail | https://github.com/PavelDelhomme/HuberaMail |) Tj
+0 -14 Td
+(| HuberaDrive | https://github.com/PavelDelhomme/HuberaDrive |) Tj
+0 -14 Td
+(| HuberaPass | https://github.com/PavelDelhomme/HuberaPass |) Tj
+0 -14 Td
+(| HuberaCalendar | https://github.com/PavelDelhomme/HuberaCalendar |) Tj
+0 -14 Td
+(| HuberaContacts | https://github.com/PavelDelhomme/HuberaContacts |) Tj
+0 -14 Td
+(| HuberaNotes | https://github.com/PavelDelhomme/HuberaNotes |) Tj
+0 -14 Td
+(| HuberaPhotos | https://github.com/PavelDelhomme/HuberaPhotos |) Tj
+0 -14 Td
+(| HuberaOffice | https://github.com/PavelDelhomme/HuberaOffice |) Tj
+0 -14 Td
+(| HuberaWordPress | https://github.com/PavelDelhomme/HuberaWordPress |) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Fichiers .env / .pem / .key exclus \(gitignore\). Commit initial du type « extraction depuis) Tj
+0 -14 Td
+(Cloudity \(archive\) ».) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Liens Hubera : products/{id,mail,drive,pass,calendar,contacts,notes,photos,office,cms}.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(9. Meta-repo Hubera) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Premier commit Git \(sans .env\). Remote GitHub privé PavelDelhomme/Hubera créé si besoin, puis) Tj
+0 -14 Td
+(push.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(PDF de ce rapport : docs/reports/restructuration-hubera-2026-09-19.pdf.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(10. SMTP / e-mail) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(SMTP indisponible dans la config Hubera \(pas d?envoi automatique\). Corps de mail à coller) Tj
+0 -14 Td
+(manuellement :) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Objet : Restructuration Hubera ? 19 sept. 2026) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(- Cloudity est en archive ; Hubera est le holding.) Tj
+0 -14 Td
+(- Nouveaux hosts music / gasoil-tracking créés ; jobs / budget / tasks déjà présents.) Tj
+0 -14 Td
+(- Smoke : 200 partout sauf tasks.hubera.cloud et taskflow.delhomme.ovh \(502 des deux côtés\).) Tj
+0 -14 Td
+(- DNS A = .) Tj
+0 -14 Td
+(- Snapshots inspect OK ; tar volumes en lecture seule.) Tj
+0 -14 Td
+(- Repos extraits poussés \(privés\). Branding npm poussé.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(11. Règles respectées) Tj
+ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 11 0 R >> >> /Contents 7 0 R >>
+endobj
+9 0 obj
+<< /Length 647 >>
+stream
+BT
+/F1 10 Tf
+14 TL
+50 800 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(- Pas de docker compose down -v) Tj
+0 -14 Td
+(- Pas de rename volumes / conteneurs) Tj
+0 -14 Td
+(- Pas d?édition d?hôtes NPM existants) Tj
+0 -14 Td
+(- Pas de commit .env) Tj
+0 -14 Td
+(- Pas de force-push, pas de skip hooks, pas de git config) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(12. Points ouverts) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(- TaskFlow : 502 identique ancien / nouveau host ? à diagnostiquer côté stack taskflow:3003,) Tj
+0 -14 Td
+(hors scope NPM.) Tj
+0 -14 Td
+(- Tar volumes : durée longue si le volume ytmusic est volumineux ; inspect JSON déjà en place.) Tj
+ET
+endstream
+endobj
+10 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 11 0 R >> >> /Contents 9 0 R >>
+endobj
+11 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 12
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000140 00000 n 
+0000002593 00000 n 
+0000002720 00000 n 
+0000005404 00000 n 
+0000005531 00000 n 
+0000008113 00000 n 
+0000008240 00000 n 
+0000008938 00000 n 
+0000009066 00000 n 
+trailer
+<< /Size 12 /Root 1 0 R >>
+startxref
+9137
+%%EOF

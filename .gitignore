@@ -5,3 +5,7 @@ data/
 !.env.example
 *.log
 .DS_Store
+mobile/.dart_tool/
+mobile/build/
+mobile/.idea/
+mobile/*.iml

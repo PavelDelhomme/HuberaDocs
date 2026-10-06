@@ -21,7 +21,10 @@ header.top {
   padding-top: calc(14px + env(safe-area-inset-top));
   display: flex; justify-content: space-between; align-items: center;
 }
-header.top strong { letter-spacing: .12em; font-size: 13px; }
+header.top { gap: 8px; flex-wrap: wrap; }
+header.top .who { font-size: 11px; opacity: .8; margin-left: auto; }
+.tap { cursor: pointer; }
+textarea.doc { width: 100%; min-height: 240px; font-family: ui-monospace, monospace; }
 .logout { background: transparent; border: 1px solid #ffffff55; color: #fff; border-radius: 8px; padding: 6px 10px; }
 .view { padding: 14px 16px; }
 h1 { font-size: 22px; margin: 0 0 8px; color: var(--ink); }
@@ -66,5 +69,7 @@ button.primary { background: var(--ink); color: #fff; border: 0; font-weight: 70
 .doc { white-space: pre-wrap; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px; font-size: 13px; line-height: 1.45; }
 iframe.pdf { width: 100%; height: 70vh; border: 0; background: #fff; border-radius: 12px; }
 @media (max-width: 800px) {
-  .kanban { grid-template-columns: repeat(4, 78vw); }
+  .kanban { grid-template-columns: repeat(4, 78vw); padding-bottom: 8px; }
+  form.login { margin: 24px 16px; }
+  nav.bottom button { font-size: 11px; }
 }
