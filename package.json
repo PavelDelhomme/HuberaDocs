@@ -1,0 +1,19 @@
+{
+  "name": "hubera-docs",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Hubera Docs — cockpit Paul (tâches, documentation, rapports, Gantt)",
+  "scripts": {
+    "start": "node api/server.mjs",
+    "dev": "node --watch api/server.mjs"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.4.1",
+    "cookie-parser": "^1.4.7",
+    "express": "^5.1.0"
+  },
+  "allowScripts": {
+    "better-sqlite3@12.11.1": true
+  }
+}

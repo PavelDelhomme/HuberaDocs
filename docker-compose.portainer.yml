@@ -1,0 +1,29 @@
+# Stack: hubera-docs
+# Jamais docker compose down -v.
+services:
+  web:
+    build: .
+    image: hubera-docs:local
+    container_name: hubera-docs
+    restart: unless-stopped
+    environment:
+      PORT: "80"
+      ID_URL: ${ID_URL:-https://id.hubera.cloud}
+      DOCS_ADMIN_EMAILS: ${DOCS_ADMIN_EMAILS:-paul@delhomme.ovh,paveldelhomme@gmail.com}
+      SESSION_SECRET: ${SESSION_SECRET}
+    volumes:
+      - hubera-docs-data:/app/data
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+      - hubera.slug=docs
+    networks:
+      - proxy
+
+volumes:
+  hubera-docs-data:
+    name: hubera-docs-data
+
+networks:
+  proxy:
+    external: true
+    name: ${NPM_NETWORK:-shared-network-copy}
