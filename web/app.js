@@ -3,9 +3,43 @@ const app = $('#app');
 const views = ['dash', 'kanban', 'docs', 'reports', 'gantt', 'inbox'];
 const labels = { dash: 'Home', kanban: 'Tâches', docs: 'Docs', reports: 'PDF', gantt: 'Avance', inbox: 'Noter' };
 const projects = ['music','maps','fuel','contacts','mail','photos','calendar','pass','drive','cook','jobs','admin','docs','id','ops','platform'];
+const THEME_KEY = 'hubera-docs-theme';
 let route = location.hash.replace('#', '') || 'dash';
 let me = null;
 let pendingEmail = '';
+
+function themeNow() {
+  const t = document.documentElement.getAttribute('data-theme');
+  return t === 'dark' ? 'dark' : 'light';
+}
+
+function applyTheme(mode) {
+  const t = mode === 'dark' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', t);
+  try { localStorage.setItem(THEME_KEY, t); } catch { /* ignore */ }
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.content = t === 'dark' ? '#0b1519' : '#0e4d5c';
+  document.querySelectorAll('#themeBtn').forEach((b) => {
+    b.textContent = t === 'dark' ? 'Mode clair' : 'Mode sombre';
+  });
+}
+
+function toggleTheme() {
+  applyTheme(themeNow() === 'dark' ? 'light' : 'dark');
+}
+
+function themeBtnHtml() {
+  return `<button type="button" class="theme-toggle" id="themeBtn">${themeNow() === 'dark' ? 'Mode clair' : 'Mode sombre'}</button>`;
+}
+
+function bindThemeBtn() {
+  $('#themeBtn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    toggleTheme();
+  });
+}
+
+applyTheme(themeNow());
 
 async function api(path, opts = {}) {
   const r = await fetch(path, {
@@ -13,13 +47,13 @@ async function api(path, opts = {}) {
     headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
     ...opts,
   });
-  if (r.status === 401) {
+  const authCall = path.startsWith('/api/auth/');
+  if (r.status === 401 && !authCall) {
     me = null;
-    render();
     throw new Error('auth');
   }
   if (opts.raw) return r;
-  return r.json();
+  return r.json().catch(() => ({}));
 }
 
 function shell(inner) {
@@ -27,6 +61,7 @@ function shell(inner) {
     <header class="top">
       <strong>HUBERA DOCS</strong>
       <span class="who">${me?.email || ''}</span>
+      ${themeBtnHtml()}
       <button class="logout" id="noteFast" type="button">Noter</button>
       <button class="logout" id="out" type="button">Quitter</button>
     </header>
@@ -54,36 +89,39 @@ function bindShell() {
       render();
     };
   });
+  bindThemeBtn();
 }
 
-function loginView(err = '', twofa = false) {
-  app.innerHTML = twofa
-    ? `<form class="login card">
-        <h1>Code 2FA</h1>
-        <p class="lead">Hubera ID / Bitwarden Authenticator.</p>
-        <input name="code" inputmode="numeric" autocomplete="one-time-code" placeholder="123456" required />
-        <button class="primary" type="submit">Valider</button>
-        ${err ? `<p class="err">${err}</p>` : ''}
-      </form>`
-    : `<form class="login card">
-        <h1>Connexion</h1>
-        <p class="lead">Cockpit Paul — tâches, PDF des mails, docs .md, notes. Pas Hubera Admin.</p>
-        <p class="lead">Brave / Chrome → menu → Ajouter à l’écran d’accueil. Bitwarden peut remplir Hubera ID.</p>
-        <input name="email" type="email" autocomplete="username" placeholder="e-mail" required />
-        <input name="password" type="password" autocomplete="current-password" placeholder="mot de passe" required />
-        <button class="primary" type="submit">Entrer</button>
-        ${err ? `<p class="err">${err}</p>` : ''}
-      </form>`;
-  $('form').onsubmit = async (e) => {
+function setLoginErr(form, msg) {
+  let errEl = form.querySelector('.err');
+  if (!msg) {
+    errEl?.remove();
+    return;
+  }
+  if (!errEl) {
+    errEl = document.createElement('p');
+    errEl.className = 'err';
+    form.appendChild(errEl);
+  }
+  errEl.textContent = msg;
+}
+
+function bindLoginForm(form, twofa) {
+  form.onsubmit = async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
+    const btn = form.querySelector('button[type="submit"]');
+    if (btn) btn.disabled = true;
     try {
       if (twofa) {
         const j = await api('/api/auth/login/2fa', {
           method: 'POST',
           body: JSON.stringify({ email: pendingEmail, code: fd.get('code') }),
         });
-        if (!j.ok) return loginView('Code refusé.', true);
+        if (!j.ok) {
+          setLoginErr(form, 'Code refusé.');
+          return;
+        }
         me = { email: j.email };
         return render();
       }
@@ -93,13 +131,63 @@ function loginView(err = '', twofa = false) {
         body: JSON.stringify({ email: pendingEmail, password: fd.get('password') }),
       });
       if (j.requires_2fa) return loginView('', true);
-      if (!j.ok) return loginView('Refusé (allowlist ou identifiants).');
+      if (j.error === 'allowlist') {
+        setLoginErr(form, 'Cet e-mail n’est pas sur la liste Docs (compte admin Paul).');
+        return;
+      }
+      if (j.error === 'rate') {
+        setLoginErr(form, 'Trop d’essais — attends une minute.');
+        return;
+      }
+      if (!j.ok) {
+        setLoginErr(form, 'E-mail ou mot de passe Hubera ID refusé. Même compte que Music / Admin.');
+        return;
+      }
       me = { email: j.email };
       render();
     } catch {
-      loginView(twofa ? 'Code invalide.' : 'Hubera ID injoignable ou identifiants invalides.', twofa);
+      setLoginErr(form, twofa ? 'Code invalide.' : 'Hubera ID injoignable. Réessaie.');
+    } finally {
+      if (btn) btn.disabled = false;
     }
   };
+}
+
+function loginView(err = '', twofa = false) {
+  const existing = $('form.login');
+  if (existing && Boolean(existing.dataset.twofa) === twofa) {
+    setLoginErr(existing, err);
+    bindLoginForm(existing, twofa);
+    return;
+  }
+  const keepEmail = esc(pendingEmail || $('input[name="email"]')?.value || '');
+  app.innerHTML = twofa
+    ? `<div class="theme-bar">${themeBtnHtml()}</div>
+      <form class="login card" data-twofa="1" autocomplete="on">
+        <h1>Code 2FA</h1>
+        <p class="lead">Hubera ID / Bitwarden Authenticator — le code à 6 chiffres, pas le mot de passe.</p>
+        <label for="docs-code">Code</label>
+        <input id="docs-code" name="code" inputmode="numeric" autocomplete="one-time-code" placeholder="123456" required autofocus />
+        <button class="primary" type="submit">Valider</button>
+        ${err ? `<p class="err">${esc(err)}</p>` : ''}
+      </form>`
+    : `<div class="theme-bar">${themeBtnHtml()}</div>
+      <form class="login card" autocomplete="on">
+        <h1>Connexion</h1>
+        <p class="lead">Ton compte Hubera ID admin (le même e-mail et mot de passe que Music / Mail / Admin).</p>
+        <label for="docs-email">E-mail</label>
+        <input id="docs-email" name="email" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" inputmode="email" placeholder="e-mail" required value="${keepEmail}" />
+        <label for="docs-password">Mot de passe Hubera ID</label>
+        <input id="docs-password" name="password" type="password" autocomplete="current-password" placeholder="mot de passe" required />
+        <button class="primary" type="submit">Entrer</button>
+        ${err ? `<p class="err">${esc(err)}</p>` : ''}
+      </form>`;
+  bindLoginForm($('form.login'), twofa);
+  bindThemeBtn();
+  queueMicrotask(() => {
+    const el = twofa ? $('#docs-code') : keepEmail ? $('#docs-password') : $('#docs-email');
+    el?.focus();
+  });
 }
 
 async function viewDash() {
@@ -312,12 +400,12 @@ const renderers = { dash: viewDash, kanban: viewKanban, docs: viewDocs, reports:
 
 async function render() {
   if (!me) {
-    try {
-      me = await api('/api/auth/me');
-    } catch {
+    const j = await api('/api/auth/me');
+    if (!j?.email) {
       loginView();
       return;
     }
+    me = j;
   }
   if (!views.includes(route)) route = 'dash';
   await renderers[route]();
@@ -329,4 +417,5 @@ window.addEventListener('hashchange', () => {
   route = location.hash.replace('#', '') || 'dash';
   render();
 });
+bindThemeBtn();
 render();

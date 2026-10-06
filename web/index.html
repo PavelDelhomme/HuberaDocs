@@ -9,10 +9,38 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <title>Hubera Docs</title>
   <link rel="manifest" href="/manifest.json" />
-  <link rel="stylesheet" href="/styles.css?v=20261006d" />
+  <link rel="stylesheet" href="/styles.css?v=20261006f" />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('hubera-docs-theme');
+        if (t !== 'light' && t !== 'dark') {
+          t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.content = t === 'dark' ? '#0b1519' : '#0e4d5c';
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
 </head>
 <body>
-  <div id="app"></div>
-  <script src="/app.js?v=20261006d" type="module"></script>
+  <div id="app">
+    <div class="theme-bar">
+      <button type="button" class="theme-toggle" id="themeBtn">Mode sombre</button>
+    </div>
+    <form class="login card" id="login-form" autocomplete="on">
+      <h1>Connexion</h1>
+        <p class="lead">Bitwarden : même fiche que Hubera ID (compte admin). URI à ajouter : <code>https://docs.hubera.cloud</code> — pas un nouveau mot de passe.</p>
+      <label for="docs-email">E-mail</label>
+      <input id="docs-email" name="email" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" inputmode="email" placeholder="e-mail" required autofocus />
+      <label for="docs-password">Mot de passe Hubera ID</label>
+      <input id="docs-password" name="password" type="password" autocomplete="current-password" placeholder="mot de passe" required />
+      <button class="primary" type="submit">Entrer</button>
+    </form>
+  </div>
+  <script src="/app.js?v=20261006f" type="module"></script>
 </body>
 </html>
