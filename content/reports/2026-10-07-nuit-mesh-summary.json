@@ -1,0 +1,31 @@
+{
+  "stop_at": "2026-10-07T02:00:00",
+  "updated": "2026-10-07T02:00:00",
+  "pkg_music": "cloud.hubera.music",
+  "devices": {
+    "samsung": "R5CT7263YJL",
+    "blackview": "EEA9700PRO0014587"
+  },
+  "stats": {
+    "samsung": {
+      "titles": 223,
+      "skips_buf": 203,
+      "skips_frozen": 0,
+      "skips_err": 0,
+      "playing_s": 387.1999999999988,
+      "last": "Bilsem Ki, Mela Bedel, Bilsem Ki"
+    },
+    "blackview": {
+      "titles": 213,
+      "skips_buf": 176,
+      "skips_frozen": 0,
+      "skips_err": 3,
+      "playing_s": 2204.400000000017,
+      "last": "Lose Somebody, Kygo, OneRepublic, Golden Hour"
+    }
+  },
+  "maps_runs": 14,
+  "smoke_runs": 9,
+  "notes": [],
+  "done": true
+}

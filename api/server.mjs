@@ -111,6 +111,10 @@ function seed() {
     tx();
   }
   const extra = [
+    { title: 'Maps 0.1.75 overlay Blackview', body: 'USB vu, ADB absent le 7 oct. Overlay Samsung déjà 0.1.75. Pas Nothing.', project: 'maps', category: 'test', column_id: 'todo', priority: 1 },
+    { title: 'Music 1.3.356 overlay Blackview + verif paroles 8s', body: 'Samsung déjà p+1.3.356. Liste paroles scrollable, retour auto 8 s.', project: 'music', category: 'test', column_id: 'todo', priority: 1 },
+    { title: 'Pass Autofill Android : build APK + overlay + activer le service', body: 'Code PassAutofillService livré. APK Flutter pas encore publiée. Type Bitwarden, cache 5 min.', project: 'pass', category: 'feature', column_id: 'doing', priority: 1 },
+    { title: 'Fuel 1.4.166+ overlay Samsung (encore 1.4.165)', body: 'Budget unique toujours ouvert. Maps 0.1.75 ne lance plus Fuel à l’arrêt.', project: 'fuel', category: 'feature', column_id: 'doing', priority: 1 },
     { title: 'Hubera Admin : proxy /admin sur id.hubera.cloud', body: 'Sans ça l’app mobile reçoit le HTML Hubera ID (FormatException doctype). Fallback API cloudity.delhomme.ovh.', project: 'admin', category: 'bug', column_id: 'doing', priority: 1 },
     { title: 'Hubera Docs PWA Nothing + login Hubera ID', body: 'Chrome → écran d’accueil. Tâches projet ici, pas dans Admin.', project: 'docs', category: 'feature', column_id: 'doing', priority: 1 },
     { title: 'Admin web /4dm1n (cloudity.delhomme.ovh) — TLS admin.hubera.cloud plus tard', body: 'admin.hubera.cloud unrecognized name. Utiliser la console Cloudity.', project: 'admin', category: 'infra', column_id: 'later', priority: 3 },
@@ -417,6 +421,11 @@ app.get('/api/reports/file/:name', requireAuth, (req, res) => {
   if (name.includes('..') || name.includes('/')) return res.status(400).end();
   const abs = join(REPORTS_DIR, name);
   if (!existsSync(abs)) return res.status(404).end();
+  const ext = extname(name).toLowerCase();
+  if (ext === '.pdf') res.type('application/pdf');
+  else if (ext === '.html') res.type('text/html; charset=utf-8');
+  res.setHeader('Content-Disposition', `inline; filename="${name.replace(/"/g, '')}"`);
+  res.setHeader('X-Content-Type-Options', 'nosniff');
   res.sendFile(abs);
 });
 
@@ -471,7 +480,10 @@ app.use(express.static(WEB_DIR, {
   etag: true,
   index: false,
   setHeaders(res, filePath) {
-    if (filePath.endsWith('.html') || filePath.endsWith('.js') || filePath.endsWith('.css')) {
+    if (filePath.endsWith('.mjs')) {
+      res.setHeader('Content-Type', 'text/javascript; charset=utf-8');
+    }
+    if (filePath.endsWith('.html') || filePath.endsWith('.js') || filePath.endsWith('.css') || filePath.endsWith('.mjs')) {
       res.setHeader('Cache-Control', 'no-store');
     }
   },

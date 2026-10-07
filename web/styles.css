@@ -123,6 +123,28 @@ html[data-theme="light"] button.primary { color: #fff; }
 .bar > i { display: block; height: 100%; background: var(--ink); }
 .doc { white-space: pre-wrap; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; font-size: 13px; line-height: 1.45; }
 iframe.pdf { width: 100%; height: 70vh; border: 0; background: var(--card); border-radius: 12px; }
+.pdf-layout { display: grid; gap: 12px; }
+.pdf-list .list li.on { outline: 2px solid var(--ink); }
+.pdf-pane { background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.pdf-toolbar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 8px 10px; border-bottom: 1px solid var(--line);
+}
+.pdf-toolbar strong { font-size: 14px; color: var(--ink); }
+.pdf-scroll {
+  max-height: calc(100dvh - 220px); min-height: 50vh;
+  overflow: auto; padding: 12px; background: var(--col);
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+.pdf-page {
+  display: block; max-width: 100%; height: auto;
+  background: #fff; box-shadow: var(--shadow); border-radius: 4px;
+}
+iframe.html-preview { height: min(70vh, 720px); background: #fff; }
+@media (max-width: 800px) {
+  .pdf-layout.is-open .pdf-list { display: none; }
+  .pdf-scroll { max-height: calc(100dvh - 180px); min-height: 60vh; }
+}
 code { background: var(--code-bg); padding: 1px 6px; border-radius: 6px; font-size: 12px; }
 small { color: var(--muted); }
 @media (max-width: 800px) {

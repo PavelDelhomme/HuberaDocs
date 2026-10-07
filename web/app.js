@@ -1,12 +1,42 @@
+import { renderPdfBytes, renderHtmlBlob, clearPdfStage } from './pdf-view.js';
+
 const $ = (sel, el = document) => el.querySelector(sel);
 const app = $('#app');
 const views = ['dash', 'kanban', 'docs', 'reports', 'gantt', 'inbox'];
 const labels = { dash: 'Home', kanban: 'Tâches', docs: 'Docs', reports: 'PDF', gantt: 'Avance', inbox: 'Noter' };
 const projects = ['music','maps','fuel','contacts','mail','photos','calendar','pass','drive','cook','jobs','admin','docs','id','ops','platform'];
 const THEME_KEY = 'hubera-docs-theme';
-let route = location.hash.replace('#', '') || 'dash';
+let route = 'dash';
+let openFile = '';
 let me = null;
 let pendingEmail = '';
+
+function parseHash() {
+  const raw = decodeURIComponent((location.hash || '').replace(/^#/, '') || 'dash');
+  const slash = raw.indexOf('/');
+  if (slash < 0) return { view: raw || 'dash', file: '' };
+  return { view: raw.slice(0, slash) || 'dash', file: raw.slice(slash + 1) };
+}
+
+function applyHash() {
+  const h = parseHash();
+  route = views.includes(h.view) ? h.view : 'dash';
+  openFile = h.file || '';
+}
+
+function go(view, file = '') {
+  route = view;
+  openFile = file || '';
+  const next = file ? `${view}/${encodeURIComponent(file)}` : view;
+  const cur = (location.hash || '').replace(/^#/, '');
+  if (cur === next) {
+    render();
+    return;
+  }
+  location.hash = next;
+}
+
+applyHash();
 
 function themeNow() {
   const t = document.documentElement.getAttribute('data-theme');
@@ -78,15 +108,11 @@ function bindShell() {
     loginView();
   });
   $('#noteFast')?.addEventListener('click', () => {
-    route = 'inbox';
-    location.hash = 'inbox';
-    render();
+    go('inbox');
   });
   document.querySelectorAll('nav.bottom button').forEach((b) => {
     b.onclick = () => {
-      route = b.dataset.go;
-      location.hash = route;
-      render();
+      go(b.dataset.go);
     };
   });
   bindThemeBtn();
@@ -203,15 +229,13 @@ async function viewDash() {
       <div class="card tap" data-go="inbox"><b>${d.remarks}</b><span>Notes / retours</span></div>
     </div>
     <h2>Derniers rapports / mails</h2>
-    <ul class="list">${d.recentReports.map((r) => `<li class="tap" data-go="reports"><strong>${r.title}</strong><br><small>${(r.sent_at || '').slice(0, 16)} · ${r.kind}</small><div class="lead">${r.summary || ''}</div></li>`).join('') || '<li>Pas encore de PDF</li>'}</ul>
+    <ul class="list">${d.recentReports.map((r) => `<li class="tap" data-go="reports" data-f="${esc(r.filename || '')}"><strong>${esc(r.title)}</strong><br><small>${(r.sent_at || '').slice(0, 16)} · ${esc(r.kind)}</small><div class="lead">${esc(r.summary || '')}</div></li>`).join('') || '<li>Pas encore de PDF</li>'}</ul>
     <h2>Tâches récentes</h2>
-    <ul class="list">${d.recentTasks.map((t) => `<li class="tap" data-go="kanban">${t.title}<small> ${t.project} · ${t.column_id}</small></li>`).join('')}</ul>
+    <ul class="list">${d.recentTasks.map((t) => `<li class="tap" data-go="kanban">${esc(t.title)}<small> ${esc(t.project)} · ${esc(t.column_id)}</small></li>`).join('')}</ul>
   `);
   app.querySelectorAll('[data-go]').forEach((el) => {
     el.onclick = () => {
-      route = el.dataset.go;
-      location.hash = route;
-      render();
+      go(el.dataset.go, el.dataset.f || '');
     };
   });
 }
@@ -325,31 +349,84 @@ async function viewReports() {
   const { reports, files } = await api('/api/reports');
   const names = new Set(reports.map((r) => r.filename).filter(Boolean));
   const orphans = files.filter((f) => !names.has(f.filename));
+  const titleOf = (filename) => reports.find((r) => r.filename === filename)?.title || filename;
   app.innerHTML = shell(`
     <h1>PDF des mails</h1>
-    <p class="lead">Aujourd’hui et les jours précédents. Tape pour ouvrir ici (pas seulement Gmail).</p>
-    <ul class="list" id="rl">${reports
-      .map(
-        (r) =>
-          `<li><a href="#" data-f="${esc(r.filename || '')}"><strong>${esc(r.title)}</strong></a>
-          <div class="lead">${esc(r.summary || '')}</div>
-          <small>${esc((r.sent_at || '').slice(0, 16))} · ${esc(r.filename || '')}</small></li>`,
-      )
-      .join('')}</ul>
-    ${orphans.length ? `<h2>Autres fichiers</h2><ul class="list">${orphans.map((f) => `<li><a href="#" data-f="${esc(f.filename)}">${esc(f.filename)}</a></li>`).join('')}</ul>` : ''}
-    <iframe class="pdf" id="pdf" hidden></iframe>
+    <p class="lead">Tape un fichier : il s’affiche ici, dans la page. Pas d’onglet, pas de téléchargement.</p>
+    <div class="pdf-layout${openFile ? ' is-open' : ''}" id="pdfLayout">
+      <div class="pdf-list" id="pdfList">
+        <ul class="list" id="rl">${reports
+          .map(
+            (r) =>
+              `<li class="${openFile === r.filename ? 'on' : ''}"><a href="#reports/${encodeURIComponent(r.filename || '')}" data-f="${esc(r.filename || '')}"><strong>${esc(r.title)}</strong></a>
+              <div class="lead">${esc(r.summary || '')}</div>
+              <small>${esc((r.sent_at || '').slice(0, 16))} · ${esc(r.filename || '')}</small></li>`,
+          )
+          .join('')}</ul>
+        ${orphans.length ? `<h2>Autres fichiers</h2><ul class="list">${orphans.map((f) => `<li class="${openFile === f.filename ? 'on' : ''}"><a href="#reports/${encodeURIComponent(f.filename)}" data-f="${esc(f.filename)}">${esc(f.filename)}</a></li>`).join('')}</ul>` : ''}
+      </div>
+      <div class="pdf-pane" id="pdfPane" ${openFile ? '' : 'hidden'}>
+        <div class="pdf-toolbar">
+          <button type="button" class="theme-toggle" id="pdfBack">Liste</button>
+          <strong id="pdfTitle">${esc(openFile ? titleOf(openFile) : '')}</strong>
+        </div>
+        <div class="pdf-scroll" id="pdfStage"></div>
+      </div>
+    </div>
   `);
+
+  async function showInApp(filename) {
+    if (!filename) return;
+    openFile = filename;
+    const layout = $('#pdfLayout');
+    const pane = $('#pdfPane');
+    const stage = $('#pdfStage');
+    const titleEl = $('#pdfTitle');
+    layout?.classList.add('is-open');
+    if (pane) pane.hidden = false;
+    if (titleEl) titleEl.textContent = titleOf(filename);
+    app.querySelectorAll('#pdfList li').forEach((li) => {
+      li.classList.toggle('on', li.querySelector('a')?.dataset.f === filename);
+    });
+    if (!stage) return;
+    stage.innerHTML = '<p class="lead">Chargement…</p>';
+    try {
+      const r = await fetch('/api/reports/file/' + encodeURIComponent(filename), { credentials: 'include' });
+      if (!r.ok) {
+        stage.innerHTML = `<p class="err">Impossible de lire ${esc(filename)} (${r.status}).</p>`;
+        return;
+      }
+      const buf = new Uint8Array(await r.arrayBuffer());
+      if (filename.toLowerCase().endsWith('.html')) {
+        renderHtmlBlob(stage, buf);
+      } else {
+        await renderPdfBytes(stage, buf);
+      }
+      stage.scrollTop = 0;
+    } catch (err) {
+      stage.innerHTML = `<p class="err">Aperçu impossible. ${esc(err?.message || err)}</p>`;
+    }
+  }
+
+  $('#pdfBack')?.addEventListener('click', () => {
+    clearPdfStage($('#pdfStage'));
+    openFile = '';
+    $('#pdfLayout')?.classList.remove('is-open');
+    const pane = $('#pdfPane');
+    if (pane) pane.hidden = true;
+    history.replaceState(null, '', '#reports');
+  });
+
   app.querySelectorAll('a[data-f]').forEach((a) => {
     a.onclick = (e) => {
       e.preventDefault();
       if (!a.dataset.f) return;
-      const url = '/api/reports/file/' + encodeURIComponent(a.dataset.f);
-      const pdf = $('#pdf');
-      pdf.hidden = false;
-      pdf.src = url;
-      window.open(url, '_blank');
+      history.replaceState(null, '', '#reports/' + encodeURIComponent(a.dataset.f));
+      showInApp(a.dataset.f);
     };
   });
+
+  if (openFile) showInApp(openFile);
 }
 
 async function viewGantt() {
@@ -407,6 +484,7 @@ async function render() {
     }
     me = j;
   }
+  applyHash();
   if (!views.includes(route)) route = 'dash';
   await renderers[route]();
   bindShell();
@@ -414,7 +492,7 @@ async function render() {
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 window.addEventListener('hashchange', () => {
-  route = location.hash.replace('#', '') || 'dash';
+  applyHash();
   render();
 });
 bindThemeBtn();
