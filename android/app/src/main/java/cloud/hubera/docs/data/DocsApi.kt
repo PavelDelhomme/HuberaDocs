@@ -308,6 +308,14 @@ class DocsApi(
         )
     }
 
+    fun patchRemark(id: String, app: String, body: String, kind: String) {
+        send(
+            "PATCH",
+            "/api/remarks/$id",
+            JSONObject().put("app", app).put("body", body).put("kind", kind),
+        )
+    }
+
     fun version(clientVersion: String, clientCode: Int, pkg: String): VersionInfo {
         val q =
             "/api/version?clientVersion=${java.net.URLEncoder.encode(clientVersion, "UTF-8")}" +

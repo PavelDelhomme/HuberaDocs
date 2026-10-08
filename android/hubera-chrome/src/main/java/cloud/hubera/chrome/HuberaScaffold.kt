@@ -30,6 +30,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Info
@@ -94,6 +95,7 @@ fun HuberaTopBar(
     onAccountClick: () -> Unit,
     extraActions: @Composable RowScope.() -> Unit = {},
     userPicture: @Composable (() -> Unit)? = null,
+    onUpClick: (() -> Unit)? = null,
 ) {
     TopAppBar(
         title = {
@@ -106,13 +108,21 @@ fun HuberaTopBar(
             )
         },
         navigationIcon = {
-            IconButton(onClick = onMenuClick) {
-                Icon(Icons.Default.Menu, contentDescription = "Menu")
+            if (onUpClick != null) {
+                IconButton(onClick = onUpClick) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour")
+                }
+            } else {
+                IconButton(onClick = onMenuClick) {
+                    Icon(Icons.Default.Menu, contentDescription = "Menu")
+                }
             }
         },
         actions = {
             extraActions()
-            HuberaAccountButton(onClick = onAccountClick, userPicture = userPicture)
+            if (onUpClick == null) {
+                HuberaAccountButton(onClick = onAccountClick, userPicture = userPicture)
+            }
         },
         windowInsets = WindowInsets.statusBars,
         colors = TopAppBarDefaults.topAppBarColors(
@@ -284,6 +294,7 @@ fun HuberaScaffold(
     bottomBarExtra: @Composable () -> Unit = {},
     hideBottomNav: Boolean = false,
     hideTopBar: Boolean = false,
+    onUpClick: (() -> Unit)? = null,
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -316,6 +327,7 @@ fun HuberaScaffold(
                         onAccountClick = onAccountClick,
                         extraActions = extraActions,
                         userPicture = userPicture,
+                        onUpClick = onUpClick,
                     )
                 }
             },

@@ -228,6 +228,33 @@ nav.bottom button.on { color: var(--ink); font-weight: 700; }
   font-size: 13px; line-height: 1.5; width: 100%;
   background: var(--card); color: var(--text); margin: 0;
 }
+.md-html {
+  font-size: 16px; line-height: 1.55; color: var(--text);
+  padding: 8px 4px 24px;
+}
+.md-html h1, .md-html h2, .md-html h3 { margin: 1.1em 0 0.4em; line-height: 1.25; }
+.md-html h1 { font-size: 1.55rem; }
+.md-html h2 { font-size: 1.28rem; }
+.md-html h3 { font-size: 1.08rem; }
+.md-html p, .md-html ul, .md-html ol { margin: 0.55em 0; }
+.md-html li { margin: 0.2em 0; }
+.md-html code {
+  font-family: ui-monospace, monospace; font-size: 0.9em;
+  background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 4px;
+}
+.md-html pre {
+  background: var(--code-bg); border-radius: 10px; padding: 12px;
+  overflow: auto; font-size: 13px;
+}
+.md-html pre code { background: none; padding: 0; }
+.md-html blockquote {
+  margin: 0.6em 0; padding: 8px 12px; border-left: 4px solid var(--ink);
+  background: var(--col); border-radius: 0 8px 8px 0;
+}
+.md-html hr { border: 0; border-top: 1px solid var(--line); margin: 1.2em 0; }
+.md-html a { color: var(--ink); }
+.md-html table { border-collapse: collapse; width: 100%; font-size: 14px; }
+.md-html th, .md-html td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; }
 form.login { max-width: 360px; width: min(360px, calc(100% - 32px)); margin: 16px auto; padding: 20px; }
 .sso-picker { margin: 0 0 12px; }
 .sso-btn, .sso-other {

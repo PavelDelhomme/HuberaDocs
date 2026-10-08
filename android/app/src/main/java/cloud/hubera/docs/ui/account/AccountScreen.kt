@@ -71,8 +71,7 @@ fun DocsAccountScreen(
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text("Compte Hubera", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        Text(email.ifBlank { "Connecté" }, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(email.ifBlank { "Connecté" }, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         Text(
             "Installée ${BuildConfig.VERSION_NAME} · mise à jour jamais forcée.",
             style = MaterialTheme.typography.bodySmall,

@@ -1,6 +1,6 @@
 # Hubera Admin
 
-Application **ops** (tenants Cloudity, console `/4dm1n`). **Pas** le cockpit tâches : ça c’est [Hubera Docs](https://docs.hubera.cloud).
+Application **ops** + cockpit Docs intégré (tâches, docs, rapports, retours, Gantt, tenants, console `/4dm1n`). Live mobile **0.1.6**. Interface native, pas de WebView.
 
 - Mobile : `cloud.hubera.admin` — gateway `https://id.hubera.cloud` (proxy `/admin` → `cloudity-api-gateway`).
 - Web : `https://cloudity.delhomme.ovh/4dm1n` (pas `admin.hubera.cloud` tant que le TLS n’est pas posé).

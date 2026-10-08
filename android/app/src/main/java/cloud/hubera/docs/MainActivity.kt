@@ -1,6 +1,5 @@
 package cloud.hubera.docs
 
-import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -8,7 +7,6 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,14 +24,10 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Timeline
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import cloud.hubera.chrome.HuberaNavItem
 import cloud.hubera.chrome.HuberaProduct
@@ -55,11 +49,11 @@ import androidx.compose.ui.unit.dp
 import cloud.hubera.docs.data.Dashboard
 import cloud.hubera.docs.data.DocsApi
 import cloud.hubera.docs.data.GanttBar
-import cloud.hubera.docs.data.Remark
 import cloud.hubera.docs.ui.DocsSpeedDial
 import cloud.hubera.docs.ui.account.DocsAccountScreen
 import cloud.hubera.docs.ui.auth.LoginScreen
 import cloud.hubera.docs.ui.docs.DocsScreen
+import cloud.hubera.docs.ui.inbox.InboxScreen
 import cloud.hubera.docs.ui.kanban.KanbanScreen
 import cloud.hubera.docs.ui.reports.ReportsScreen
 import cloud.hubera.docs.ui.theme.HuberaDocsTheme
@@ -124,6 +118,8 @@ private fun DocsRoot(api: DocsApi, tokens: TokenStore) {
     var fabOpen by remember { mutableStateOf(false) }
     var pendingNewTask by remember { mutableStateOf(false) }
     var inboxKindIntent by remember { mutableStateOf<String?>(null) }
+    var nestedTitle by remember { mutableStateOf<String?>(null) }
+    var nestedBack by remember { mutableStateOf<(() -> Unit)?>(null) }
     var pendingUpdate by remember { mutableStateOf<UpdateChecker.CheckResult?>(null) }
     var dlBusy by remember { mutableStateOf(false) }
     var dlProgress by remember { mutableFloatStateOf(0f) }
@@ -169,19 +165,35 @@ private fun DocsRoot(api: DocsApi, tokens: TokenStore) {
 
     fun go(id: String) {
         showAccount = false
+        nestedTitle = null
+        nestedBack = null
         tab = id
     }
 
+    fun setNested(title: String?, back: (() -> Unit)?) {
+        nestedTitle = title
+        nestedBack = back
+    }
+
     HuberaScaffold(
-        title = titles[if (showAccount) "account" else tab] ?: "Docs",
+        title = nestedTitle ?: titles[if (showAccount) "account" else tab] ?: "Docs",
         current = HuberaProduct.DOCS,
         versionLabel = "v${BuildConfig.VERSION_NAME}",
-        onAccountClick = { showAccount = true },
+        onAccountClick = {
+            nestedTitle = null
+            nestedBack = null
+            showAccount = true
+        },
         navItems = docsTabs,
-        selectedNavId = if (showAccount || tab !in docsTabs.map { it.id }) null else tab,
+        selectedNavId = if (showAccount || nestedBack != null || tab !in docsTabs.map { it.id }) null else tab,
         onNavSelect = { go(it) },
         userEmail = email,
-        hideBottomNav = showAccount,
+        hideBottomNav = showAccount || nestedBack != null,
+        onUpClick = when {
+            nestedBack != null -> nestedBack
+            showAccount -> ({ showAccount = false })
+            else -> null
+        },
         extraDrawer = {
             Text(
                 "Dans Docs",
@@ -212,7 +224,7 @@ private fun DocsRoot(api: DocsApi, tokens: TokenStore) {
             }
         },
         floatingActionButton = {
-            if (!showAccount) {
+            if (!showAccount && nestedBack == null) {
                 DocsSpeedDial(
                     expanded = fabOpen,
                     onToggle = { fabOpen = !fabOpen },
@@ -258,8 +270,8 @@ private fun DocsRoot(api: DocsApi, tokens: TokenStore) {
                     openNew = pendingNewTask,
                     onOpenNewConsumed = { pendingNewTask = false },
                 )
-                "docs" -> DocsScreen(api)
-                "pdf" -> ReportsScreen(api)
+                "docs" -> DocsScreen(api, onOpenChanged = ::setNested)
+                "pdf" -> ReportsScreen(api, onOpenChanged = ::setNested)
                 "gantt" -> GanttScreen(api)
                 "inbox" -> InboxScreen(
                     api,
@@ -363,104 +375,3 @@ private fun GanttScreen(api: DocsApi) {
     }
 }
 
-private val inboxApps = listOf(
-    "music", "maps", "fuel", "docs", "pass", "drive", "mail", "contacts",
-    "photos", "calendar", "cook", "jobs", "id", "ops", "platform", "admin",
-)
-
-@Composable
-private fun InboxScreen(
-    api: DocsApi,
-    kindIntent: String? = null,
-    onKindConsumed: () -> Unit = {},
-) {
-    val ctx = LocalContext.current
-    val prefs = remember { ctx.getSharedPreferences("hubera_docs_inbox", Context.MODE_PRIVATE) }
-    var remarks by remember { mutableStateOf<List<Remark>>(emptyList()) }
-    var appName by remember { mutableStateOf(prefs.getString("last_app", "docs") ?: "docs") }
-    var body by remember { mutableStateOf(prefs.getString("draft", "") ?: "") }
-    var kind by remember { mutableStateOf(prefs.getString("kind", "retour") ?: "retour") }
-    var filter by remember { mutableStateOf(prefs.getString("filter", "all") ?: "all") }
-    val scope = rememberCoroutineScope()
-
-    fun persist() {
-        prefs.edit()
-            .putString("last_app", appName)
-            .putString("draft", body)
-            .putString("kind", kind)
-            .putString("filter", filter)
-            .apply()
-    }
-
-    LaunchedEffect(kindIntent) {
-        if (kindIntent != null) {
-            kind = kindIntent
-            persist()
-            onKindConsumed()
-        }
-    }
-    LaunchedEffect(appName, body, kind, filter) { persist() }
-    LaunchedEffect(Unit) {
-        remarks = withContext(Dispatchers.IO) { runCatching { api.remarks() }.getOrDefault(emptyList()) }
-    }
-    val shown = remarks.filter { filter == "all" || it.kind == filter }
-    Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text(
-            "Un retour ou une note crée une tâche. Brouillon et dernière app mémorisés.",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text("Application", style = MaterialTheme.typography.labelMedium)
-        Row(
-            Modifier.horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            inboxApps.forEach { p ->
-                OutlinedButton(onClick = { appName = p }) {
-                    Text(if (p == appName) "✓ $p" else p)
-                }
-            }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilterChip(selected = kind == "retour", onClick = { kind = "retour" }, label = { Text("Retour") })
-            FilterChip(selected = kind == "note", onClick = { kind = "note" }, label = { Text("Note") })
-        }
-        OutlinedTextField(
-            body,
-            {
-                body = it
-            },
-            label = { Text("Ce qui cloche") },
-            minLines = 4,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Button(
-            onClick = {
-                if (body.isBlank()) return@Button
-                val savedApp = appName.trim()
-                val savedKind = kind
-                val savedBody = body.trim()
-                scope.launch {
-                    withContext(Dispatchers.IO) { api.addRemark(savedApp, savedBody, savedKind) }
-                    body = ""
-                    persist()
-                    remarks = withContext(Dispatchers.IO) { api.remarks() }
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-        ) { Text("Enregistrer → tâche") }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilterChip(selected = filter == "all", onClick = { filter = "all" }, label = { Text("Tous") })
-            FilterChip(selected = filter == "retour", onClick = { filter = "retour" }, label = { Text("Retours") })
-            FilterChip(selected = filter == "note", onClick = { filter = "note" }, label = { Text("Notes") })
-        }
-        shown.forEach { r ->
-            Text("${r.app} · ${r.kind} — ${r.body}", style = MaterialTheme.typography.bodySmall)
-        }
-    }
-}

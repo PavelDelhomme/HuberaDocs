@@ -1,6 +1,16 @@
 {
   "versions": [
     {
+      "version": "0.2.8",
+      "date": "2026-10-08",
+      "title": "Retours modifiables, markdown rendu, Docs dans Admin",
+      "notes": [
+        "Un retour ou une note se reprend : texte, type (retour/note) et application. La tâche liée suit.",
+        "Les rapports .md s’affichent rendus (titres, listes), plus le brut. Un fichier ouvert met le bouton retour dans la barre, pas en dessous.",
+        "Hubera Admin embarque le cockpit (tâches, docs, rapports, retours, Gantt) en interface d’app, pas une page web. Mise à jour proposée, pas forcée."
+      ]
+    },
+    {
       "version": "0.2.7",
       "date": "2026-10-08",
       "title": "Ouverture native depuis Hubera Admin",

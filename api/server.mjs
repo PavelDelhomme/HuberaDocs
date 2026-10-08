@@ -872,6 +872,29 @@ app.post('/api/remarks', requireAuth, (req, res) => {
   res.json({ remark, task });
 });
 
+app.patch('/api/remarks/:id', requireAuth, (req, res) => {
+  const cur = db.prepare('SELECT * FROM remarks WHERE id = ?').get(req.params.id);
+  if (!cur) return res.status(404).json({ error: 'missing' });
+  const appName = String(req.body?.app ?? cur.app).trim() || cur.app;
+  const body = String(req.body?.body ?? cur.body).trim();
+  if (!body) return res.status(400).json({ error: 'body' });
+  const kind = String(req.body?.kind ?? cur.kind ?? 'retour').trim() === 'note' ? 'note' : 'retour';
+  db.prepare('UPDATE remarks SET app = ?, body = ?, kind = ? WHERE id = ?').run(appName, body, kind, cur.id);
+  if (cur.task_id) {
+    db.prepare(
+      `UPDATE tasks SET title = ?, body = ?, project = ?, category = ?, updated_at = ? WHERE id = ?`,
+    ).run(
+      `[${kind} ${appName}] ${body.slice(0, 72)}`,
+      body,
+      appName,
+      kind === 'note' ? 'docs' : 'bug',
+      now(),
+      cur.task_id,
+    );
+  }
+  res.json({ remark: { ...cur, app: appName, body, kind } });
+});
+
 app.use(express.static(WEB_DIR, {
   maxAge: 0,
   etag: true,

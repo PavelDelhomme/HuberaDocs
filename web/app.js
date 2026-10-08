@@ -625,27 +625,51 @@ function openNewColumn() {
 async function viewDocs() {
   const { files } = await api('/api/docs');
   app.innerHTML = shell(`
-    <p class="lead">Fichiers du dépôt Docs. Tu peux les lire et les modifier. Les NOTES produits doivent pointer ici.</p>
+    <p class="lead">Fichiers du dépôt. Aperçu rendu, puis Modifier si besoin.</p>
     <input id="q" placeholder="Filtrer un fichier…" />
     <ul class="list" id="fl">${files.map((f) => `<li><a href="#" data-p="${esc(f.path)}">${esc(f.path)}</a></li>`).join('')}</ul>
-    <textarea id="md" class="doc" rows="18" placeholder="Choisis un fichier."></textarea>
+    <div id="mdToolbar" hidden>
+      <div class="chips">
+        <button type="button" class="chip on" id="mdPreviewBtn">Aperçu</button>
+        <button type="button" class="chip" id="mdEditBtn">Modifier</button>
+      </div>
+    </div>
+    <article class="md-html" id="mdPreview" hidden></article>
+    <textarea id="md" class="doc" rows="18" placeholder="Choisis un fichier." hidden></textarea>
     <button class="primary" id="saveMd" type="button" hidden>Enregistrer le .md</button>
   `);
   let current = '';
+  let editing = false;
   const refreshList = () => {
     const q = ($('#q').value || '').toLowerCase();
     app.querySelectorAll('#fl li').forEach((li) => {
       li.hidden = q && !li.textContent.toLowerCase().includes(q);
     });
   };
+  const showMode = () => {
+    const ta = $('#md');
+    const prev = $('#mdPreview');
+    $('#mdPreviewBtn')?.classList.toggle('on', !editing);
+    $('#mdEditBtn')?.classList.toggle('on', editing);
+    if (ta) ta.hidden = !editing;
+    if (prev) {
+      prev.hidden = editing;
+      if (!editing) prev.innerHTML = renderMarkdown(ta?.value || '');
+    }
+    $('#saveMd').hidden = !editing;
+  };
   $('#q').oninput = refreshList;
+  $('#mdPreviewBtn')?.addEventListener('click', () => { editing = false; showMode(); });
+  $('#mdEditBtn')?.addEventListener('click', () => { editing = true; showMode(); });
   app.querySelectorAll('#fl a').forEach((a) => {
     a.onclick = async (e) => {
       e.preventDefault();
       current = a.dataset.p;
       const j = await fetch('/api/docs/file?path=' + encodeURIComponent(current), { credentials: 'include' });
       $('#md').value = await j.text();
-      $('#saveMd').hidden = false;
+      $('#mdToolbar').hidden = false;
+      editing = false;
+      showMode();
     };
   });
   $('#saveMd').onclick = async () => {
@@ -654,6 +678,8 @@ async function viewDocs() {
       method: 'PUT',
       body: JSON.stringify({ path: current, markdown: $('#md').value }),
     });
+    editing = false;
+    showMode();
   };
 }
 
@@ -712,7 +738,7 @@ async function viewReports() {
         renderHtmlBlob(stage, buf);
       } else if (filename.toLowerCase().endsWith('.md')) {
         const text = new TextDecoder('utf-8').decode(buf);
-        stage.innerHTML = `<pre class="md-view">${esc(text)}</pre>`;
+        stage.innerHTML = `<article class="md-html">${renderMarkdown(text)}</article>`;
       } else {
         await renderPdfBytes(stage, buf);
       }
@@ -796,7 +822,7 @@ async function viewInbox() {
     return true;
   });
   app.innerHTML = shell(`
-    <p class="lead">Ce qui ne va pas, une note, un retour. Ça crée une tâche kanban. Le brouillon et la dernière app restent en mémoire.</p>
+    <p class="lead">Tape un retour pour le modifier (texte, type, application). Ça met aussi à jour la tâche.</p>
     <form id="fb" class="card">
       <select name="app">${projects.map((p) => `<option ${p === lastApp ? 'selected' : ''}>${p}</option>`).join('')}</select>
       <select name="kind">
@@ -811,7 +837,7 @@ async function viewInbox() {
       <button type="button" class="chip ${filter === 'retour' ? 'on' : ''}" data-filter="retour">Retours</button>
       <button type="button" class="chip ${filter === 'note' ? 'on' : ''}" data-filter="note">Notes</button>
     </div>
-    <ul class="list">${shown.map((r) => `<li><strong>${esc(r.app)}</strong> · ${esc(r.kind || 'retour')} — ${esc(r.body)}</li>`).join('') || '<li>Aucun élément</li>'}</ul>
+    <ul class="list">${shown.map((r) => `<li class="tap" data-edit="${esc(r.id)}"><strong>${esc(r.app)}</strong> · ${esc(r.kind || 'retour')} — ${esc(r.body)}</li>`).join('') || '<li>Aucun élément</li>'}</ul>
   `);
   const bodyEl = document.querySelector('#fb [name="body"]');
   if (bodyEl) bodyEl.value = draft;
@@ -823,6 +849,43 @@ async function viewInbox() {
       persistInboxFields();
       writeLs(FILTER_KEY, b.dataset.filter);
       viewInbox();
+    };
+  });
+  document.querySelectorAll('[data-edit]').forEach((li) => {
+    li.onclick = () => {
+      const r = remarks.find((x) => x.id === li.dataset.edit);
+      if (!r) return;
+      openModal(`
+        <h2>Modifier</h2>
+        <label>Application</label>
+        <select id="eapp">${projects.map((p) => `<option ${p === r.app ? 'selected' : ''}>${p}</option>`).join('')}</select>
+        <label>Type</label>
+        <select id="ekind">
+          <option value="retour" ${r.kind === 'note' ? '' : 'selected'}>Retour</option>
+          <option value="note" ${r.kind === 'note' ? 'selected' : ''}>Note</option>
+        </select>
+        <label>Texte</label>
+        <textarea id="ebody" rows="5">${esc(r.body)}</textarea>
+        <div class="modal-actions">
+          <button class="primary" type="button" id="esave">Enregistrer</button>
+          <button class="ghost" type="button" id="eclose">Annuler</button>
+        </div>
+      `);
+      $('#eclose').onclick = closeModal;
+      $('#esave').onclick = async () => {
+        const body = ($('#ebody').value || '').trim();
+        if (!body) return;
+        await api('/api/remarks/' + encodeURIComponent(r.id), {
+          method: 'PATCH',
+          body: JSON.stringify({
+            app: $('#eapp').value,
+            kind: $('#ekind').value === 'note' ? 'note' : 'retour',
+            body,
+          }),
+        });
+        closeModal();
+        viewInbox();
+      };
     };
   });
   $('#fb').onsubmit = async (e) => {
@@ -846,6 +909,86 @@ function esc(s) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/"/g, '&quot;');
+}
+
+function inlineMd(s) {
+  return esc(s)
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\[([^\]]+)]\(([^)]+)\)/g, '<a href="$2" rel="noopener">$1</a>');
+}
+
+function renderMarkdown(src) {
+  const lines = String(src || '').replace(/\r\n/g, '\n').split('\n');
+  const html = [];
+  let i = 0;
+  const flushList = (items, ordered) => {
+    if (!items.length) return;
+    const tag = ordered ? 'ol' : 'ul';
+    html.push(`<${tag}>${items.map((t) => `<li>${inlineMd(t)}</li>`).join('')}</${tag}>`);
+    items.length = 0;
+  };
+  const ul = [];
+  const ol = [];
+  while (i < lines.length) {
+    const line = lines[i];
+    if (line.startsWith('```')) {
+      flushList(ul, false); flushList(ol, true);
+      const buf = [];
+      i += 1;
+      while (i < lines.length && !lines[i].startsWith('```')) {
+        buf.push(lines[i]);
+        i += 1;
+      }
+      i += 1;
+      html.push(`<pre><code>${esc(buf.join('\n'))}</code></pre>`);
+      continue;
+    }
+    if (/^\s*$/.test(line)) {
+      flushList(ul, false); flushList(ol, true);
+      i += 1;
+      continue;
+    }
+    if (/^---+$/.test(line.trim()) || /^\*\*\*+$/.test(line.trim())) {
+      flushList(ul, false); flushList(ol, true);
+      html.push('<hr/>');
+      i += 1;
+      continue;
+    }
+    const h = line.match(/^(#{1,3})\s+(.*)$/);
+    if (h) {
+      flushList(ul, false); flushList(ol, true);
+      html.push(`<h${h[1].length}>${inlineMd(h[2])}</h${h[1].length}>`);
+      i += 1;
+      continue;
+    }
+    if (line.startsWith('> ')) {
+      flushList(ul, false); flushList(ol, true);
+      html.push(`<blockquote>${inlineMd(line.slice(2))}</blockquote>`);
+      i += 1;
+      continue;
+    }
+    const bullet = line.match(/^[-*]\s+(.*)$/);
+    if (bullet) {
+      flushList(ol, true);
+      ul.push(bullet[1]);
+      i += 1;
+      continue;
+    }
+    const num = line.match(/^\d+\.\s+(.*)$/);
+    if (num) {
+      flushList(ul, false);
+      ol.push(num[1]);
+      i += 1;
+      continue;
+    }
+    flushList(ul, false); flushList(ol, true);
+    html.push(`<p>${inlineMd(line)}</p>`);
+    i += 1;
+  }
+  flushList(ul, false); flushList(ol, true);
+  return html.join('') || '<p class="lead">Document vide.</p>';
 }
 
 const renderers = { dash: viewDash, kanban: viewKanban, docs: viewDocs, reports: viewReports, gantt: viewGantt, inbox: viewInbox, account: viewAccount };
