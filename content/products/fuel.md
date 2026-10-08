@@ -1,8 +1,12 @@
 # Hubera Fuel
 
-Priorité 3. Un budget global. Samsung encore **1.4.165** au 7 oct 16h (source 166 à overlay). Maps 0.1.75 ne lance plus Fuel tant que tu n’as pas roulé.
+Priorité 3. Un budget global — **pas ce sprint**. Live **1.4.169** (vc 193) · overlay Samsung `cloud.hubera.fuel` 8 oct · OTA `forceUpdate: false`.
 
+- Chrome hamburger + compte Hubera ID. Jauge → modèle conso (EMA) de 1.4.168 **inchangée**.
+- Dual APK `cloud.hubera.fuel` (SHA `3a97447c…b46781`) + `com.gasoiltracking.app` (SHA `bb25fbbf…91570c`).
+- OTA : client 1.4.168 voit `apkAvailable: true`, `forceUpdate: false`.
+- Ne pas relancer Fuel à l’arrêt depuis Maps (`fuelArmed` seulement en roulant).
 - Stack Portainer : `gasoil-tracking` (volume `gasoil_api_data` — ne pas renommer)
-- Affichage « Fuel » plus tard, pas un rename de volume
+- Overlay Samsung USB `R5CT7263YJL` `-r`. **Pas Nothing.** Blackview ADB absent.
 
 Notes d’usage → onglet **Noter**.
