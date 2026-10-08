@@ -1,6 +1,15 @@
 {
   "versions": [
     {
+      "version": "0.2.7",
+      "date": "2026-10-08",
+      "title": "Ouverture native depuis Hubera Admin",
+      "notes": [
+        "Hubera Admin lance l’application Docs (pas une page web). Schéma hubera-docs://open.",
+        "L’app Docs reste une APK à part, en plus d’Admin."
+      ]
+    },
+    {
       "version": "0.2.6",
       "date": "2026-10-08",
       "title": "Drawer, FAB, brouillon retours",
