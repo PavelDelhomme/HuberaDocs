@@ -4,10 +4,9 @@ Priorité 2 après Music. Lieux, tuiles hors-ligne, garage Fuel dans Maps.
 
 - Domaine : https://maps.hubera.cloud
 - OTA : `updates.json` + `GET /api/version` (même JSON). `forceUpdate: false` / `mandatory: false`
-- Live **0.1.81** vc 82 · cold start 0.1.79 + chrome natif 0.1.80 · trajet → Calendar · Fuel `hubera-maps://` sans chooser · overlay Samsung cloud+legacy 8 oct · **pas Nothing (ADB)**
-- **P0 8 oct Nothing** : crash au lancement (0.1.78/0.1.79) → OTA in-app impossible. Sideload navigateur 0.1.81 **après** campagne suite. `content/reports/2026-10-08-nothing-maps-crash-lancement.md`
-- SHA APK cloud `76befdc589a749c18af88d45be55af6b1114849fd281c16ccd2f6e0aa59fd56a`
-- SHA APK legacy `241841da9577647a2d22d151bbc3f6961e357e0bc818be6187a76a0783a8c1ab`
+- Live **0.1.82** vc 83 · UI WebView d’avant le chrome 0.1.80 + cold start 0.1.79 · overlay Samsung + Blackview `-r` 8 oct · **Nothing absent ADB** → sideload https://maps.hubera.cloud/apk/hubera-maps.apk
+- SHA APK cloud `94e4017326833c5bc5779fcf485f9c43051abe8ac2364716add7a09dc7097395`
+- SHA APK legacy `5157b907cbfc971720da9446d00d0c8f8a8742cbbd6e2fb3f1ba76b427e09b80`
 
 ## Nothing — installer **sans ouvrir** l’app (P0 crash 0.1.75)
 
@@ -20,6 +19,7 @@ Si Maps se ferme au lancement, l’OTA in-app est inutilisable. Télécharger le
 
 Installer par-dessus (garder les données), **puis** ouvrir Maps.
 
+- **0.1.82** : UI d’avant chrome (HUD / recherche / onglets) + cold start 0.1.79. Rapport `content/reports/2026-10-08-maps-0.1.82.md`
 - **0.1.81** : fusion cold-start + chrome ; Calendar ; pont Fuel unique
 - **0.1.80** : chrome natif hamburger / compte / Carte-Trajet-Lieux
 - **0.1.79** : adopt auto Bearer Hubera ID (SSO hors UI) — overlay Samsung seulement
