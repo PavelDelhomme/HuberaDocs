@@ -1,5 +1,5 @@
 {
-  "name": "Hubera Docs",
+  "name": "Hubera Docs — cahier unique",
   "short_name": "Docs",
   "start_url": "/",
   "scope": "/",
@@ -7,5 +7,9 @@
   "orientation": "portrait",
   "background_color": "#0e4d5c",
   "theme_color": "#0e4d5c",
-  "lang": "fr"
+  "lang": "fr",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
 }

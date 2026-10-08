@@ -1,0 +1,156 @@
+=== cloud.hubera.music after-play 20261008-201116 ===
+--- cpuinfo ---
+ +0% 27011/cloud.hubera.music: 0% user + 0% kernel
+--- meminfo ---
+Applications Memory Usage (in Kilobytes):
+Uptime: 101614669 Realtime: 101614669
+
+** MEMINFO in pid 27011 [cloud.hubera.music] **
+                   Pss  Private  Private  SwapPss      Rss     Heap     Heap     Heap
+                 Total    Dirty    Clean    Dirty    Total     Size    Alloc     Free
+                ------   ------   ------   ------   ------   ------   ------   ------
+  Native Heap    36298    35464      792     3563    37292   162748    30000   129548
+  Dalvik Heap    78684    76452     2196      616    79356    84412    59836    24576
+ Dalvik Other    25397     9584      200      208    41216                           
+        Stack     5220     5168       52      804     5224                           
+       Ashmem      661      576        0        0      916                           
+    Other dev     3928     3904       12        0     4412                           
+     .so mmap    10812      156     7412       50    39236                           
+    .jar mmap     7706        0     3748        0    37752                           
+    .apk mmap     1129        0      784        0     1876                           
+    .ttf mmap      520        0      436        0      636                           
+    .dex mmap    24469    18092     6364    59324    25220                           
+    .oat mmap      167        0        0        0     1468                           
+    .art mmap     5965     4888      492     3101    15004                           
+   Other mmap       99        4       56        0      772                           
+   EGL mtrack    54100    54100        0        0    54100                           
+    GL mtrack     1536     1536        0        0     1536                           
+      Unknown      865      284      568      269     1400                           
+        TOTAL   325491   210208    23112    67935   347416   247160    89836   154124
+ 
+ App Summary
+                       Pss(KB)                        Rss(KB)
+                        ------                         ------
+           Java Heap:    81832                          94360
+         Native Heap:    35464                          37292
+                Code:    37284                         137704
+               Stack:     5168                           5224
+            Graphics:    55636                          55636
+       Private Other:    17936
+              System:    92171
+             Unknown:                                   17200
+ 
+           TOTAL PSS:   325491            TOTAL RSS:   347416       TOTAL SWAP PSS:    67935
+ 
+--- gfxinfo ---
+Applications Graphics Acceleration Info:
+Uptime: 101614930 Realtime: 101614930
+
+** Graphics info for pid 27011 [cloud.hubera.music] **
+
+Stats since: 101377311846638ns
+Total frames rendered: 13522
+Janky frames: 369 (2.73%)
+Janky frames (legacy): 3144 (23.25%)
+50th percentile: 8ms
+90th percentile: 12ms
+95th percentile: 13ms
+99th percentile: 23ms
+Number Missed Vsync: 251
+Number High input latency: 24665
+Number Slow UI thread: 213
+Number Slow bitmap uploads: 7
+Number Slow issue draw commands: 245
+Number Frame deadline missed: 369
+Number Frame deadline missed (legacy): 364
+HISTOGRAM: 5ms=1568 6ms=1792 7ms=1879 8ms=1686 9ms=872 10ms=1264 11ms=2086 12ms=1455 13ms=386 14ms=84 15ms=58 16ms=46 17ms=33 18ms=47 19ms=54 20ms=31 21ms=25 22ms=18 23ms=17 24ms=14 25ms=10 26ms=3 27ms=3 28ms=4 29ms=1 30ms=2 31ms=4 32ms=0 34ms=5 36ms=1 38ms=4 40ms=3 42ms=4 44ms=0 46ms=2 48ms=5 53ms=2 57ms=1 61ms=3 65ms=2 69ms=2 73ms=6 77ms=2 81ms=3 85ms=2 89ms=0 93ms=1 97ms=5 101ms=1 105ms=0 109ms=0 113ms=1 117ms=0 121ms=2 125ms=1 129ms=1 133ms=0 150ms=7 200ms=2 250ms=3 300ms=1 350ms=0 400ms=2 450ms=1 500ms=0 550ms=0 600ms=0 650ms=0 700ms=0 750ms=0 800ms=0 850ms=1 900ms=0 950ms=0 1000ms=0 1050ms=1 1100ms=0 1150ms=0 1200ms=1 1250ms=0 1300ms=1 1350ms=0 1400ms=0 1450ms=0 1500ms=0 1550ms=1 1600ms=0 1650ms=0 1700ms=0 1750ms=0 1800ms=0 1850ms=0 1900ms=0 1950ms=0 2000ms=0 2050ms=0 2100ms=0 2150ms=0 2200ms=0 2250ms=0 2300ms=0 2350ms=0 2400ms=0 2450ms=0 2500ms=0 2550ms=0 2600ms=0 2650ms=0 2700ms=0 2750ms=0 2800ms=0 2850ms=0 2900ms=0 2950ms=0 3000ms=0 3050ms=0 3100ms=0 3150ms=0 3200ms=0 3250ms=0 3300ms=0 3350ms=0 3400ms=0 3450ms=0 3500ms=0 3550ms=0 3600ms=0 3650ms=0 3700ms=0 3750ms=0 3800ms=0 3850ms=0 3900ms=0 3950ms=0 4000ms=0 4050ms=0 4100ms=0 4150ms=0 4200ms=0 4250ms=0 4300ms=0 4350ms=0 4400ms=0 4450ms=0 4500ms=0 4550ms=0 4600ms=0 4650ms=0 4700ms=0 4750ms=0 4800ms=0 4850ms=0 4900ms=0 4950ms=0
+50th gpu percentile: 5ms
+90th gpu percentile: 5ms
+95th gpu percentile: 5ms
+99th gpu percentile: 6ms
+GPU HISTOGRAM: 1ms=11 2ms=5644 3ms=54 4ms=77 5ms=7447 6ms=215 7ms=55 8ms=10 9ms=6 10ms=3 11ms=0 12ms=0 13ms=0 14ms=0 15ms=0 16ms=0 17ms=0 18ms=0 19ms=0 20ms=0 21ms=0 22ms=0 23ms=0 24ms=0 25ms=0 4950ms=0
+
+Pipeline=Skia (OpenGL)
+Memory policy:
+  Max surface area: 2527200
+--- batterystats uid ---
+Feature status:
+  Can read 'charging remaining time': true
+  Can trust power_profile: true
+
+Statistics since last charge:
+  System starts: 0, currently on battery: false
+  Estimated battery capacity: 4370 mAh
+  Time on battery: 0ms (0,0%) realtime, 0ms (--%) uptime
+  Time on battery screen off: 0ms (--%) realtime, 0ms (--%) uptime
+  Time on battery screen doze: 0ms (--%)
+  Total run time: 1s 552ms realtime, 1s 552ms uptime
+  Charge time remaining: 0ms 
+  Discharge: 0 mAh
+  Screen off discharge: 0 mAh
+  Screen doze discharge: 0 mAh
+  Screen on discharge: 0 mAh
+  Device light doze discharge: 0 mAh
+  Device deep doze discharge: 0 mAh
+  Start clock time: 2026-10-08-20-11-16
+  Screen on: 0ms (--%) 0x, Interactive: 0ms (--%)
+  Screen brightnesses: (no activity)
+  Screen refresh rate: (disabled)
+
+  Mobile info
+     Mobile active time: 0ms 
+     Mobile active 5G time: 0ms 
+     Silent log on screen on time: 0ms 
+     Silent log on screen off time: 0ms 
+
+  CONNECTIVITY POWER SUMMARY START
+  Logging duration for connectivity statistics: 0ms 
+  Cellular Statistics:
+     Cellular kernel active time: 0ms (--%)
+     Cellular Sleep time:  0ms (--%)
+     Cellular Idle time:   0ms (--%)
+     Cellular Rx time:     0ms (--%)
+     Cellular Tx time:     
+       less than 0dBm:  0ms (--%)
+       0dBm to 8dBm:  0ms (--%)
+       8dBm to 15dBm:  0ms (--%)
+       15dBm to 20dBm:  0ms (--%)
+       above 20dBm:  0ms (--%)
+     Active Cellular Radio Access Technology Breakdown:
+       (no activity)
+     Cellular data received: 0B
+     Cellular data sent: 0B
+     Cellular packets received: 0
+     Cellular packets sent: 0
+     Cellular Radio Access Technology: (no activity)
+     Cellular Rx signal strength (RSRP): (no activity)
+  Wifi Statistics:
+     Wifi kernel active time: 0ms (--%)
+     WiFi Scan time:  0ms (--%)
+     WiFi Sleep time:  0ms (--%)
+     WiFi Idle time:   0ms (--%)
+     WiFi Rx time:     0ms (--%)
+     WiFi Tx time:     0ms (--%)
+     Wifi data received: 0B
+     Wifi data sent: 0B
+     Wifi packets received: 0
+     Wifi packets sent: 0
+     Wifi states: (no activity)
+     Wifi supplicant states: (no activity)
+     Wifi Rx signal strength (RSSI): (no activity)
+  GPS Statistics:
+     GPS signal quality (Top 4 Average CN0):
+      poor (less than 20 dBHz): 0ms (--%) 
+      good (greater than 20 dBHz): 0ms (--%) 
+  CONNECTIVITY POWER SUMMARY END
+
+  Bluetooth total received: 0B, sent: 0B
+  Bluetooth scan time: 0ms 
+     Bluetooth Idle time:   0ms (--%)
+     Bluetooth Rx time:     0ms (--%)
+     Bluetooth Tx time:     0ms (--%)
+
+  Speaker Statistics: (no activity)
+
+  Device battery use since last full charge
+    Amount discharged (lower bound): 0

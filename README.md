@@ -4,9 +4,9 @@ Cockpit **Paul uniquement** : tâches (kanban), documentation canonique, rapport
 
 - **Pas** Hubera Admin, **pas** HuberaPress.
 - Auth : **Hubera ID** + allowlist e-mail.
-- Web + PWA (Nothing : Chrome → Ajouter à l’écran d’accueil).
+- Web `https://docs.hubera.cloud` + app **Android native** Kotlin Compose (`android/`, paquets `cloud.hubera.docs` / `ovh.delhomme.hubera.docs`). Pas une WebView du site.
+- OTA `forceUpdate: false` / `mandatory: false`. Overlay Samsung `-r` ; jamais Nothing.
 - Repo : https://github.com/PavelDelhomme/HuberaDocs
-- Domaine visé : `https://docs.hubera.cloud`
 
 ```bash
 cp .env.example .env   # SESSION_SECRET long, DOCS_ADMIN_EMAILS

@@ -7,9 +7,12 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="Hubera Docs" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <title>Hubera Docs</title>
+  <title>Hubera Docs — cahier unique</title>
   <link rel="manifest" href="/manifest.json" />
-  <link rel="stylesheet" href="/styles.css?v=20261007a" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png" />
+  <link rel="apple-touch-icon" href="/icons/icon-180.png" />
+  <link rel="stylesheet" href="/styles.css?v=20261008d" />
   <script>
     (function () {
       try {
@@ -19,7 +22,7 @@
         }
         document.documentElement.setAttribute('data-theme', t);
         var meta = document.querySelector('meta[name="theme-color"]');
-        if (meta) meta.content = t === 'dark' ? '#0b1519' : '#0e4d5c';
+        if (meta) meta.content = t === 'dark' ? '#11181e' : '#ffffff';
       } catch (e) {
         document.documentElement.setAttribute('data-theme', 'light');
       }
@@ -32,8 +35,9 @@
       <button type="button" class="theme-toggle" id="themeBtn">Mode sombre</button>
     </div>
     <form class="login card" id="login-form" autocomplete="on">
-      <h1>Connexion</h1>
-        <p class="lead">Bitwarden : même fiche que Hubera ID (compte admin). URI à ajouter : <code>https://docs.hubera.cloud</code> — pas un nouveau mot de passe.</p>
+      <img class="login-logo" src="/favicon.svg" width="56" height="56" alt="" />
+      <h1>Hubera Docs</h1>
+      <p class="lead">Cahier unique — le même compte Hubera ID que Music / Admin. URI Bitwarden : <code>https://docs.hubera.cloud</code></p>
       <label for="docs-email">E-mail</label>
       <input id="docs-email" name="email" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" inputmode="email" placeholder="e-mail" required autofocus />
       <label for="docs-password">Mot de passe Hubera ID</label>
@@ -41,6 +45,6 @@
       <button class="primary" type="submit">Entrer</button>
     </form>
   </div>
-  <script src="/app.js?v=20261007a" type="module"></script>
+  <script src="/app.js?v=20261008d" type="module"></script>
 </body>
 </html>

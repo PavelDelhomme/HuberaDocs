@@ -9,3 +9,10 @@ mobile/.dart_tool/
 mobile/build/
 mobile/.idea/
 mobile/*.iml
+android/.gradle/
+android/build/
+android/app/build/
+android/dist/
+android/local.properties
+android/*.iml
+android/.idea/

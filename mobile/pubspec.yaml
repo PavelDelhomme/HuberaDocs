@@ -1,7 +1,7 @@
 name: hubera_docs
 description: Hubera Docs — cockpit tâches, PDF, notes (Paul).
 publish_to: 'none'
-version: 0.1.0+1
+version: 0.2.1+201
 
 environment:
   sdk: ^3.11.4
