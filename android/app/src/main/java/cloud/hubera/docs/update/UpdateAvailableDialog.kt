@@ -22,6 +22,7 @@ fun UpdateAvailableDialog(
     busy: Boolean,
     progress: Float,
     message: String?,
+    releaseNotes: String? = null,
     onInstall: () -> Unit,
     onSnooze: (UpdateChecker.SnoozeOption) -> Unit,
     onDismiss: () -> Unit,
@@ -60,8 +61,9 @@ fun UpdateAvailableDialog(
         text = {
             Column {
                 Text(
-                    message?.takeIf { it.isNotBlank() }
-                        ?: versionName?.let { "Version $it prête à installer. Jamais forcée." }
+                    releaseNotes?.takeIf { it.isNotBlank() }
+                        ?: message?.takeIf { it.isNotBlank() }
+                        ?: versionName?.let { "Version $it — nouveautés et améliorations. Jamais forcée." }
                         ?: "Une nouvelle version de Hubera Docs est disponible.",
                 )
                 if (busy) {

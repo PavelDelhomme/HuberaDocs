@@ -138,6 +138,7 @@ private fun DocsRoot(api: DocsApi, tokens: TokenStore) {
             busy = dlBusy,
             progress = dlProgress,
             message = upd.message,
+            releaseNotes = upd.message,
             onInstall = {
                 dlBusy = true
                 dlProgress = 0f

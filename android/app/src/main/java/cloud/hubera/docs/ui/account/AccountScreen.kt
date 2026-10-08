@@ -88,7 +88,21 @@ fun DocsAccountScreen(
                     },
                 )
             },
-            supportingContent = { Text(updateMsg) },
+            supportingContent = {
+                val incoming = notes.firstOrNull { n ->
+                    remoteName != null && n.version == remoteName
+                } ?: notes.firstOrNull()
+                Text(
+                    if (busy && incoming != null) {
+                        buildString {
+                            append(incoming.title)
+                            incoming.notes.forEach { append("\n• ").append(it) }
+                        }
+                    } else {
+                        updateMsg
+                    },
+                )
+            },
             leadingContent = {
                 Icon(Icons.Default.SystemUpdate, contentDescription = null)
             },
