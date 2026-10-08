@@ -15,10 +15,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -111,7 +114,7 @@ fun HuberaTopBar(
             extraActions()
             HuberaAccountButton(onClick = onAccountClick, userPicture = userPicture)
         },
-        windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top),
+        windowInsets = WindowInsets.statusBars,
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.surface,
             titleContentColor = MaterialTheme.colorScheme.onSurface,
@@ -239,18 +242,22 @@ fun HuberaBottomNav(
     onSelect: (String) -> Unit,
 ) {
     if (items.isEmpty()) return
-    NavigationBar(
-        containerColor = MaterialTheme.colorScheme.surface,
-        windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom),
-    ) {
-        items.forEach { item ->
-            NavigationBarItem(
-                selected = item.id == selectedId,
-                onClick = { onSelect(item.id) },
-                icon = { Icon(item.icon, contentDescription = item.label) },
-                label = { Text(item.label) },
-                alwaysShowLabel = true,
-            )
+    Column(Modifier.windowInsetsPadding(WindowInsets.navigationBars)) {
+        NavigationBar(
+            modifier = Modifier.height(56.dp),
+            containerColor = MaterialTheme.colorScheme.surface,
+            tonalElevation = 0.dp,
+            windowInsets = WindowInsets(0, 0, 0, 0),
+        ) {
+            items.forEach { item ->
+                NavigationBarItem(
+                    selected = item.id == selectedId,
+                    onClick = { onSelect(item.id) },
+                    icon = { Icon(item.icon, contentDescription = item.label) },
+                    label = { Text(item.label) },
+                    alwaysShowLabel = true,
+                )
+            }
         }
     }
 }

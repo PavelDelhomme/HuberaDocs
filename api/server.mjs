@@ -77,6 +77,9 @@ function hasColumn(table, col) {
 if (!hasColumn('reports', 'owner_email')) {
   db.exec('ALTER TABLE reports ADD COLUMN owner_email TEXT');
 }
+if (!hasColumn('remarks', 'kind')) {
+  db.exec("ALTER TABLE remarks ADD COLUMN kind TEXT NOT NULL DEFAULT 'retour'");
+}
 const WORKSPACE_EMAIL = ADMINS[0] || 'paul@delhomme.ovh';
 db.prepare(`UPDATE reports SET owner_email = ? WHERE owner_email IS NULL OR owner_email = ''`).run(WORKSPACE_EMAIL);
 
@@ -832,21 +835,27 @@ app.get('/api/gantt', requireAuth, (_req, res) => {
   });
 });
 
-app.get('/api/remarks', requireAuth, (_req, res) => {
-  res.json({ remarks: db.prepare('SELECT * FROM remarks ORDER BY created_at DESC LIMIT 50').all() });
+app.get('/api/remarks', requireAuth, (req, res) => {
+  const kind = String(req.query.kind || '').trim();
+  const rows =
+    kind === 'note' || kind === 'retour'
+      ? db.prepare('SELECT * FROM remarks WHERE kind = ? ORDER BY created_at DESC LIMIT 80').all(kind)
+      : db.prepare('SELECT * FROM remarks ORDER BY created_at DESC LIMIT 80').all();
+  res.json({ remarks: rows });
 });
 
 app.post('/api/remarks', requireAuth, (req, res) => {
   const appName = String(req.body?.app || 'music').trim();
   const body = String(req.body?.body || '').trim();
+  const kind = String(req.body?.kind || 'retour').trim() === 'note' ? 'note' : 'retour';
   if (!body) return res.status(400).json({ error: 'body' });
   const t = now();
   const task = {
     id: nid(),
-    title: `[retour ${appName}] ${body.slice(0, 72)}`,
+    title: `[${kind} ${appName}] ${body.slice(0, 72)}`,
     body,
     project: appName,
-    category: 'bug',
+    category: kind === 'note' ? 'docs' : 'bug',
     column_id: 'todo',
     priority: 1,
     created_at: t,
@@ -856,10 +865,10 @@ app.post('/api/remarks', requireAuth, (req, res) => {
     `INSERT INTO tasks (id,title,body,project,category,column_id,priority,created_at,updated_at)
      VALUES (@id,@title,@body,@project,@category,@column_id,@priority,@created_at,@updated_at)`,
   ).run(task);
-  const remark = { id: nid(), app: appName, body, task_id: task.id, created_at: t };
-  db.prepare('INSERT INTO remarks (id,app,body,task_id,created_at) VALUES (@id,@app,@body,@task_id,@created_at)').run(
-    remark,
-  );
+  const remark = { id: nid(), app: appName, body, kind, task_id: task.id, created_at: t };
+  db.prepare(
+    'INSERT INTO remarks (id,app,body,kind,task_id,created_at) VALUES (@id,@app,@body,@kind,@task_id,@created_at)',
+  ).run(remark);
   res.json({ remark, task });
 });
 

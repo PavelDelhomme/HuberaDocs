@@ -13,13 +13,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
@@ -34,14 +30,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cloud.hubera.docs.data.Column
 import cloud.hubera.docs.data.DocsApi
 import cloud.hubera.docs.data.Task
-import cloud.hubera.docs.ui.theme.HuberaOrange
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -52,7 +47,11 @@ private val projects = listOf(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun KanbanScreen(api: DocsApi) {
+fun KanbanScreen(
+    api: DocsApi,
+    openNew: Boolean = false,
+    onOpenNewConsumed: () -> Unit = {},
+) {
     var tasks by remember { mutableStateOf<List<Task>>(emptyList()) }
     var columns by remember { mutableStateOf<List<Column>>(emptyList()) }
     var selected by remember { mutableStateOf<Task?>(null) }
@@ -70,6 +69,12 @@ fun KanbanScreen(api: DocsApi) {
         }
     }
     LaunchedEffect(Unit) { reload() }
+    LaunchedEffect(openNew) {
+        if (openNew) {
+            showNew = true
+            onOpenNewConsumed()
+        }
+    }
 
     Box(Modifier.fillMaxSize()) {
         Column(
@@ -116,15 +121,6 @@ fun KanbanScreen(api: DocsApi) {
                 }
                 OutlinedButton(onClick = { showCol = true }) { Text("+ Colonne") }
             }
-        }
-        FloatingActionButton(
-            onClick = { showNew = true },
-            containerColor = HuberaOrange,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp),
-        ) {
-            Icon(Icons.Default.Add, contentDescription = "Nouvelle tâche")
         }
     }
 
@@ -233,9 +229,11 @@ private fun NewTaskDialog(
     onDismiss: () -> Unit,
     onCreate: (String, String, String, String, String) -> Unit,
 ) {
+    val ctx = LocalContext.current
+    val prefs = ctx.getSharedPreferences("hubera_docs_inbox", android.content.Context.MODE_PRIVATE)
     var title by remember { mutableStateOf("") }
     var body by remember { mutableStateOf("") }
-    var proj by remember { mutableStateOf("docs") }
+    var proj by remember { mutableStateOf(prefs.getString("last_app", "docs") ?: "docs") }
     var cat by remember { mutableStateOf("feature") }
     var col by remember { mutableStateOf(columns.firstOrNull()?.id ?: "todo") }
     AlertDialog(
@@ -250,6 +248,7 @@ private fun NewTaskDialog(
         confirmButton = {
             TextButton(onClick = {
                 if (title.isBlank()) return@TextButton
+                prefs.edit().putString("last_app", proj).apply()
                 onCreate(title.trim(), body, proj, cat, col)
             }) { Text("Créer") }
         },

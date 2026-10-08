@@ -1,5 +1,6 @@
 package cloud.hubera.docs
 
+import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -7,12 +8,15 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -24,8 +28,11 @@ import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import cloud.hubera.chrome.HuberaNavItem
@@ -40,6 +47,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -48,6 +56,7 @@ import cloud.hubera.docs.data.Dashboard
 import cloud.hubera.docs.data.DocsApi
 import cloud.hubera.docs.data.GanttBar
 import cloud.hubera.docs.data.Remark
+import cloud.hubera.docs.ui.DocsSpeedDial
 import cloud.hubera.docs.ui.account.DocsAccountScreen
 import cloud.hubera.docs.ui.auth.LoginScreen
 import cloud.hubera.docs.ui.docs.DocsScreen
@@ -112,6 +121,9 @@ private fun DocsRoot(api: DocsApi, tokens: TokenStore) {
     }
     var tab by remember { mutableStateOf("home") }
     var showAccount by remember { mutableStateOf(false) }
+    var fabOpen by remember { mutableStateOf(false) }
+    var pendingNewTask by remember { mutableStateOf(false) }
+    var inboxKindIntent by remember { mutableStateOf<String?>(null) }
     var pendingUpdate by remember { mutableStateOf<UpdateChecker.CheckResult?>(null) }
     var dlBusy by remember { mutableStateOf(false) }
     var dlProgress by remember { mutableFloatStateOf(0f) }
@@ -170,6 +182,58 @@ private fun DocsRoot(api: DocsApi, tokens: TokenStore) {
         onNavSelect = { go(it) },
         userEmail = email,
         hideBottomNav = showAccount,
+        extraDrawer = {
+            Text(
+                "Dans Docs",
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { go("inbox") }
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(Icons.Default.EditNote, contentDescription = null)
+                Spacer(Modifier.width(12.dp))
+                Text("Retours")
+            }
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { go("gantt") }
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(Icons.Default.Timeline, contentDescription = null)
+                Spacer(Modifier.width(12.dp))
+                Text("Gantt")
+            }
+        },
+        floatingActionButton = {
+            if (!showAccount) {
+                DocsSpeedDial(
+                    expanded = fabOpen,
+                    onToggle = { fabOpen = !fabOpen },
+                    onTask = {
+                        fabOpen = false
+                        go("kanban")
+                        pendingNewTask = true
+                    },
+                    onRetour = {
+                        fabOpen = false
+                        inboxKindIntent = "retour"
+                        go("inbox")
+                    },
+                    onNote = {
+                        fabOpen = false
+                        inboxKindIntent = "note"
+                        go("inbox")
+                    },
+                )
+            }
+        },
     ) { pad ->
         Column(Modifier.fillMaxSize().padding(pad)) {
             if (showAccount) {
@@ -189,11 +253,19 @@ private fun DocsRoot(api: DocsApi, tokens: TokenStore) {
                     goKanban = { tab = "kanban" },
                     goPdf = { tab = "pdf" },
                 )
-                "kanban" -> KanbanScreen(api)
+                "kanban" -> KanbanScreen(
+                    api,
+                    openNew = pendingNewTask,
+                    onOpenNewConsumed = { pendingNewTask = false },
+                )
                 "docs" -> DocsScreen(api)
                 "pdf" -> ReportsScreen(api)
                 "gantt" -> GanttScreen(api)
-                "inbox" -> InboxScreen(api)
+                "inbox" -> InboxScreen(
+                    api,
+                    kindIntent = inboxKindIntent,
+                    onKindConsumed = { inboxKindIntent = null },
+                )
             }
         }
     }
@@ -291,15 +363,47 @@ private fun GanttScreen(api: DocsApi) {
     }
 }
 
+private val inboxApps = listOf(
+    "music", "maps", "fuel", "docs", "pass", "drive", "mail", "contacts",
+    "photos", "calendar", "cook", "jobs", "id", "ops", "platform", "admin",
+)
+
 @Composable
-private fun InboxScreen(api: DocsApi) {
+private fun InboxScreen(
+    api: DocsApi,
+    kindIntent: String? = null,
+    onKindConsumed: () -> Unit = {},
+) {
+    val ctx = LocalContext.current
+    val prefs = remember { ctx.getSharedPreferences("hubera_docs_inbox", Context.MODE_PRIVATE) }
     var remarks by remember { mutableStateOf<List<Remark>>(emptyList()) }
-    var appName by remember { mutableStateOf("docs") }
-    var body by remember { mutableStateOf("") }
+    var appName by remember { mutableStateOf(prefs.getString("last_app", "docs") ?: "docs") }
+    var body by remember { mutableStateOf(prefs.getString("draft", "") ?: "") }
+    var kind by remember { mutableStateOf(prefs.getString("kind", "retour") ?: "retour") }
+    var filter by remember { mutableStateOf(prefs.getString("filter", "all") ?: "all") }
     val scope = rememberCoroutineScope()
-    LaunchedEffect(Unit) {
-        remarks = withContext(Dispatchers.IO) { api.remarks() }
+
+    fun persist() {
+        prefs.edit()
+            .putString("last_app", appName)
+            .putString("draft", body)
+            .putString("kind", kind)
+            .putString("filter", filter)
+            .apply()
     }
+
+    LaunchedEffect(kindIntent) {
+        if (kindIntent != null) {
+            kind = kindIntent
+            persist()
+            onKindConsumed()
+        }
+    }
+    LaunchedEffect(appName, body, kind, filter) { persist() }
+    LaunchedEffect(Unit) {
+        remarks = withContext(Dispatchers.IO) { runCatching { api.remarks() }.getOrDefault(emptyList()) }
+    }
+    val shown = remarks.filter { filter == "all" || it.kind == filter }
     Column(
         Modifier
             .fillMaxSize()
@@ -307,19 +411,56 @@ private fun InboxScreen(api: DocsApi) {
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text("Un retour crée une tâche kanban priorité 1.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-        OutlinedTextField(appName, { appName = it }, label = { Text("App") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(body, { body = it }, label = { Text("Ce qui cloche") }, minLines = 4, modifier = Modifier.fillMaxWidth())
-        Button(onClick = {
-            if (body.isBlank()) return@Button
-            scope.launch {
-                withContext(Dispatchers.IO) { api.addRemark(appName.trim(), body.trim()) }
-                body = ""
-                remarks = withContext(Dispatchers.IO) { api.remarks() }
+        Text(
+            "Un retour ou une note crée une tâche. Brouillon et dernière app mémorisés.",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text("Application", style = MaterialTheme.typography.labelMedium)
+        Row(
+            Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            inboxApps.forEach { p ->
+                OutlinedButton(onClick = { appName = p }) {
+                    Text(if (p == appName) "✓ $p" else p)
+                }
             }
-        }, modifier = Modifier.fillMaxWidth()) { Text("Enregistrer → tâche") }
-        remarks.forEach { r ->
-            Text("${r.app} — ${r.body}", style = MaterialTheme.typography.bodySmall)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(selected = kind == "retour", onClick = { kind = "retour" }, label = { Text("Retour") })
+            FilterChip(selected = kind == "note", onClick = { kind = "note" }, label = { Text("Note") })
+        }
+        OutlinedTextField(
+            body,
+            {
+                body = it
+            },
+            label = { Text("Ce qui cloche") },
+            minLines = 4,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Button(
+            onClick = {
+                if (body.isBlank()) return@Button
+                val savedApp = appName.trim()
+                val savedKind = kind
+                val savedBody = body.trim()
+                scope.launch {
+                    withContext(Dispatchers.IO) { api.addRemark(savedApp, savedBody, savedKind) }
+                    body = ""
+                    persist()
+                    remarks = withContext(Dispatchers.IO) { api.remarks() }
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+        ) { Text("Enregistrer → tâche") }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(selected = filter == "all", onClick = { filter = "all" }, label = { Text("Tous") })
+            FilterChip(selected = filter == "retour", onClick = { filter = "retour" }, label = { Text("Retours") })
+            FilterChip(selected = filter == "note", onClick = { filter = "note" }, label = { Text("Notes") })
+        }
+        shown.forEach { r ->
+            Text("${r.app} · ${r.kind} — ${r.body}", style = MaterialTheme.typography.bodySmall)
         }
     }
 }

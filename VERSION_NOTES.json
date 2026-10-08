@@ -1,6 +1,16 @@
 {
   "versions": [
     {
+      "version": "0.2.6",
+      "date": "2026-10-08",
+      "title": "Drawer, FAB, brouillon retours",
+      "notes": [
+        "Le menu hamburger s’ouvre vraiment : le tiroir fermé ne bloque plus les clics (Retours compris).",
+        "Bouton + en menu : Tâche, Retour ou Note. Dernière app et texte du brouillon mémorisés si tu changes d’écran.",
+        "Liste Retours filtrable (tous / retours / notes). Barres haut et bas plus serrées."
+      ]
+    },
+    {
       "version": "0.2.5",
       "date": "2026-10-08",
       "title": "Libellés Hubera (plus de Cloudity visible)",

@@ -67,10 +67,31 @@ function openHuberaApp(slug) {
 const hamburgerSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>';
 const projects = ['music','maps','fuel','contacts','mail','photos','calendar','pass','drive','cook','jobs','admin','docs','id','ops','platform'];
 const THEME_KEY = 'hubera-docs-theme';
+const LAST_APP_KEY = 'hubera-docs-inbox-app';
+const DRAFT_KEY = 'hubera-docs-inbox-draft';
+const KIND_KEY = 'hubera-docs-inbox-kind';
+const FILTER_KEY = 'hubera-docs-inbox-filter';
 let route = 'dash';
 let openFile = '';
 let me = null;
 let pendingEmail = '';
+let pendingNewTask = false;
+let pendingInboxKind = '';
+
+function readLs(k, fallback = '') {
+  try { return localStorage.getItem(k) || fallback; } catch { return fallback; }
+}
+function writeLs(k, v) {
+  try { localStorage.setItem(k, v); } catch { /* ignore */ }
+}
+function persistInboxFields() {
+  const appSel = document.querySelector('#fb [name="app"]');
+  const body = document.querySelector('#fb [name="body"]');
+  const kind = document.querySelector('#fb [name="kind"]');
+  if (appSel) writeLs(LAST_APP_KEY, appSel.value);
+  if (body) writeLs(DRAFT_KEY, body.value);
+  if (kind) writeLs(KIND_KEY, kind.value);
+}
 
 function parseHash() {
   const raw = decodeURIComponent((location.hash || '').replace(/^#/, '') || 'dash');
@@ -86,6 +107,7 @@ function applyHash() {
 }
 
 function go(view, file = '') {
+  persistInboxFields();
   route = view;
   openFile = file || '';
   const next = file ? `${view}/${encodeURIComponent(file)}` : view;
@@ -149,9 +171,10 @@ async function api(path, opts = {}) {
 
 function shell(inner) {
   const hideBottom = route === 'account';
+  const hideFab = route === 'account';
   return `
-    <aside class="drawer" id="drawer" hidden>
-      <div class="drawer-scrim" data-close-drawer></div>
+    <aside class="drawer" id="drawer">
+      <button type="button" class="drawer-scrim" data-close-drawer aria-label="Fermer le menu"></button>
       <div class="drawer-sheet" role="dialog" aria-label="Menu">
         <div class="drawer-accent"></div>
         <div class="drawer-head">
@@ -178,37 +201,82 @@ function shell(inner) {
     </header>
     <div class="view">${inner}</div>
     ${hideBottom ? '' : `<nav class="bottom">
-      ${bottomNav.map((v) => `<button data-go="${v}" class="${v === route ? 'on' : ''}">${navIcons[v] || ''}<span>${labels[v]}</span></button>`).join('')}
-    </nav>`}`;
+      ${bottomNav.map((v) => `<button type="button" data-go="${v}" class="${v === route ? 'on' : ''}">${navIcons[v] || ''}<span>${labels[v]}</span></button>`).join('')}
+    </nav>`}
+    ${hideFab ? '' : `<button type="button" class="fab" id="fabBtn" aria-label="Ajouter">+</button>
+    <div class="fab-menu" id="fabMenu">
+      <button type="button" data-fab="task">Tâche</button>
+      <button type="button" data-fab="retour">Retour</button>
+      <button type="button" data-fab="note">Note</button>
+    </div>`}`;
 }
 
 function closeDrawer() {
-  const d = $('#drawer');
-  if (d) d.hidden = true;
+  $('#drawer')?.classList.remove('is-open');
+}
+
+function closeFabMenu() {
+  $('#fabMenu')?.classList.remove('is-open');
 }
 
 function bindShell() {
-  $('#menuBtn')?.addEventListener('click', () => {
-    const d = $('#drawer');
-    if (d) d.hidden = !d.hidden;
+  $('#menuBtn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeFabMenu();
+    $('#drawer')?.classList.toggle('is-open');
   });
   document.querySelectorAll('[data-close-drawer]').forEach((el) => {
-    el.onclick = closeDrawer;
+    el.onclick = (e) => {
+      e.preventDefault();
+      closeDrawer();
+    };
   });
+  $('.drawer-sheet')?.addEventListener('click', (e) => e.stopPropagation());
   $('#accountBtn')?.addEventListener('click', () => go('account'));
   document.querySelectorAll('[data-go]').forEach((b) => {
     if (b.tagName === 'A') return;
     b.onclick = () => {
       closeDrawer();
+      closeFabMenu();
       go(b.dataset.go);
     };
   });
   document.querySelectorAll('[data-hubera-slug]').forEach((b) => {
     b.onclick = (e) => {
       e.preventDefault();
+      persistInboxFields();
       closeDrawer();
       openHuberaApp(b.dataset.huberaSlug);
     };
+  });
+  $('#fabBtn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeDrawer();
+    $('#fabMenu')?.classList.toggle('is-open');
+  });
+  $('#fabMenu')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const btn = e.target.closest('[data-fab]');
+    if (!btn) return;
+    closeFabMenu();
+    const k = btn.dataset.fab;
+    if (k === 'task') {
+      pendingNewTask = true;
+      if (route === 'kanban') {
+        openNewTask();
+        pendingNewTask = false;
+      } else {
+        go('kanban');
+      }
+      return;
+    }
+    if (k === 'retour' || k === 'note') {
+      writeLs(KIND_KEY, k);
+      pendingInboxKind = k;
+      go('inbox');
+    }
   });
   bindThemeBtn();
 }
@@ -445,15 +513,11 @@ async function viewKanban() {
   app.querySelectorAll('.task').forEach((el) => {
     el.onclick = () => openTaskCard(byId[el.dataset.id]);
   });
-  const fab = document.createElement('button');
-  fab.type = 'button';
-  fab.className = 'fab';
-  fab.id = 'fabAdd';
-  fab.setAttribute('aria-label', 'Nouvelle tâche');
-  fab.textContent = '+';
-  app.appendChild(fab);
-  fab.onclick = () => openNewTask();
   $('#addCol').onclick = () => openNewColumn();
+  if (pendingNewTask) {
+    pendingNewTask = false;
+    openNewTask();
+  }
 }
 
 function openTaskCard(t) {
@@ -504,11 +568,12 @@ function openTaskEdit(t) {
 
 function openNewTask() {
   const first = kanbanCols[0]?.id || 'todo';
+  const lastApp = readLs(LAST_APP_KEY, 'docs');
   openModal(`
     <h2>Nouvelle tâche</h2>
     <input id="ntitle" placeholder="Titre" required />
     <textarea id="nbody" rows="4" placeholder="Détail (optionnel)"></textarea>
-    <select id="nproj">${projects.map((p) => `<option>${p}</option>`).join('')}</select>
+    <select id="nproj">${projects.map((p) => `<option ${p === lastApp ? 'selected' : ''}>${p}</option>`).join('')}</select>
     <select id="ncat">${['test','feature','bug','infra','docs','ops'].map((p) => `<option>${p}</option>`).join('')}</select>
     <select id="ncol">${colOptions(first)}</select>
     <div class="modal-actions">
@@ -521,6 +586,7 @@ function openNewTask() {
   $('#nsave').onclick = async () => {
     const title = ($('#ntitle').value || '').trim();
     if (!title) return;
+    writeLs(LAST_APP_KEY, $('#nproj').value);
     await api('/api/tasks', {
       method: 'POST',
       body: JSON.stringify({
@@ -718,20 +784,59 @@ async function viewGantt() {
 }
 
 async function viewInbox() {
+  const lastApp = readLs(LAST_APP_KEY, 'docs');
+  const draft = readLs(DRAFT_KEY, '');
+  const kind = pendingInboxKind || readLs(KIND_KEY, 'retour');
+  pendingInboxKind = '';
+  writeLs(KIND_KEY, kind);
+  const filter = readLs(FILTER_KEY, 'all');
   const { remarks } = await api('/api/remarks');
+  const shown = remarks.filter((r) => {
+    if (filter === 'note' || filter === 'retour') return (r.kind || 'retour') === filter;
+    return true;
+  });
   app.innerHTML = shell(`
-    <p class="lead">Ce qui ne va pas, à améliorer, à faire. Ça crée une tâche kanban priorité 1.</p>
+    <p class="lead">Ce qui ne va pas, une note, un retour. Ça crée une tâche kanban. Le brouillon et la dernière app restent en mémoire.</p>
     <form id="fb" class="card">
-      <select name="app">${projects.map((p) => `<option>${p}</option>`).join('')}</select>
+      <select name="app">${projects.map((p) => `<option ${p === lastApp ? 'selected' : ''}>${p}</option>`).join('')}</select>
+      <select name="kind">
+        <option value="retour" ${kind === 'note' ? '' : 'selected'}>Retour</option>
+        <option value="note" ${kind === 'note' ? 'selected' : ''}>Note</option>
+      </select>
       <textarea name="body" rows="5" placeholder="Ex. Nothing : Flowers spinner 20 s. Ou : ajouter le budget unique Fuel dans Docs." required></textarea>
       <button class="primary" type="submit">Enregistrer → tâche</button>
     </form>
-    <ul class="list">${remarks.map((r) => `<li><strong>${esc(r.app)}</strong> — ${esc(r.body)}</li>`).join('') || '<li>Aucun retour</li>'}</ul>
+    <div class="chips" id="inboxFilter">
+      <button type="button" class="chip ${filter === 'all' ? 'on' : ''}" data-filter="all">Tous</button>
+      <button type="button" class="chip ${filter === 'retour' ? 'on' : ''}" data-filter="retour">Retours</button>
+      <button type="button" class="chip ${filter === 'note' ? 'on' : ''}" data-filter="note">Notes</button>
+    </div>
+    <ul class="list">${shown.map((r) => `<li><strong>${esc(r.app)}</strong> · ${esc(r.kind || 'retour')} — ${esc(r.body)}</li>`).join('') || '<li>Aucun élément</li>'}</ul>
   `);
+  const bodyEl = document.querySelector('#fb [name="body"]');
+  if (bodyEl) bodyEl.value = draft;
+  document.querySelector('#fb [name="app"]')?.addEventListener('change', persistInboxFields);
+  document.querySelector('#fb [name="kind"]')?.addEventListener('change', persistInboxFields);
+  bodyEl?.addEventListener('input', persistInboxFields);
+  document.querySelectorAll('#inboxFilter [data-filter]').forEach((b) => {
+    b.onclick = () => {
+      persistInboxFields();
+      writeLs(FILTER_KEY, b.dataset.filter);
+      viewInbox();
+    };
+  });
   $('#fb').onsubmit = async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
-    await api('/api/remarks', { method: 'POST', body: JSON.stringify({ app: fd.get('app'), body: fd.get('body') }) });
+    const appName = String(fd.get('app') || 'docs');
+    const k = String(fd.get('kind') || 'retour') === 'note' ? 'note' : 'retour';
+    await api('/api/remarks', {
+      method: 'POST',
+      body: JSON.stringify({ app: appName, body: fd.get('body'), kind: k }),
+    });
+    writeLs(LAST_APP_KEY, appName);
+    writeLs(KIND_KEY, k);
+    writeLs(DRAFT_KEY, '');
     viewInbox();
   };
 }
@@ -763,8 +868,14 @@ async function render() {
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 window.addEventListener('hashchange', () => {
+  persistInboxFields();
   applyHash();
   render();
+});
+window.addEventListener('pagehide', persistInboxFields);
+document.addEventListener('click', () => {
+  closeDrawer();
+  closeFabMenu();
 });
 bindThemeBtn();
 render();
