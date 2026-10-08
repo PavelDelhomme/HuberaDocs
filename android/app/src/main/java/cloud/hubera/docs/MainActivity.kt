@@ -28,7 +28,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import cloud.hubera.chrome.HuberaDrawerItem
 import cloud.hubera.chrome.HuberaNavItem
 import cloud.hubera.chrome.HuberaProduct
 import cloud.hubera.chrome.HuberaScaffold
@@ -169,26 +168,6 @@ private fun DocsRoot(api: DocsApi, tokens: TokenStore) {
         selectedNavId = if (showAccount || tab !in docsTabs.map { it.id }) null else tab,
         onNavSelect = { go(it) },
         userEmail = email,
-        extraDrawer = { close ->
-            HuberaDrawerItem("Cahier unique", Icons.Default.Home, selected = !showAccount && tab == "home") {
-                close(); go("home")
-            }
-            HuberaDrawerItem("Kanban", Icons.AutoMirrored.Filled.List, selected = !showAccount && tab == "kanban") {
-                close(); go("kanban")
-            }
-            HuberaDrawerItem("Docs", Icons.Default.MenuBook, selected = !showAccount && tab == "docs") {
-                close(); go("docs")
-            }
-            HuberaDrawerItem("Rapports PDF", Icons.Default.PictureAsPdf, selected = !showAccount && tab == "pdf") {
-                close(); go("pdf")
-            }
-            HuberaDrawerItem("Gantt", Icons.Default.Timeline, selected = !showAccount && tab == "gantt") {
-                close(); go("gantt")
-            }
-            HuberaDrawerItem("Retours", Icons.Default.EditNote, selected = !showAccount && tab == "inbox") {
-                close(); go("inbox")
-            }
-        },
         hideBottomNav = showAccount,
     ) { pad ->
         Column(Modifier.fillMaxSize().padding(pad)) {
