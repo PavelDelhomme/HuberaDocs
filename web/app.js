@@ -2,8 +2,69 @@ import { renderPdfBytes, renderHtmlBlob, clearPdfStage } from './pdf-view.js';
 
 const $ = (sel, el = document) => el.querySelector(sel);
 const app = $('#app');
-const views = ['dash', 'kanban', 'docs', 'reports', 'gantt', 'inbox'];
-const labels = { dash: 'Home', kanban: 'Tâches', docs: 'Docs', reports: 'PDF', gantt: 'Avance', inbox: 'Noter' };
+const views = ['dash', 'kanban', 'docs', 'reports', 'gantt', 'inbox', 'account'];
+const bottomNav = ['dash', 'kanban', 'docs', 'reports'];
+const labels = {
+  dash: 'Accueil',
+  kanban: 'Tâches',
+  docs: 'Docs',
+  reports: 'Rapports',
+  gantt: 'Avance',
+  inbox: 'Retours',
+  account: 'Compte',
+};
+const titles = {
+  dash: 'Docs',
+  kanban: 'Tâches',
+  docs: 'Docs',
+  reports: 'Rapports',
+  gantt: 'Avance',
+  inbox: 'Retours',
+  account: 'Compte',
+};
+const navIcons = {
+  dash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1z"/></svg>',
+  kanban: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="6" height="16" rx="1"/><rect x="11" y="4" width="4" height="10" rx="1"/><rect x="17" y="4" width="4" height="13" rx="1"/></svg>',
+  docs: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3h8l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M15 3v6h6"/></svg>',
+  reports: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3h8l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M9 13h6M9 17h4"/></svg>',
+  gantt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h10M4 12h16M4 18h7"/></svg>',
+  inbox: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h5"/></svg>',
+  account: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="3"/><path d="M5 19c1.5-3 4-5 7-5s5.5 2 7 5"/></svg>',
+};
+const suiteLinks = [
+  { title: 'Music', slug: 'music' },
+  { title: 'Maps', slug: 'maps' },
+  { title: 'Fuel', slug: 'fuel' },
+  { title: 'Mail', slug: 'mail' },
+  { title: 'Drive', slug: 'drive' },
+  { title: 'Pass', slug: 'pass' },
+  { title: 'Agenda', slug: 'calendar' },
+  { title: 'ID', slug: 'id' },
+];
+
+function openHuberaApp(slug) {
+  const https = `https://${slug}.hubera.cloud`;
+  const scheme = `hubera-${slug}://open`;
+  let left = false;
+  const mark = () => { left = true; };
+  document.addEventListener('visibilitychange', mark, { once: true });
+  window.addEventListener('pagehide', mark, { once: true });
+  try {
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = scheme;
+    document.body.appendChild(iframe);
+    setTimeout(() => {
+      iframe.remove();
+      if (!left && document.visibilityState === 'visible') {
+        window.open(https, '_blank', 'noopener');
+      }
+    }, 800);
+  } catch {
+    window.open(https, '_blank', 'noopener');
+  }
+}
+const hamburgerSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>';
 const projects = ['music','maps','fuel','contacts','mail','photos','calendar','pass','drive','cook','jobs','admin','docs','id','ops','platform'];
 const THEME_KEY = 'hubera-docs-theme';
 let route = 'dash';
@@ -48,7 +109,7 @@ function applyTheme(mode) {
   document.documentElement.setAttribute('data-theme', t);
   try { localStorage.setItem(THEME_KEY, t); } catch { /* ignore */ }
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.content = t === 'dark' ? '#0b1519' : '#0e4d5c';
+  if (meta) meta.content = t === 'dark' ? '#11181e' : '#ffffff';
   document.querySelectorAll('#themeBtn').forEach((b) => {
     b.textContent = t === 'dark' ? 'Mode clair' : 'Mode sombre';
   });
@@ -87,32 +148,66 @@ async function api(path, opts = {}) {
 }
 
 function shell(inner) {
+  const hideBottom = route === 'account';
   return `
+    <aside class="drawer" id="drawer" hidden>
+      <div class="drawer-scrim" data-close-drawer></div>
+      <div class="drawer-sheet" role="dialog" aria-label="Menu">
+        <div class="drawer-accent"></div>
+        <div class="drawer-head">
+          <strong>Hubera Docs</strong>
+          <small>${esc(me?.email || 'Compte Hubera')}</small>
+        </div>
+        <button type="button" data-go="dash" class="drawer-item ${route === 'dash' ? 'on' : ''}">${navIcons.dash}<span>Cahier unique</span></button>
+        <button type="button" data-go="kanban" class="drawer-item ${route === 'kanban' ? 'on' : ''}">${navIcons.kanban}<span>Kanban</span></button>
+        <button type="button" data-go="docs" class="drawer-item ${route === 'docs' ? 'on' : ''}">${navIcons.docs}<span>Docs</span></button>
+        <button type="button" data-go="reports" class="drawer-item ${route === 'reports' ? 'on' : ''}">${navIcons.reports}<span>Rapports PDF</span></button>
+        <button type="button" data-go="gantt" class="drawer-item ${route === 'gantt' ? 'on' : ''}">${navIcons.gantt}<span>Gantt</span></button>
+        <button type="button" data-go="inbox" class="drawer-item ${route === 'inbox' ? 'on' : ''}">${navIcons.inbox}<span>Retours</span></button>
+        <button type="button" data-go="account" class="drawer-item ${route === 'account' ? 'on' : ''}">${navIcons.account}<span>Compte / MAJ</span></button>
+        <p class="drawer-label">Apps Hubera</p>
+        <div class="drawer-suite">
+          ${suiteLinks.map((a) => `<button type="button" class="suite-chip" data-hubera-slug="${a.slug}">${esc(a.title)}</button>`).join('')}
+        </div>
+      </div>
+    </aside>
     <header class="top">
-      <strong>HUBERA DOCS</strong>
-      <span class="who">${me?.email || ''}</span>
-      ${themeBtnHtml()}
-      <button class="logout" id="noteFast" type="button">Noter</button>
-      <button class="logout" id="out" type="button">Quitter</button>
+      <button type="button" class="icon-btn" id="menuBtn" aria-label="Menu">${hamburgerSvg}</button>
+      <strong class="top-title">${esc(titles[route] || 'Docs')}</strong>
+      <button type="button" class="avatar" id="accountBtn" aria-label="Compte">${navIcons.account}</button>
     </header>
     <div class="view">${inner}</div>
-    <nav class="bottom">
-      ${views.map((v) => `<button data-go="${v}" class="${v === route ? 'on' : ''}">${labels[v]}</button>`).join('')}
-    </nav>`;
+    ${hideBottom ? '' : `<nav class="bottom">
+      ${bottomNav.map((v) => `<button data-go="${v}" class="${v === route ? 'on' : ''}">${navIcons[v] || ''}<span>${labels[v]}</span></button>`).join('')}
+    </nav>`}`;
+}
+
+function closeDrawer() {
+  const d = $('#drawer');
+  if (d) d.hidden = true;
 }
 
 function bindShell() {
-  $('#out')?.addEventListener('click', async () => {
-    await api('/api/auth/logout', { method: 'POST' });
-    me = null;
-    loginView();
+  $('#menuBtn')?.addEventListener('click', () => {
+    const d = $('#drawer');
+    if (d) d.hidden = !d.hidden;
   });
-  $('#noteFast')?.addEventListener('click', () => {
-    go('inbox');
+  document.querySelectorAll('[data-close-drawer]').forEach((el) => {
+    el.onclick = closeDrawer;
   });
-  document.querySelectorAll('nav.bottom button').forEach((b) => {
+  $('#accountBtn')?.addEventListener('click', () => go('account'));
+  document.querySelectorAll('[data-go]').forEach((b) => {
+    if (b.tagName === 'A') return;
     b.onclick = () => {
+      closeDrawer();
       go(b.dataset.go);
+    };
+  });
+  document.querySelectorAll('[data-hubera-slug]').forEach((b) => {
+    b.onclick = (e) => {
+      e.preventDefault();
+      closeDrawer();
+      openHuberaApp(b.dataset.huberaSlug);
     };
   });
   bindThemeBtn();
@@ -130,6 +225,23 @@ function setLoginErr(form, msg) {
     form.appendChild(errEl);
   }
   errEl.textContent = msg;
+}
+
+function bindDevicePicker() {
+  document.querySelectorAll('[data-sso]').forEach((btn) => {
+    btn.onclick = () => {
+      const email = btn.getAttribute('data-sso') || '';
+      pendingEmail = email;
+      if (nativeSso(email)) return;
+      const input = $('#docs-email');
+      if (input) input.value = email;
+      $('#docs-password')?.focus();
+    };
+  });
+  $('#ssoOther')?.addEventListener('click', () => {
+    document.querySelector('.sso-picker')?.remove();
+    $('#docs-email')?.focus();
+  });
 }
 
 function bindLoginForm(form, twofa) {
@@ -179,17 +291,53 @@ function bindLoginForm(form, twofa) {
   };
 }
 
+function deviceAccounts() {
+  const raw = window.__huberaDeviceAccounts;
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((e) => (typeof e === 'string' ? e : e?.email || ''))
+    .map((e) => String(e).trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function nativeSso(email) {
+  try {
+    if (window.HuberaId && typeof window.HuberaId.postMessage === 'function') {
+      window.HuberaId.postMessage(email);
+      return true;
+    }
+  } catch {
+    /* hors app Android */
+  }
+  return false;
+}
+
+window.__huberaDeviceAccountsReady = function () {
+  if (!me) loginView();
+};
+
 function loginView(err = '', twofa = false) {
   const existing = $('form.login');
   if (existing && Boolean(existing.dataset.twofa) === twofa) {
     setLoginErr(existing, err);
     bindLoginForm(existing, twofa);
+    bindDevicePicker();
     return;
   }
   const keepEmail = esc(pendingEmail || $('input[name="email"]')?.value || '');
+  const accounts = deviceAccounts();
+  const picker = !twofa && accounts.length
+    ? `<div class="sso-picker">
+        <p class="lead">Continuer avec un compte déjà sur l’appareil</p>
+        ${accounts.map((e) => `<button type="button" class="sso-btn" data-sso="${esc(e)}">Continuer avec ${esc(e)}</button>`).join('')}
+        <button type="button" class="sso-other" id="ssoOther">Utiliser un autre compte</button>
+        <p class="lead">ou avec e-mail</p>
+      </div>`
+    : '';
   app.innerHTML = twofa
     ? `<div class="theme-bar">${themeBtnHtml()}</div>
       <form class="login card" data-twofa="1" autocomplete="on">
+        <img class="login-logo" src="/favicon.svg" width="56" height="56" alt="" />
         <h1>Code 2FA</h1>
         <p class="lead">Hubera ID / Bitwarden Authenticator — le code à 6 chiffres, pas le mot de passe.</p>
         <label for="docs-code">Code</label>
@@ -199,8 +347,10 @@ function loginView(err = '', twofa = false) {
       </form>`
     : `<div class="theme-bar">${themeBtnHtml()}</div>
       <form class="login card" autocomplete="on">
-        <h1>Connexion</h1>
-        <p class="lead">Ton compte Hubera ID admin (le même e-mail et mot de passe que Music / Mail / Admin).</p>
+        <img class="login-logo" src="/favicon.svg" width="56" height="56" alt="" />
+        <h1>Hubera Docs</h1>
+        <p class="lead">Cahier unique — même compte Hubera ID que Music / Mail / Admin.</p>
+        ${picker}
         <label for="docs-email">E-mail</label>
         <input id="docs-email" name="email" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" inputmode="email" placeholder="e-mail" required value="${keepEmail}" />
         <label for="docs-password">Mot de passe Hubera ID</label>
@@ -209,6 +359,7 @@ function loginView(err = '', twofa = false) {
         ${err ? `<p class="err">${esc(err)}</p>` : ''}
       </form>`;
   bindLoginForm($('form.login'), twofa);
+  bindDevicePicker();
   bindThemeBtn();
   queueMicrotask(() => {
     const el = twofa ? $('#docs-code') : keepEmail ? $('#docs-password') : $('#docs-email');
@@ -220,15 +371,14 @@ async function viewDash() {
   const d = await api('/api/dashboard');
   const count = (id) => d.byCol.find((x) => x.column_id === id)?.c || 0;
   app.innerHTML = shell(`
-    <h1>Tableau de bord</h1>
-    <p class="lead">Les PDF des mails sont dans l’onglet PDF. Ce qui cloche → Noter (ça crée une tâche).</p>
+    <p class="lead">${esc(d.subtitle || `Cockpit de ${me?.email || 'Paul'} — un seul endroit pour l’état, les tâches, les docs et les PDF.`)}</p>
     <div class="grid">
       <div class="card tap" data-go="kanban"><b>${count('todo')}</b><span>À faire</span></div>
       <div class="card tap" data-go="kanban"><b>${count('doing')}</b><span>En cours</span></div>
       <div class="card tap" data-go="kanban"><b>${count('done')}</b><span>Faits</span></div>
       <div class="card tap" data-go="inbox"><b>${d.remarks}</b><span>Notes / retours</span></div>
     </div>
-    <h2>Derniers rapports / mails</h2>
+    <h2>Tes derniers rapports / mails</h2>
     <ul class="list">${d.recentReports.map((r) => `<li class="tap" data-go="reports" data-f="${esc(r.filename || '')}"><strong>${esc(r.title)}</strong><br><small>${(r.sent_at || '').slice(0, 16)} · ${esc(r.kind)}</small><div class="lead">${esc(r.summary || '')}</div></li>`).join('') || '<li>Pas encore de PDF</li>'}</ul>
     <h2>Tâches récentes</h2>
     <ul class="list">${d.recentTasks.map((t) => `<li class="tap" data-go="kanban">${esc(t.title)}<small> ${esc(t.project)} · ${esc(t.column_id)}</small></li>`).join('')}</ul>
@@ -240,71 +390,168 @@ async function viewDash() {
   });
 }
 
+let kanbanCols = [];
+
+function colOptions(selected) {
+  return kanbanCols
+    .map((c) => `<option value="${esc(c.id)}" ${c.id === selected ? 'selected' : ''}>${esc(c.label)}</option>`)
+    .join('');
+}
+
+function closeModal() {
+  $('#modal')?.remove();
+}
+
+function openModal(html) {
+  closeModal();
+  const wrap = document.createElement('div');
+  wrap.id = 'modal';
+  wrap.className = 'modal-back';
+  wrap.innerHTML = `<div class="modal-card" role="dialog" aria-modal="true">${html}</div>`;
+  wrap.addEventListener('click', (e) => {
+    if (e.target === wrap) closeModal();
+  });
+  document.body.appendChild(wrap);
+}
+
 async function viewKanban() {
-  const { tasks } = await api('/api/tasks');
-  const cols = [
-    ['todo', 'À faire'],
-    ['doing', 'En cours'],
-    ['done', 'Fait'],
-    ['later', 'Plus tard'],
-  ];
+  const [{ tasks }, colsRes] = await Promise.all([api('/api/tasks'), api('/api/columns')]);
+  kanbanCols = colsRes.columns?.length
+    ? colsRes.columns
+    : [
+        { id: 'todo', label: 'À faire' },
+        { id: 'doing', label: 'En cours' },
+        { id: 'done', label: 'Fait' },
+        { id: 'later', label: 'Plus tard' },
+      ];
   const cell = (id) =>
     tasks
       .filter((t) => t.column_id === id)
       .map(
         (t) =>
           `<div class="task p${t.priority}" data-id="${t.id}">
-            ${esc(t.title)}<small>${t.project} · ${t.category}</small></div>`,
+            ${esc(t.title)}<small>${esc(t.project)} · ${esc(t.category)}</small></div>`,
       )
       .join('');
   app.innerHTML = shell(`
-    <h1>Kanban</h1>
-    <p class="lead">Tape une carte pour écrire une note / la faire avancer. Ça, c’est le travail projet — pas Admin.</p>
-    <div class="kanban">${cols.map(([id, lab]) => `<div class="col"><h3>${lab}</h3>${cell(id)}</div>`).join('')}</div>
-    <form id="new" class="card" style="margin-top:12px">
-      <input name="title" placeholder="Nouvelle tâche" required />
-      <textarea name="body" rows="2" placeholder="Détail (optionnel)"></textarea>
-      <select name="project">${projects.map((p) => `<option>${p}</option>`).join('')}</select>
-      <select name="category">${['test','feature','bug','infra','docs','ops'].map((p) => `<option>${p}</option>`).join('')}</select>
-      <button class="primary" type="submit">Ajouter</button>
-    </form>
-    <div id="sheet" hidden></div>
+    <p class="lead">Une carte = une tâche. Tape pour ouvrir la fiche — l’édition se fait depuis la popup.</p>
+    <div class="kanban">${kanbanCols
+      .map((c) => `<div class="col" data-col="${esc(c.id)}"><h3>${esc(c.label)}</h3>${cell(c.id)}</div>`)
+      .join('')}
+      <button type="button" class="col col-add" id="addCol">+ Colonne</button>
+    </div>
   `);
   const byId = Object.fromEntries(tasks.map((t) => [t.id, t]));
   app.querySelectorAll('.task').forEach((el) => {
-    el.onclick = () => openTask(byId[el.dataset.id]);
+    el.onclick = () => openTaskCard(byId[el.dataset.id]);
   });
-  $('#new').onsubmit = async (e) => {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    await api('/api/tasks', {
-      method: 'POST',
+  const fab = document.createElement('button');
+  fab.type = 'button';
+  fab.className = 'fab';
+  fab.id = 'fabAdd';
+  fab.setAttribute('aria-label', 'Nouvelle tâche');
+  fab.textContent = '+';
+  app.appendChild(fab);
+  fab.onclick = () => openNewTask();
+  $('#addCol').onclick = () => openNewColumn();
+}
+
+function openTaskCard(t) {
+  openModal(`
+    <h2>${esc(t.title)}</h2>
+    <p class="meta">${esc(t.project)} · ${esc(t.category)} · priorité ${t.priority}</p>
+    <div class="lead" id="tbody-ro">${esc(t.body || 'Pas encore de détail.')}</div>
+    <div class="modal-actions">
+      <button class="primary" type="button" id="tedit">Modifier</button>
+      <button class="ghost" type="button" id="tclose">Fermer</button>
+    </div>
+  `);
+  $('#tclose').onclick = closeModal;
+  $('#tedit').onclick = () => openTaskEdit(t);
+}
+
+function openTaskEdit(t) {
+  openModal(`
+    <h2>Modifier la carte</h2>
+    <label>Titre</label>
+    <input id="ttitle" value="${esc(t.title)}" />
+    <label>Détail</label>
+    <textarea id="tbody" rows="6">${esc(t.body || '')}</textarea>
+    <label>Colonne</label>
+    <select id="tcol">${colOptions(t.column_id)}</select>
+    <label>Projet</label>
+    <select id="tproj">${projects.map((p) => `<option ${p === t.project ? 'selected' : ''}>${p}</option>`).join('')}</select>
+    <div class="modal-actions">
+      <button class="primary" type="button" id="tsave">Enregistrer</button>
+      <button class="ghost" type="button" id="tclose">Annuler</button>
+    </div>
+  `);
+  $('#tclose').onclick = () => openTaskCard(t);
+  $('#tsave').onclick = async () => {
+    await api('/api/tasks/' + t.id, {
+      method: 'PATCH',
       body: JSON.stringify({
-        title: fd.get('title'),
-        body: fd.get('body'),
-        project: fd.get('project'),
-        category: fd.get('category'),
+        title: $('#ttitle').value,
+        body: $('#tbody').value,
+        column_id: $('#tcol').value,
+        project: $('#tproj').value,
       }),
     });
+    closeModal();
     viewKanban();
   };
 }
 
-function openTask(t) {
-  const sheet = $('#sheet');
-  sheet.hidden = false;
-  sheet.innerHTML = `<div class="card">
-    <strong>${esc(t.title)}</strong>
-    <p class="lead">${t.project} · ${t.category} · ${t.column_id}</p>
-    <textarea id="tbody" rows="5">${esc(t.body || '')}</textarea>
-    <select id="tcol">${['todo','doing','done','later'].map((c) => `<option ${c===t.column_id?'selected':''}>${c}</option>`).join('')}</select>
-    <button class="primary" id="tsave" type="button">Enregistrer</button>
-  </div>`;
-  $('#tsave').onclick = async () => {
-    await api('/api/tasks/' + t.id, {
-      method: 'PATCH',
-      body: JSON.stringify({ body: $('#tbody').value, column_id: $('#tcol').value }),
+function openNewTask() {
+  const first = kanbanCols[0]?.id || 'todo';
+  openModal(`
+    <h2>Nouvelle tâche</h2>
+    <input id="ntitle" placeholder="Titre" required />
+    <textarea id="nbody" rows="4" placeholder="Détail (optionnel)"></textarea>
+    <select id="nproj">${projects.map((p) => `<option>${p}</option>`).join('')}</select>
+    <select id="ncat">${['test','feature','bug','infra','docs','ops'].map((p) => `<option>${p}</option>`).join('')}</select>
+    <select id="ncol">${colOptions(first)}</select>
+    <div class="modal-actions">
+      <button class="primary" type="button" id="nsave">Créer</button>
+      <button class="ghost" type="button" id="nclose">Annuler</button>
+    </div>
+  `);
+  $('#nclose').onclick = closeModal;
+  queueMicrotask(() => $('#ntitle')?.focus());
+  $('#nsave').onclick = async () => {
+    const title = ($('#ntitle').value || '').trim();
+    if (!title) return;
+    await api('/api/tasks', {
+      method: 'POST',
+      body: JSON.stringify({
+        title,
+        body: $('#nbody').value,
+        project: $('#nproj').value,
+        category: $('#ncat').value,
+        column_id: $('#ncol').value,
+      }),
     });
+    closeModal();
+    viewKanban();
+  };
+}
+
+function openNewColumn() {
+  openModal(`
+    <h2>Nouvelle colonne</h2>
+    <input id="clabel" placeholder="Nom de la colonne (ex. Bloqué)" />
+    <div class="modal-actions">
+      <button class="primary" type="button" id="csave">Ajouter</button>
+      <button class="ghost" type="button" id="cclose">Annuler</button>
+    </div>
+  `);
+  $('#cclose').onclick = closeModal;
+  queueMicrotask(() => $('#clabel')?.focus());
+  $('#csave').onclick = async () => {
+    const label = ($('#clabel').value || '').trim();
+    if (!label) return;
+    await api('/api/columns', { method: 'POST', body: JSON.stringify({ label }) });
+    closeModal();
     viewKanban();
   };
 }
@@ -312,7 +559,6 @@ function openTask(t) {
 async function viewDocs() {
   const { files } = await api('/api/docs');
   app.innerHTML = shell(`
-    <h1>Documentation .md</h1>
     <p class="lead">Fichiers du dépôt Docs. Tu peux les lire et les modifier. Les NOTES produits doivent pointer ici.</p>
     <input id="q" placeholder="Filtrer un fichier…" />
     <ul class="list" id="fl">${files.map((f) => `<li><a href="#" data-p="${esc(f.path)}">${esc(f.path)}</a></li>`).join('')}</ul>
@@ -351,8 +597,7 @@ async function viewReports() {
   const orphans = files.filter((f) => !names.has(f.filename));
   const titleOf = (filename) => reports.find((r) => r.filename === filename)?.title || filename;
   app.innerHTML = shell(`
-    <h1>PDF des mails</h1>
-    <p class="lead">Tape un fichier : il s’affiche ici, dans la page. Pas d’onglet, pas de téléchargement.</p>
+    <p class="lead">PDF et notes markdown de ${esc(me?.email || 'ton compte')} — pas un dump anonyme. Tape un fichier : il s’affiche ici.</p>
     <div class="pdf-layout${openFile ? ' is-open' : ''}" id="pdfLayout">
       <div class="pdf-list" id="pdfList">
         <ul class="list" id="rl">${reports
@@ -399,6 +644,9 @@ async function viewReports() {
       const buf = new Uint8Array(await r.arrayBuffer());
       if (filename.toLowerCase().endsWith('.html')) {
         renderHtmlBlob(stage, buf);
+      } else if (filename.toLowerCase().endsWith('.md')) {
+        const text = new TextDecoder('utf-8').decode(buf);
+        stage.innerHTML = `<pre class="md-view">${esc(text)}</pre>`;
       } else {
         await renderPdfBytes(stage, buf);
       }
@@ -429,10 +677,33 @@ async function viewReports() {
   if (openFile) showInApp(openFile);
 }
 
+async function viewAccount() {
+  const [ver, notes] = await Promise.all([
+    api('/api/version?clientVersion=web').catch(() => ({})),
+    api('/api/version-notes').catch(() => ({ versions: [] })),
+  ]);
+  const list = notes.versions || [];
+  app.innerHTML = shell(`
+    <p class="lead">${esc(me?.email || '')}</p>
+    <div class="card">
+      <strong>Version serveur ${esc(ver.version || '')}</strong>
+      <p class="lead">Mise à jour Android jamais forcée (${esc(String(ver.forceUpdate))} / mandatory ${esc(String(ver.mandatory))}).</p>
+    </div>
+    <h2>Notes</h2>
+    <ul class="list">${list.map((n) => `<li><strong>${esc(n.version)} — ${esc(n.title)}</strong><div class="lead">${(n.notes || []).map((x) => esc(x)).join('<br>')}</div></li>`).join('') || '<li>Pas de notes</li>'}</ul>
+    ${themeBtnHtml()}
+    <button class="logout-page" id="out" type="button">Quitter</button>
+  `);
+  $('#out')?.addEventListener('click', async () => {
+    await api('/api/auth/logout', { method: 'POST' });
+    me = null;
+    loginView();
+  });
+}
+
 async function viewGantt() {
   const g = await api('/api/gantt');
   app.innerHTML = shell(`
-    <h1>Avancement</h1>
     <p class="lead">${esc(g.objective)}</p>
     ${g.bars
       .map(
@@ -449,8 +720,7 @@ async function viewGantt() {
 async function viewInbox() {
   const { remarks } = await api('/api/remarks');
   app.innerHTML = shell(`
-    <h1>Noter</h1>
-    <p class="lead">Ce qui ne va pas, à améliorer, à faire. Ça crée une tâche kanban priorité 1. Une app = un menu.</p>
+    <p class="lead">Ce qui ne va pas, à améliorer, à faire. Ça crée une tâche kanban priorité 1.</p>
     <form id="fb" class="card">
       <select name="app">${projects.map((p) => `<option>${p}</option>`).join('')}</select>
       <textarea name="body" rows="5" placeholder="Ex. Nothing : Flowers spinner 20 s. Ou : ajouter le budget unique Fuel dans Docs." required></textarea>
@@ -473,9 +743,10 @@ function esc(s) {
     .replace(/"/g, '&quot;');
 }
 
-const renderers = { dash: viewDash, kanban: viewKanban, docs: viewDocs, reports: viewReports, gantt: viewGantt, inbox: viewInbox };
+const renderers = { dash: viewDash, kanban: viewKanban, docs: viewDocs, reports: viewReports, gantt: viewGantt, inbox: viewInbox, account: viewAccount };
 
 async function render() {
+  closeModal();
   if (!me) {
     const j = await api('/api/auth/me');
     if (!j?.email) {

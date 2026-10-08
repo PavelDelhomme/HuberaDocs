@@ -1,0 +1,147 @@
+=== cloud.hubera.music idle-home 20261008-194834 ===
+--- cpuinfo ---
+ +0% 14424/cloud.hubera.music: 0% user + 0% kernel
+--- meminfo ---
+Applications Memory Usage (in Kilobytes):
+Uptime: 100252697 Realtime: 100252697
+
+** MEMINFO in pid 14424 [cloud.hubera.music] **
+                   Pss  Private  Private  SwapPss      Rss     Heap     Heap     Heap
+                 Total    Dirty    Clean    Dirty    Total     Size    Alloc     Free
+                ------   ------   ------   ------   ------   ------   ------   ------
+  Native Heap    10751    10736        0      229    11736    59868     8223    47755
+  Dalvik Heap    81799    81736        0       76    82644    40416    32224     8192
+ Dalvik Other    11672     4036        0      248    19528                           
+        Stack     1348     1328       20      116     1352                           
+       Ashmem        2        0        0        0       68                           
+    Other dev        6        0        4        0      384                           
+     .so mmap      651       84        0       40    17188                           
+    .jar mmap     3648        0       72        0    30748                           
+    .apk mmap      219        0        8        0     1100                           
+    .dex mmap    83795    83780        0        0    84544                           
+    .oat mmap       63        0        0        0     1272                           
+    .art mmap     3205     2832        0     5211    11180                           
+   Other mmap       50        4        0        0      716                           
+      Unknown      376      200      168      191      872                           
+        TOTAL   203696   184736      272     6111   263332   100284    40447    55947
+ 
+ App Summary
+                       Pss(KB)                        Rss(KB)
+                        ------                         ------
+           Java Heap:    84568                          93824
+         Native Heap:    10736                          11736
+                Code:    84100                         150280
+               Stack:     1328                           1352
+            Graphics:        0                              0
+       Private Other:     4276
+              System:    18688
+             Unknown:                                    6140
+ 
+           TOTAL PSS:   203696            TOTAL RSS:   263332       TOTAL SWAP PSS:     6111
+ 
+ Objects
+               Views:        0         ViewRootImpl:        0
+         AppContexts:        3           Activities:        0
+--- gfxinfo ---
+Applications Graphics Acceleration Info:
+Uptime: 100253540 Realtime: 100253540
+
+** Graphics info for pid 14424 [cloud.hubera.music] **
+GraphicBufferAllocator buffers:
+            Handle |         Size |     W (Stride) x H | Layers |   Format |      Usage | Requestor
+Total allocated by GraphicBufferAllocator (estimate): 0.00 KB
+Imported gralloc buffers:
+Total imported by gralloc: 0KiB
+
+Profile data in ms:
+
+View hierarchy:
+
+
+Total ViewRootImpl   : 0
+Total attached Views : 0
+Total RenderNode     : 0,00 kB (used) / 0,00 kB (capacity)
+
+  ProcessConfig={1.0 208mcc20mnc [fr_FR] ldltr sw360dp w360dp h780dp 480dpi nrml long port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2340) mAppBounds=Rect(0, 0 - 1080, 2340) mMaxBounds=Rect(0, 0 - 1080, 2340) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0 mStageConfig=undefined mEmbedActivityMode=undefined mPopOver=undefined mOverlappingWithCutout=false} s.370 fontWeightAdjustment=0 ff=0 bf=-1 bts=0 cst=1.0 nightDim=0 themeSeq=0}
+  Application ResourcesConfig={1.0 208mcc20mnc [fr_FR] ldltr sw360dp w360dp h780dp 480dpi nrml long port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2340) mAppBounds=Rect(0, 0 - 1080, 2340) mMaxBounds=Rect(0, 0 - 1080, 2340) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0 mStageConfig=undefined mEmbedActivityMode=undefined mPopOver=undefined mOverlappingWithCutout=false} s.370 fontWeightAdjustment=0 ff=0 bf=-1 bts=0 cst=1.0 nightDim=0 themeSeq=0}
+--- batterystats uid ---
+Feature status:
+  Can read 'charging remaining time': true
+  Can trust power_profile: true
+
+Statistics since last charge:
+  System starts: 0, currently on battery: false
+  Estimated battery capacity: 4370 mAh
+  Time on battery: 0ms (0,0%) realtime, 0ms (--%) uptime
+  Time on battery screen off: 0ms (--%) realtime, 0ms (--%) uptime
+  Time on battery screen doze: 0ms (--%)
+  Total run time: 2s 264ms realtime, 2s 264ms uptime
+  Charge time remaining: 0ms 
+  Discharge: 0 mAh
+  Screen off discharge: 0 mAh
+  Screen doze discharge: 0 mAh
+  Screen on discharge: 0 mAh
+  Device light doze discharge: 0 mAh
+  Device deep doze discharge: 0 mAh
+  Start clock time: 2026-10-08-19-48-34
+  Screen on: 0ms (--%) 0x, Interactive: 0ms (--%)
+  Screen brightnesses: (no activity)
+  Screen refresh rate: (disabled)
+
+  Mobile info
+     Mobile active time: 0ms 
+     Mobile active 5G time: 0ms 
+     Silent log on screen on time: 0ms 
+     Silent log on screen off time: 0ms 
+
+  CONNECTIVITY POWER SUMMARY START
+  Logging duration for connectivity statistics: 0ms 
+  Cellular Statistics:
+     Cellular kernel active time: 0ms (--%)
+     Cellular Sleep time:  0ms (--%)
+     Cellular Idle time:   0ms (--%)
+     Cellular Rx time:     0ms (--%)
+     Cellular Tx time:     
+       less than 0dBm:  0ms (--%)
+       0dBm to 8dBm:  0ms (--%)
+       8dBm to 15dBm:  0ms (--%)
+       15dBm to 20dBm:  0ms (--%)
+       above 20dBm:  0ms (--%)
+     Active Cellular Radio Access Technology Breakdown:
+       (no activity)
+     Cellular data received: 0B
+     Cellular data sent: 0B
+     Cellular packets received: 0
+     Cellular packets sent: 0
+     Cellular Radio Access Technology: (no activity)
+     Cellular Rx signal strength (RSRP): (no activity)
+  Wifi Statistics:
+     Wifi kernel active time: 0ms (--%)
+     WiFi Scan time:  0ms (--%)
+     WiFi Sleep time:  0ms (--%)
+     WiFi Idle time:   0ms (--%)
+     WiFi Rx time:     0ms (--%)
+     WiFi Tx time:     0ms (--%)
+     Wifi data received: 0B
+     Wifi data sent: 0B
+     Wifi packets received: 0
+     Wifi packets sent: 0
+     Wifi states: (no activity)
+     Wifi supplicant states: (no activity)
+     Wifi Rx signal strength (RSSI): (no activity)
+  GPS Statistics:
+     GPS signal quality (Top 4 Average CN0):
+      poor (less than 20 dBHz): 0ms (--%) 
+      good (greater than 20 dBHz): 0ms (--%) 
+  CONNECTIVITY POWER SUMMARY END
+
+  Bluetooth total received: 0B, sent: 0B
+  Bluetooth scan time: 0ms 
+     Bluetooth Idle time:   0ms (--%)
+     Bluetooth Rx time:     0ms (--%)
+     Bluetooth Tx time:     0ms (--%)
+
+  Speaker Statistics: (no activity)
+
+  Device battery use since last full charge
+    Amount discharged (lower bound): 0

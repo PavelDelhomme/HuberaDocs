@@ -1,0 +1,41 @@
+{
+  "versions": [
+    {
+      "version": "0.2.5",
+      "date": "2026-10-08",
+      "title": "Libellés Hubera (plus de Cloudity visible)",
+      "notes": [
+        "Les écrans, landings et notes parlent Hubera. La stack Portainer cloudity (Mail/Drive) et les applicationId Android restent inchangés.",
+        "Suivi produit dans ce cockpit, plus dans les NOTES.md des dépôts."
+      ]
+    },
+    {
+      "version": "0.2.4",
+      "date": "2026-10-08",
+      "title": "Chrome Music + OTA au lancement",
+      "notes": [
+        "Chrome Google-like calqué sur Music : hamburger, header compact, compte en haut à droite, nav bas Accueil · Tâches · Docs · Rapports.",
+        "OTA au lancement : dialogue de proposition, jamais forcé, jamais bloquant. Compte affiche la version, les notes et le téléchargement APK.",
+        "Dual slots APK cloud.hubera.docs + ovh.delhomme.hubera.docs. Pas de WebView du site."
+      ]
+    },
+    {
+      "version": "0.2.3",
+      "date": "2026-10-08",
+      "title": "Overlay Samsung chrome",
+      "notes": [
+        "Overlay Samsung 0.2.3, dual paquets."
+      ]
+    },
+    {
+      "version": "0.2.0",
+      "date": "2026-10-08",
+      "title": "Cahier unique natif",
+      "notes": [
+        "App Android Kotlin Compose (login, dashboard, kanban, docs, PDF, Gantt, retours) — plus de WebView du site.",
+        "Kanban : carte en popup, édition depuis la fiche, FAB +, colonnes ajoutables.",
+        "Rapports PDF et markdown du compte Paul, OTA non forcée."
+      ]
+    }
+  ]
+}

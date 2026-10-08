@@ -1,0 +1,86 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:2:1-22:12
+INJECTED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:2:1-22:12
+	package
+		INJECTED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml
+	xmlns:android
+		ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:2:11-69
+queries
+ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:3:5-21:15
+package#cloud.hubera.music
+ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:4:9-54
+	android:name
+		ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:4:18-51
+package#ovh.delhomme.ytmusic
+ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:5:9-56
+	android:name
+		ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:5:18-53
+package#cloud.hubera.maps
+ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:6:9-53
+	android:name
+		ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:6:18-50
+package#ovh.delhomme.maps
+ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:7:9-53
+	android:name
+		ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:7:18-50
+package#cloud.hubera.fuel
+ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:8:9-53
+	android:name
+		ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:8:18-50
+package#com.gasoiltracking.app
+ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:9:9-58
+	android:name
+		ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:9:18-55
+package#cloud.hubera.docs
+ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:10:9-53
+	android:name
+		ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:10:18-50
+package#cloud.hubera.calendar
+ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:11:9-57
+	android:name
+		ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:11:18-54
+package#cloud.hubera.drive
+ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:12:9-54
+	android:name
+		ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:12:18-51
+package#cloud.hubera.mail
+ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:13:9-53
+	android:name
+		ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:13:18-50
+package#cloud.hubera.pass
+ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:14:9-53
+	android:name
+		ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:14:18-50
+package#cloud.hubera.jobs
+ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:15:9-53
+	android:name
+		ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:15:18-50
+package#cloud.hubera.id
+ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:16:9-51
+	android:name
+		ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:16:18-48
+package#cloud.hubera.photos
+ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:17:9-55
+	android:name
+		ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:17:18-52
+package#cloud.hubera.contacts
+ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:18:9-57
+	android:name
+		ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:18:18-54
+package#cloud.hubera.notes
+ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:19:9-54
+	android:name
+		ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:19:18-51
+package#cloud.hubera.cook
+ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:20:9-53
+	android:name
+		ADDED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml:20:18-50
+uses-sdk
+INJECTED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml
+INJECTED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml
+	android:targetSdkVersion
+		INJECTED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from /home/pactivisme/Documents/Dev/Perso/HuberaDocs/android/hubera-chrome/src/main/AndroidManifest.xml
