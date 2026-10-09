@@ -252,9 +252,13 @@ fun HuberaBottomNav(
     onSelect: (String) -> Unit,
 ) {
     if (items.isEmpty()) return
-    Column(Modifier.windowInsetsPadding(WindowInsets.navigationBars)) {
+    Column(
+        Modifier.windowInsetsPadding(
+            WindowInsets.navigationBars.only(WindowInsetsSides.Bottom),
+        ),
+    ) {
         NavigationBar(
-            modifier = Modifier.height(56.dp),
+            modifier = Modifier.height(64.dp),
             containerColor = MaterialTheme.colorScheme.surface,
             tonalElevation = 0.dp,
             windowInsets = WindowInsets(0, 0, 0, 0),

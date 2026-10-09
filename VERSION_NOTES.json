@@ -1,6 +1,15 @@
 {
   "versions": [
     {
+      "version": "0.2.9",
+      "date": "2026-10-09",
+      "title": "Barres plus basses, OTA sans boucle",
+      "notes": [
+        "La barre du bas n’est plus trop haute : un seul padding, au-dessus des boutons système.",
+        "La mise à jour demande d’abord l’autorisation d’installer, puis télécharge. Plus de boucle. Jamais forcée."
+      ]
+    },
+    {
       "version": "0.2.8",
       "date": "2026-10-08",
       "title": "Retours modifiables, markdown rendu, Docs dans Admin",

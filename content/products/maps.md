@@ -4,9 +4,9 @@ Priorité 2 après Music. Lieux, tuiles hors-ligne, garage Fuel dans Maps.
 
 - Domaine : https://maps.hubera.cloud
 - OTA : `updates.json` + `GET /api/version` (même JSON). `forceUpdate: false` / `mandatory: false`
-- Live **0.1.82** vc 83 · UI WebView d’avant le chrome 0.1.80 + cold start 0.1.79 · overlay Samsung + Blackview `-r` 8 oct · **Nothing absent ADB** → sideload https://maps.hubera.cloud/apk/hubera-maps.apk
-- SHA APK cloud `94e4017326833c5bc5779fcf485f9c43051abe8ac2364716add7a09dc7097395`
-- SHA APK legacy `5157b907cbfc971720da9446d00d0c8f8a8742cbbd6e2fb3f1ba76b427e09b80`
+- Live **0.1.86** vc 87 · Nothing : recherche/drawer/compte plus haut (inset glyph plafonné). Samsung inchangé. OTA, pas d’overlay Nothing.
+- SHA APK cloud `e2bbdd669779d0b1cff2aa2adbb2e672c80fee17ed954599234e0e73667f5376`
+- SHA APK legacy `671ec8385c495bc718ed5e6273dcf8ffbfb84b02b1d4d85d3cc67e6de94d030f`
 
 ## Nothing — installer **sans ouvrir** l’app (P0 crash 0.1.75)
 

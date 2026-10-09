@@ -101,14 +101,18 @@ class UpdateChecker(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
             !context.packageManager.canRequestPackageInstalls()
         ) {
-            withContext(Dispatchers.Main) {
-                context.startActivity(
-                    Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES)
-                        .setData(Uri.parse("package:${context.packageName}"))
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                )
+            val last = prefs.getLong(KEY_PERM_ASKED_AT, 0L)
+            if (System.currentTimeMillis() - last > 90_000L) {
+                prefs.edit().putLong(KEY_PERM_ASKED_AT, System.currentTimeMillis()).apply()
+                withContext(Dispatchers.Main) {
+                    context.startActivity(
+                        Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES)
+                            .setData(Uri.parse("package:${context.packageName}"))
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                    )
+                }
             }
-            return@withContext "Autorise l’installation pour Hubera Docs, puis réessaie"
+            return@withContext "Autorise l’installation pour Hubera Docs, puis réessaie — rien n’a encore été téléchargé"
         }
         val dest = File(File(context.cacheDir, "apk-updates"), "hubera-docs.apk")
         dest.parentFile?.mkdirs()
@@ -121,9 +125,11 @@ class UpdateChecker(
         val uri = FileProvider.getUriForFile(context, context.packageName + ".fileprovider", dest)
         withContext(Dispatchers.Main) {
             context.startActivity(
-                Intent(Intent.ACTION_VIEW).apply {
+                Intent(Intent.ACTION_INSTALL_PACKAGE).apply {
                     setDataAndType(uri, "application/vnd.android.package-archive")
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+                    putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true)
+                    putExtra(Intent.EXTRA_RETURN_RESULT, false)
                 },
             )
         }
@@ -133,5 +139,6 @@ class UpdateChecker(
     companion object {
         private const val KEY_SNOOZE_CODE = "snooze_version_code"
         private const val KEY_SNOOZE_UNTIL = "snooze_until_ms"
+        private const val KEY_PERM_ASKED_AT = "perm_asked_at"
     }
 }
