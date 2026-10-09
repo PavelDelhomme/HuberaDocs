@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>Hubera — 9 octobre 2026 · Maps 0.1.86, OTA, Nothing</title>
+  <style>
+    @page { size: A4; margin: 0; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; font-family: "Noto Sans","DejaVu Sans",sans-serif; color:#1a2330; font-size:10.2pt; line-height:1.42; background:#fff; }
+    .page { width:210mm; min-height:297mm; padding:13mm 14mm 16mm; page-break-after:always; }
+    .page:last-child { page-break-after:auto; }
+    .topbar { display:flex; justify-content:space-between; border-bottom:3px solid #0e4d5c; padding-bottom:6px; margin-bottom:9px; }
+    .brand { font-weight:800; letter-spacing:.1em; font-size:10pt; color:#0e4d5c; text-transform:uppercase; }
+    .meta { font-size:8pt; color:#5a6878; }
+    h1 { font-size:15.5pt; margin:2px 0 8px; color:#0e4d5c; line-height:1.2; }
+    h2 { font-size:12pt; color:#0e4d5c; margin:9px 0 6px; border-left:5px solid #c9782a; padding-left:8px; }
+    p { margin:0 0 6px; }
+    .lead { font-size:10.5pt; color:#2c3a4a; margin-bottom:8px; }
+    .kicker { color:#c9782a; font-weight:700; font-size:8.2pt; letter-spacing:.1em; text-transform:uppercase; }
+    table { width:100%; border-collapse:collapse; font-size:8.3pt; margin:4px 0 8px; }
+    th { background:#0e4d5c; color:#fff; text-align:left; padding:4px 6px; }
+    td { border-bottom:1px solid #dce6ea; padding:4px 6px; vertical-align:top; }
+    tr:nth-child(even) td { background:#f6fafb; }
+    .ok { color:#1b7a4a; font-weight:700; }
+    .warn { color:#b45309; font-weight:700; }
+    code { font-family:"DejaVu Sans Mono",monospace; font-size:7.8pt; background:#eef3f5; padding:1px 3px; }
+    .okbox { background:#eef8f2; border-left:4px solid #1b7a4a; padding:7px 10px; font-size:9.3pt; margin:6px 0; }
+    .note { background:#fff8ee; border-left:4px solid #c9782a; padding:7px 10px; font-size:9.3pt; margin:6px 0; }
+    ul { margin:2px 0 8px 18px; }
+    li { margin:0 0 3px; }
+    .footer { margin-top:10px; padding-top:4px; border-top:1px solid #d5e3e6; font-size:7.5pt; color:#6b7785; display:flex; justify-content:space-between; }
+  </style>
+</head>
+<body>
+<section class="page">
+  <div class="topbar"><div class="brand">HUBERA · CAHIER DU SOIR</div><div class="meta">9 octobre 2026 · 21h Europe/Paris</div></div>
+  <div class="kicker">Mail + PDF · OTA · Nothing tu mets à jour toi-même</div>
+  <h1>Maps 0.1.86, chrome, OTA, batterie — Nothing intact</h1>
+  <p class="lead">Lot du 9 oct (chrome trop haut, Mail lent, Cook, OTA en boucle, Jobs admin) puis recollage Maps, puis <strong>recherche encore trop basse sur Nothing</strong>. Rien n’a été overlayé sur le Nothing. Canal OTA comme d’habitude, <code>forceUpdate: false</code>.</p>
+  <div class="okbox"><strong>Maps 0.1.86 live.</strong> APK <code>https://maps.hubera.cloud/apk/hubera-maps.apk</code>. Sur Nothing : hamburger, recherche et bouton compte plus haut (inset glyph plafonné à 18 px). Samsung labo overlayé 0.1.86, placement 0.1.85 conservé.</div>
+  <div class="note"><strong>Nothing.</strong> Pas d’ADB, pas d’injection de compte. Tu ouvres Maps → Compte / MAJ, ou tu télécharges l’APK. Les données (lieux, Fuel dans Maps, hors-ligne) restent.</div>
+  <h2>Versions live</h2>
+  <table>
+    <tr><th>App</th><th>Version</th><th>OTA N-1</th><th>Forcé</th><th>Git</th></tr>
+    <tr><td>Maps</td><td>0.1.86 vc 87</td><td class="ok">apkAvailable</td><td>non</td><td>CloudityMaps e9b99b2</td></tr>
+    <tr><td>Music</td><td>1.3.366</td><td class="ok">apkAvailable</td><td>non</td><td>HuberaMusic 9b5e31f (branche feat)</td></tr>
+    <tr><td>Docs</td><td>0.2.9</td><td class="ok">apkAvailable</td><td>non</td><td>HuberaDocs 5303b07</td></tr>
+    <tr><td>Mail</td><td>canonical 1.0.5</td><td class="ok">oui</td><td>non</td><td>HuberaMail d71c673 + Cloudity</td></tr>
+    <tr><td>Cook</td><td>0.1.4</td><td class="ok">oui</td><td>non</td><td>Cloudity cc319f5f</td></tr>
+    <tr><td>Jobs</td><td>SSO paul@ SUPER_ADMIN</td><td>—</td><td>—</td><td>HuberaJobs 2f2fa729 dev</td></tr>
+  </table>
+  <h2>Maps — fonctions encore là (vérifié Samsung + code)</h2>
+  <ul>
+    <li>Recherche, croix, engrenage, avatar compte, hamburger drawer</li>
+    <li>Chips Maison / Travail / Stations / Parkings</li>
+    <li>Onglets Maps / Fuel / Enreg., dock Music (sans changer la lecture Music)</li>
+    <li>FAB Fuel + recentrer, point bleu, limitation 30, tuiles OSM</li>
+    <li>Guidage GPS haute précision inchangé ; idle GPS 120 s (batterie)</li>
+    <li>OTA : autoriser l’install <em>avant</em> le téléchargement, pas de boucle</li>
+  </ul>
+  <div class="footer"><span>Hubera · 9 oct 2026</span><span>1 / 3</span></div>
+</section>
+<section class="page">
+  <div class="topbar"><div class="brand">2 · SUITE + BATTERIE</div><div class="meta">Sans perte de données</div></div>
+  <h1>Mail, Cook, Jobs, chrome, batterie</h1>
+  <h2>Pourquoi Mail était lent</h2>
+  <p>Au froid, l’app appelait <code>/auth/validate</code> même si le JWT n’expirait pas. Désormais on saute le réseau si le jeton est encore bon (timeout 4 s sinon). Boîte inchangée.</p>
+  <h2>Cook</h2>
+  <p>Recettes en défilement infini ( MealDB par lettre ). Quantités du frigo éditables au tap. FAB relevé, plus par-dessus l’onglet Courses.</p>
+  <h2>Jobs</h2>
+  <p>SSO Hubera ID : <code>paul@delhomme.ovh</code> est promu / rattache le compte admin existant en SUPER_ADMIN. Pas de nouveau volume, pas de <code>down -v</code>.</p>
+  <h2>Chrome (sauf Maps)</h2>
+  <p>Flutter / Docs : un seul padding bas (plus SafeArea + inflate). Maps a son propre WebView — réglé à part (0.1.85 puis 0.1.86 Nothing).</p>
+  <h2>Batterie (Maps, sans casser le guidage)</h2>
+  <ul>
+    <li>GPS idle : 90 s → 120 s, <code>enableHighAccuracy: false</code> déjà</li>
+    <li>Guidage : watch haute précision inchangé</li>
+    <li>App en fond : pause WebView + stop GPS idle (existant)</li>
+    <li>Dock Music dans Maps : poll 1,5 s au lieu de 0,7 s (pas l’app Music)</li>
+  </ul>
+  <h2>Vérifs live 21h</h2>
+  <table>
+    <tr><th>Surface</th><th>HTTP</th><th>Note</th></tr>
+    <tr><td>Maps updates.json</td><td class="ok">200</td><td>0.1.86 · force false · apkAvailable true</td></tr>
+    <tr><td>Music /api/version</td><td class="ok">200</td><td>1.3.366 · N-1 voit la MAJ · lecture non touchée</td></tr>
+    <tr><td>Docs /api/version</td><td class="ok">200</td><td>0.2.9</td></tr>
+    <tr><td>Cook / Mail OTA</td><td class="ok">200</td><td>0.1.4 / canonical 1.0.5</td></tr>
+    <tr><td>Drive /health</td><td class="ok">ok</td><td>—</td></tr>
+    <tr><td>Jobs / Budget / Tasks</td><td class="ok">200</td><td>landings</td></tr>
+  </table>
+  <div class="note">Watchtower toujours arrêté. Volumes Music / Fuel / Jobs intacts. Dual APK Maps cloud + legacy.</div>
+  <div class="footer"><span>Hubera · 9 oct 2026</span><span>2 / 3</span></div>
+</section>
+<section class="page">
+  <div class="topbar"><div class="brand">3 · NOTHING + KANBAN</div><div class="meta">Toi tu mets à jour</div></div>
+  <h1>Nothing et suivi Docs / Admin</h1>
+  <h2>Comment mettre à jour Maps sur Nothing</h2>
+  <ol>
+    <li>Sans ouvrir l’ancienne Maps si elle crashait : navigateur → <code>https://maps.hubera.cloud/apk/hubera-maps.apk</code></li>
+    <li>Ou dans Maps → Compte → mise à jour (autoriser la source, <em>puis</em> télécharger)</li>
+    <li>Installer par-dessus (garder les données). Version attendue : <strong>0.1.86</strong></li>
+  </ol>
+  <p>Recherche / menu / P doivent coller plus haut sous les icônes de statut, sans manger l’heure. Si c’est encore trop bas, un retour Docs crée une tâche.</p>
+  <h2>Git poussé</h2>
+  <table>
+    <tr><th>Dépôt</th><th>Branche</th><th>Commit</th></tr>
+    <tr><td>CloudityMaps</td><td>main</td><td>e9b99b2</td></tr>
+    <tr><td>HuberaMusic</td><td>feat/music-drawer-open-native</td><td>9b5e31f</td></tr>
+    <tr><td>HuberaDocs</td><td>main</td><td>5303b07</td></tr>
+    <tr><td>HuberaJobs</td><td>dev</td><td>2f2fa729</td></tr>
+    <tr><td>Cloudity</td><td>chore/restructure-platform</td><td>cc319f5f</td></tr>
+    <tr><td>Hubera (www/chrome)</td><td>main</td><td>2cb5e4d</td></tr>
+    <tr><td>HuberaMail</td><td>main</td><td>d71c673</td></tr>
+  </table>
+  <h2>Kanban Docs</h2>
+  <ul>
+    <li class="ok">Lot 9 oct chrome + OTA overlay Samsung — done</li>
+    <li>Overlay Blackview restant (USB HID) — todo</li>
+    <li>Maps 0.1.86 Nothing OTA — à valider par Paul</li>
+  </ul>
+  <p>Cockpit : Admin 0.1.6 + Docs 0.2.9 (tâches, docs, rapports, Gantt). DA couleurs / icônes : plus tard.</p>
+  <div class="okbox">Pas de <code>docker compose down -v</code>, pas de rename de volumes, Watchtower OFF, OTA jamais forcée.</div>
+  <div class="footer"><span>Hubera · 9 oct 2026</span><span>3 / 3</span></div>
+</section>
+</body>
+</html>
