@@ -4,9 +4,9 @@ Priorité 2 après Music. Lieux, tuiles hors-ligne, garage Fuel dans Maps.
 
 - Domaine : https://maps.hubera.cloud
 - OTA : `updates.json` + `GET /api/version` (même JSON). `forceUpdate: false` / `mandatory: false`
-- Live **0.1.86** vc 87 · Nothing : recherche/drawer/compte plus haut (inset glyph plafonné). Samsung inchangé. OTA, pas d’overlay Nothing.
-- SHA APK cloud `e2bbdd669779d0b1cff2aa2adbb2e672c80fee17ed954599234e0e73667f5376`
-- SHA APK legacy `671ec8385c495bc718ed5e6273dcf8ffbfb84b02b1d4d85d3cc67e6de94d030f`
+- Live **0.1.88** vc 89 · Nothing : recherche sous la barre d’état (plus collée au glyph). Samsung inchangé. OTA, pas d’overlay Nothing.
+- SHA APK cloud `74b6c9f9949228c2dc28b3937772563accbab00db5e63db2ae53120b1c9da0dd`
+- SHA APK legacy `84fc4b463c450a8f63cbfb6011ff3526a17b15f1b7dd560b183c61befb0d86e6`
 
 ## Nothing — installer **sans ouvrir** l’app (P0 crash 0.1.75)
 

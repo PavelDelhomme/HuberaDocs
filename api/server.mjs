@@ -213,6 +213,10 @@ function seed() {
     { title: 'Calendar grille utilisable mois/semaine/jour', body: 'Override backlog 8 oct. Web SPA /app/ + Flutter 0.1.5 vc 6. CRUD événements, liste du jour, login Hubera ID. Dual APK. Overlay Samsung R5CT7263YJL -r cloud.hubera.calendar. Pas Nothing. API encore Cloudity calendar-service.', project: 'calendar', category: 'feature', column_id: 'done', priority: 1 },
     { title: 'Calendar invitations RSVP + salles + Meet', body: 'Pas ce lot. Champ invités e-mail (Contacts) déjà dans l’éditeur mobile.', project: 'calendar', category: 'feature', column_id: 'later', priority: 3 },
     { title: 'Calendar lieux Maps (picker)', body: 'Lieu reste un texte libre. Branche Maps plus tard.', project: 'calendar', category: 'feature', column_id: 'later', priority: 3 },
+    { title: 'Maps 0.1.87 trajets Fuel + tuiles suivi libre', body: 'FGS GPS, trace au déplacement, failover tuiles. Dual APK vc 88. Overlay Samsung -r. OTA forceUpdate false. Pas Nothing.', project: 'maps', category: 'bug', column_id: 'done', priority: 1 },
+    { title: 'Music 1.3.367 partage Hubera + YouTube', body: 'ACTION_SEND : lien Hubera /watch/{id} + YouTube. Dual APK vc 10667. Overlay Samsung -r. Pas Nothing.', project: 'music', category: 'feature', column_id: 'done', priority: 1 },
+    { title: 'Maps 0.1.88 recherche sous barre d’état', body: 'Nothing : --safe-top 26–32 px (plus collé au glyph). Samsung inchangé. Dual APK vc 89. Overlay Samsung -r. OTA jamais forcée. Pas Nothing.', project: 'maps', category: 'bug', column_id: 'done', priority: 1 },
+    { title: 'Docs 0.2.10 en-tête sous barre d’état', body: 'TopAppBar safeDrawing.Top comme Music. Dual APK vc 210. Overlay Samsung -r. Pas Nothing.', project: 'docs', category: 'bug', column_id: 'done', priority: 1 },
   ];
   const existsTitle = db.prepare('SELECT id FROM tasks WHERE title = ?');
   const insExtra = db.prepare(
@@ -268,6 +272,22 @@ function seed() {
   db.prepare(`UPDATE tasks SET column_id='done', updated_at=? WHERE title=? AND column_id != 'done'`).run(
     now(),
     'Calendar grille utilisable mois/semaine/jour',
+  );
+  db.prepare(`UPDATE tasks SET column_id='done', updated_at=? WHERE title=? AND column_id != 'done'`).run(
+    now(),
+    'Maps 0.1.87 trajets Fuel + tuiles suivi libre',
+  );
+  db.prepare(`UPDATE tasks SET column_id='done', updated_at=? WHERE title=? AND column_id != 'done'`).run(
+    now(),
+    'Music 1.3.367 partage Hubera + YouTube',
+  );
+  db.prepare(`UPDATE tasks SET column_id='done', updated_at=? WHERE title=? AND column_id != 'done'`).run(
+    now(),
+    'Maps 0.1.88 recherche sous barre d’état',
+  );
+  db.prepare(`UPDATE tasks SET column_id='done', updated_at=? WHERE title=? AND column_id != 'done'`).run(
+    now(),
+    'Docs 0.2.10 en-tête sous barre d’état',
   );
   syncReportsFromDisk();
 }

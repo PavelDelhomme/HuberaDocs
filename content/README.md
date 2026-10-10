@@ -2,6 +2,9 @@
 
 Canonique dans ce dépôt (`content/`). Chaque produit a un `DOCS.md` qui renvoie ici.
 
+- Maps 0.1.88 + Docs 0.2.10 (10 oct) : recherche / en-tête sous la barre d’état : `content/reports/2026-10-10-maps-0.1.88-chrome.md`
+- Maps 0.1.87 + Music 1.3.367 (10 oct) : trajets Fuel / tuiles suivi libre + partage Hubera+YouTube : `content/reports/2026-10-10-maps-0.1.87-music-367.md`
+
 ## Produits
 
 Voir `content/products/` (Music, Maps, Fuel, Drive, Calendar, Docs, ID, Pass, Admin, …).
