@@ -1,5 +1,7 @@
 # Hubera Drive
 
+**DA vague 1 :** [`../design/labo-da-vague1.html`](../design/labo-da-vague1.html) (accueil dossiers/récents · chrome cible).
+
 Fichiers et dossiers. Live : https://drive.hubera.cloud (API encore **Cloudity** — ne pas stopper la stack `cloudity`).
 
 ## 8 oct 2026 — poids quotidien vs Google Drive

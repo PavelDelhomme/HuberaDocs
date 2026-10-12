@@ -15,12 +15,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -29,11 +27,17 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -94,7 +98,6 @@ fun HuberaTopBar(
     onAccountClick: () -> Unit,
     extraActions: @Composable RowScope.() -> Unit = {},
     userPicture: @Composable (() -> Unit)? = null,
-    onUpClick: (() -> Unit)? = null,
 ) {
     TopAppBar(
         title = {
@@ -107,21 +110,12 @@ fun HuberaTopBar(
             )
         },
         navigationIcon = {
-            if (onUpClick != null) {
-                IconButton(onClick = onUpClick) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour")
-                }
-            } else {
-                IconButton(onClick = onMenuClick) {
-                    Icon(Icons.Default.Menu, contentDescription = "Menu")
-                }
+            IconButton(onClick = onMenuClick) {
+                Icon(Icons.Default.Menu, contentDescription = "Menu")
             }
         },
         actions = {
             extraActions()
-            if (onUpClick == null) {
-                HuberaAccountButton(onClick = onAccountClick, userPicture = userPicture)
-            }
         },
         windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top),
         colors = TopAppBarDefaults.topAppBarColors(
@@ -139,7 +133,6 @@ fun HuberaDrawerContent(
     userEmail: String? = null,
     extra: @Composable ColumnScope.() -> Unit = {},
 ) {
-    val context = LocalContext.current
     Column(
         Modifier
             .fillMaxHeight()
@@ -174,46 +167,6 @@ fun HuberaDrawerContent(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-            }
-        }
-        Text(
-            "Apps Hubera",
-            style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-        )
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(4),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(240.dp)
-                .padding(horizontal = 8.dp),
-            userScrollEnabled = true,
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            items(HuberaProduct.suite) { app ->
-                val selected = app == current
-                Column(
-                    Modifier
-                        .clip(MaterialTheme.shapes.medium)
-                        .background(
-                            if (selected) HuberaTeal.copy(alpha = 0.12f)
-                            else MaterialTheme.colorScheme.surfaceVariant,
-                        )
-                        .clickable(enabled = !selected) { HuberaAppLauncher.openOrWeb(context, app.id) }
-                        .padding(8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Icon(app.icon, contentDescription = app.title, tint = HuberaTeal, modifier = Modifier.size(22.dp))
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        app.title,
-                        style = MaterialTheme.typography.labelSmall,
-                        textAlign = TextAlign.Center,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
             }
         }
         extra()
@@ -251,26 +204,18 @@ fun HuberaBottomNav(
     onSelect: (String) -> Unit,
 ) {
     if (items.isEmpty()) return
-    Column(
-        Modifier.windowInsetsPadding(
-            WindowInsets.navigationBars.only(WindowInsetsSides.Bottom),
-        ),
+    NavigationBar(
+        containerColor = MaterialTheme.colorScheme.surface,
+        windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom),
     ) {
-        NavigationBar(
-            modifier = Modifier.height(64.dp),
-            containerColor = MaterialTheme.colorScheme.surface,
-            tonalElevation = 0.dp,
-            windowInsets = WindowInsets(0, 0, 0, 0),
-        ) {
-            items.forEach { item ->
-                NavigationBarItem(
-                    selected = item.id == selectedId,
-                    onClick = { onSelect(item.id) },
-                    icon = { Icon(item.icon, contentDescription = item.label) },
-                    label = { Text(item.label) },
-                    alwaysShowLabel = true,
-                )
-            }
+        items.forEach { item ->
+            NavigationBarItem(
+                selected = item.id == selectedId,
+                onClick = { onSelect(item.id) },
+                icon = { Icon(item.icon, contentDescription = item.label) },
+                label = { Text(item.label) },
+                alwaysShowLabel = true,
+            )
         }
     }
 }
@@ -297,11 +242,50 @@ fun HuberaScaffold(
     bottomBarExtra: @Composable () -> Unit = {},
     hideBottomNav: Boolean = false,
     hideTopBar: Boolean = false,
-    onUpClick: (() -> Unit)? = null,
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    var waffleOpen by remember { mutableStateOf(false) }
+    val waffleCtx = LocalContext.current
+    if (waffleOpen) {
+        AlertDialog(
+            onDismissRequest = { waffleOpen = false },
+            title = { Text("Apps Hubera") },
+            text = {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(3),
+                    modifier = Modifier.fillMaxWidth().height(280.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    items(HuberaProduct.suite) { app ->
+                        Column(
+                            Modifier
+                                .clip(MaterialTheme.shapes.medium)
+                                .background(
+                                    if (app == current) HuberaTeal.copy(alpha = 0.12f)
+                                    else MaterialTheme.colorScheme.surfaceVariant,
+                                )
+                                .clickable(enabled = app != current) {
+                                    waffleOpen = false
+                                    HuberaAppLauncher.openOrWeb(waffleCtx, app.id)
+                                }
+                                .padding(10.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Icon(app.icon, contentDescription = app.title, tint = HuberaTeal)
+                            Spacer(Modifier.height(4.dp))
+                            Text(app.title, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { waffleOpen = false }) { Text("Fermer") }
+            },
+        )
+    }
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
@@ -328,9 +312,14 @@ fun HuberaScaffold(
                         title = title,
                         onMenuClick = { scope.launch { drawerState.open() } },
                         onAccountClick = onAccountClick,
-                        extraActions = extraActions,
+                        extraActions = {
+                            extraActions()
+                            IconButton(onClick = { waffleOpen = true }) {
+                                Icon(Icons.Default.Apps, contentDescription = "Apps Hubera")
+                            }
+                            HuberaAccountButton(onClick = onAccountClick, userPicture = userPicture)
+                        },
                         userPicture = userPicture,
-                        onUpClick = onUpClick,
                     )
                 }
             },

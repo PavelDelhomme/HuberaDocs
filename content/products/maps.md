@@ -1,10 +1,12 @@
 # Hubera Maps
 
+**DA vague 1 :** [`../design/labo-da-vague1.html`](../design/labo-da-vague1.html) (variante C · carte + recherche).
+
 Priorité 2 après Music. Lieux, tuiles hors-ligne, garage Fuel dans Maps.
 
 - Domaine : https://maps.hubera.cloud
 - OTA : `updates.json` + `GET /api/version` (même JSON). `forceUpdate: false` / `mandatory: false`
-- Live **0.1.88** vc 89 · Nothing : recherche sous la barre d’état (plus collée au glyph). Samsung inchangé. OTA, pas d’overlay Nothing.
+- Live **0.1.88** vc 89 (prod). Code **0.1.89** vc 90 : GPS bandeau, jauge Fuel, rando, fiche POI — à builder + overlay Samsung `-r`, OTA jamais forcée.
 - SHA APK cloud `74b6c9f9949228c2dc28b3937772563accbab00db5e63db2ae53120b1c9da0dd`
 - SHA APK legacy `84fc4b463c450a8f63cbfb6011ff3526a17b15f1b7dd560b183c61befb0d86e6`
 

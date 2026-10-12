@@ -1,5 +1,7 @@
 # Hubera Fuel
 
+**DA vague 1 :** [`../design/labo-da-vague1.html`](../design/labo-da-vague1.html) (section Fuel · trajet / compte).
+
 Priorité 3. Un budget global — **pas ce sprint**. Live **1.4.169** (vc 193) · overlay Samsung `cloud.hubera.fuel` 8 oct · OTA `forceUpdate: false`.
 
 - Chrome hamburger + compte Hubera ID. Jauge → modèle conso (EMA) de 1.4.168 **inchangée**.

@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light" data-variant="a">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Labo DA — Hubera vague 1</title>
+<style>
+:root, [data-theme="light"] {
+  --bg: #eef2f3; --surface: #fff; --text: #1c2628; --muted: #5a6a6e;
+  --primary: #0E4D5C; --accent: #C9782A; --border: #d0dadc; --shadow: rgba(14,77,92,.12);
+}
+[data-theme="dark"] {
+  --bg: #0f1415; --surface: #1a2224; --text: #e6ecee; --muted: #9aa8ac;
+  --border: #2a3538; --shadow: rgba(0,0,0,.35);
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.45; }
+.page { max-width: 1400px; margin: 0 auto; padding: 1rem 1.25rem 3rem; }
+header.lab-header { position: sticky; top: 0; z-index: 100; background: var(--surface); border-bottom: 1px solid var(--border); padding: .75rem 1.25rem; box-shadow: 0 2px 8px var(--shadow); }
+.lab-header h1 { margin: 0 0 .5rem; font-size: 1.25rem; color: var(--primary); }
+.controls { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
+.controls label { font-size: .85rem; color: var(--muted); }
+.controls select, .controls button { padding: .35rem .6rem; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+.controls button.print { background: var(--primary); color: #fff; border-color: var(--primary); }
+.app-nav { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0; }
+.app-nav a { font-size: .8rem; padding: .25rem .5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; text-decoration: none; color: var(--primary); }
+.app-section { margin-top: 2.5rem; padding-top: 1rem; border-top: 2px solid var(--primary); }
+.app-section h2 { color: var(--primary); }
+.view-block { margin: 1.5rem 0; padding: 1rem; background: var(--surface); border-radius: 12px; border: 1px solid var(--border); }
+.view-block h4 { margin: 0 0 .5rem; }
+.avant { font-size: .9rem; color: var(--muted); margin: 0 0 1rem; }
+.frames-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width: 900px) { .frames-row { grid-template-columns: 1fr; } }
+.frame-col h5 { margin: 0 0 .35rem; font-size: .85rem; }
+.validate { display: block; font-size: .75rem; margin-bottom: .5rem; color: var(--muted); }
+.mock { background: var(--bg); border: 2px solid var(--border); border-radius: 10px; overflow: hidden; position: relative; }
+.mock.web { min-height: 220px; }
+.mock.mobile { max-width: 280px; min-height: 420px; border-radius: 24px; }
+.hc-top { display: flex; align-items: center; gap: .5rem; padding: .4rem .6rem; background: var(--primary); color: #fff; font-size: .75rem; }
+[data-variant="b"] .hc-top { padding: .25rem .5rem; background: #c5221f; }
+[data-variant="c"] .hc-top { background: transparent; color: var(--text); position: absolute; top: 0; left: 0; right: 0; z-index: 2; }
+[data-variant="c"] .mock { position: relative; }
+.hc-title { flex: 1; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hc-actions { display: flex; align-items: center; gap: .35rem; }
+.hc-btn { background: transparent; border: none; color: inherit; cursor: default; font-size: .85rem; }
+.hc-waffle { width: 1.1rem; height: 1.1rem; display: grid; grid-template-columns: repeat(3,1fr); gap: 2px; padding: 0; border: none; background: transparent; cursor: default; }
+.hc-waffle span { background: currentColor; border-radius: 1px; opacity: .9; }
+.hc-avatar { width: 1.4rem; height: 1.4rem; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: .65rem; font-weight: 700; }
+.mock-inner { padding: .75rem; font-size: .72rem; }
+[data-variant="b"] .mock-inner { padding: .35rem .5rem; }
+[data-variant="c"] .mock-inner { padding: 0; min-height: 160px; }
+html[data-variant="a"] .mock-b, html[data-variant="a"] .mock-c { display: none; }
+html[data-variant="b"] .mock-a, html[data-variant="b"] .mock-c { display: none; }
+html[data-variant="c"] .mock-a, html[data-variant="c"] .mock-b { display: none; }
+.fld { margin-bottom: .5rem; }
+.inp { height: 1.4rem; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; }
+.inp.wide { height: 2rem; margin-bottom: .5rem; }
+.cta { display: block; width: 100%; margin-top: .5rem; padding: .5rem; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-size: .75rem; }
+.cta.dense { padding: .35rem; }
+.cta.float { margin: 0; }
+.cta.secondary { background: var(--primary); margin-top: .35rem; }
+.list { list-style: none; padding: 0; margin: 0; }
+.list li { padding: .45rem .5rem; border-bottom: 1px solid var(--border); background: var(--surface); }
+.list.dense li { padding: .25rem .4rem; font-size: .68rem; }
+.list.mail li span { display: block; color: var(--muted); font-size: .65rem; }
+.chip-row { display: flex; gap: .35rem; flex-wrap: wrap; margin-bottom: .5rem; }
+.chip { padding: .2rem .45rem; background: var(--primary); color: #fff; border-radius: 999px; font-size: .65rem; }
+.grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 4px; }
+.grid.tight { gap: 2px; }
+.grid.edge { margin: 0; }
+.thumb { aspect-ratio: 1; background: linear-gradient(135deg, var(--primary), var(--accent)); opacity: .85; border-radius: 2px; }
+.map-fill { min-height: 100px; background: linear-gradient(180deg,#8ecae6,#219ebc); color: #023047; display: flex; align-items: center; justify-content: center; border-radius: 6px; position: relative; }
+.map-fill.full { min-height: 140px; border-radius: 0; }
+.search-bar { padding: .4rem; background: var(--surface); border: 1px solid var(--border); margin-bottom: .4rem; border-radius: 6px; }
+.search.overlay { position: absolute; top: .5rem; left: .5rem; right: .5rem; padding: .35rem; border-radius: 8px; border: none; }
+.gauge { font-size: 1.2rem; font-weight: 700; color: var(--accent); text-align: center; padding: .5rem; }
+.gauge.small { font-size: .9rem; }
+.gauge.overlay { position: absolute; bottom: .5rem; right: .5rem; background: var(--surface); padding: .25rem .5rem; border-radius: 8px; font-size: .75rem; }
+.hc-bottom { display: flex; justify-content: space-around; padding: .4rem; font-size: .6rem; background: var(--surface); border-top: 1px solid var(--border); color: var(--muted); }
+[data-variant="c"] .hc-bottom { background: rgba(0,0,0,.45); color: #fff; }
+.card { padding: .75rem; background: var(--surface); border-radius: 8px; border: 1px solid var(--border); }
+.hero { padding: 1rem; background: linear-gradient(90deg, var(--primary), #156574); color: #fff; border-radius: 8px; margin-bottom: .5rem; }
+.hero.bleed { border-radius: 0; margin: 0; min-height: 80px; }
+.player-full { min-height: 120px; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; }
+.search-full { min-height: 100px; padding: 1rem; background: var(--surface); }
+@media print {
+  .lab-header { position: static; }
+  .controls button.print { display: none; }
+  .mock { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<header class="lab-header">
+  <h1>Labo DA — Vague 1 (Music, Fuel, Drive, Mail, Contacts, Maps, Photos)</h1>
+  <div class="controls">
+    <label>Variante <select id="variantSel"><option value="a">A — Keep aéré (teal / orange)</option><option value="b">B — Gmail dense</option><option value="c">C — Maps plein écran</option></select></label>
+    <label>Thème <select id="themeSel"><option value="light">Clair</option><option value="dark">Sombre</option></select></label>
+    <button type="button" class="print" onclick="window.print()">Imprimer / PDF</button>
+  </div>
+  <p style="margin:.5rem 0 0;font-size:.8rem;color:var(--muted)">Hamburger = nav <em>de cette app</em> · Droite = notifications, waffle Hubera, avatar. Mocks CSS uniquement.</p>
+</header>
+<div class="page">
+<nav class="app-nav"><a href="#app-music">Hubera Music</a><a href="#app-fuel">Hubera Fuel</a><a href="#app-drive">Hubera Drive</a><a href="#app-mail">Hubera Mail</a><a href="#app-contacts">Hubera Contacts</a><a href="#app-maps">Hubera Maps</a><a href="#app-photos">Hubera Photos</a></nav>
+<section class="app-section" id="app-music"><h2>Hubera Music</h2>
+<article class="view-block" id="music-login">
+  <h4>Connexion</h4>
+  <p class="avant"><strong>Avant :</strong> Chrome natif 1.3.367 : Accueil avec logo, biblio, recherche ; tiroir = nav Music ; compte = suite Hubera + OTA. Teal/orange partiel. — focus : Écran Hubera ID ou picker « Continuer avec [e-mail] ».</p>
+  <div class="frames-row">
+    
+<div class="frame-col">
+  <h5>Connexion · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="music-login-web"> vue validée</label>
+  <div class="mock web">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Music</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta">Continuer avec Hubera ID</button></div>
+    <div class="mock-inner mock-b"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta dense">Continuer avec Hubera ID</button></div>
+    <div class="mock-inner mock-c"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta float">Continuer avec Hubera ID</button></div>
+  </div>
+</div>
+    
+<div class="frame-col">
+  <h5>Connexion · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="music-login-mobile"> vue validée</label>
+  <div class="mock mobile">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Music</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta">Continuer avec Hubera ID</button></div>
+    <div class="mock-inner mock-b"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta dense">Continuer avec Hubera ID</button></div>
+    <div class="mock-inner mock-c"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta float">Continuer avec Hubera ID</button></div>
+  </div>
+</div>
+  </div>
+</article>
+<article class="view-block" id="music-home">
+  <h4>Accueil</h4>
+  <p class="avant"><strong>Avant :</strong> Chrome natif 1.3.367 : Accueil avec logo, biblio, recherche ; tiroir = nav Music ; compte = suite Hubera + OTA. Teal/orange partiel. — focus : File d’écoute, recommandations, mini-player persistant.</p>
+  <div class="frames-row">
+    
+<div class="frame-col">
+  <h5>Accueil · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="music-home-web"> vue validée</label>
+  <div class="mock web">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Music</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="hero">Écouter maintenant</div><ul class="list"><li>Titre A</li><li>Titre B</li></ul></div>
+    <div class="mock-inner mock-b"><ul class="list dense"><li>Piste 0</li><li>Piste 1</li><li>Piste 2</li><li>Piste 3</li><li>Piste 4</li><li>Piste 5</li><li>Piste 6</li><li>Piste 7</li><li>Piste 8</li><li>Piste 9</li></ul></div>
+    <div class="mock-inner mock-c"><div class="player-full">Couverture + liste</div></div>
+  </div>
+</div>
+    
+<div class="frame-col">
+  <h5>Accueil · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="music-home-mobile"> vue validée</label>
+  <div class="mock mobile">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Music</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="hero">Écouter maintenant</div><ul class="list"><li>Titre A</li><li>Titre B</li></ul><nav class="hc-bottom"><span>Accueil</span><span>Biblio</span><span>Recherche</span></nav></div>
+    <div class="mock-inner mock-b"><ul class="list dense"><li>Piste 0</li><li>Piste 1</li><li>Piste 2</li><li>Piste 3</li><li>Piste 4</li><li>Piste 5</li><li>Piste 6</li><li>Piste 7</li><li>Piste 8</li><li>Piste 9</li></ul><nav class="hc-bottom"><span>Accueil</span><span>Biblio</span><span>Recherche</span></nav></div>
+    <div class="mock-inner mock-c"><div class="player-full">Couverture + liste</div><nav class="hc-bottom"><span>Accueil</span><span>Biblio</span><span>Recherche</span></nav></div>
+  </div>
+</div>
+  </div>
+</article>
+<article class="view-block" id="music-account">
+  <h4>Compte</h4>
+  <p class="avant"><strong>Avant :</strong> Chrome natif 1.3.367 : Accueil avec logo, biblio, recherche ; tiroir = nav Music ; compte = suite Hubera + OTA. Teal/orange partiel. — focus : Profil, version OTA, liens vers autres apps Hubera.</p>
+  <div class="frames-row">
+    
+<div class="frame-col">
+  <h5>Compte · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="music-account-web"> vue validée</label>
+  <div class="mock web">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Music</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list settings"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul></div>
+    <div class="mock-inner mock-b"><ul class="list settings dense"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul></div>
+    <div class="mock-inner mock-c"><ul class="list settings"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul></div>
+  </div>
+</div>
+    
+<div class="frame-col">
+  <h5>Compte · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="music-account-mobile"> vue validée</label>
+  <div class="mock mobile">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Music</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list settings"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul><nav class="hc-bottom"><span>Accueil</span><span>Biblio</span><span>Recherche</span></nav></div>
+    <div class="mock-inner mock-b"><ul class="list settings dense"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul><nav class="hc-bottom"><span>Accueil</span><span>Biblio</span><span>Recherche</span></nav></div>
+    <div class="mock-inner mock-c"><ul class="list settings"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul><nav class="hc-bottom"><span>Accueil</span><span>Biblio</span><span>Recherche</span></nav></div>
+  </div>
+</div>
+  </div>
+</article></section><section class="app-section" id="app-fuel"><h2>Hubera Fuel</h2>
+<article class="view-block" id="fuel-login">
+  <h4>Connexion</h4>
+  <p class="avant"><strong>Avant :</strong> Expo/React 1.4.169 : chrome hamburger + compte ; onglets trajet / véhicules / stats ; jauge EMA 1.4.168. — focus : Login API Gasoil / Hubera ID.</p>
+  <div class="frames-row">
+    
+<div class="frame-col">
+  <h5>Connexion · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="fuel-login-web"> vue validée</label>
+  <div class="mock web">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Fuel</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta">Continuer avec Hubera ID</button></div>
+    <div class="mock-inner mock-b"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta dense">Continuer avec Hubera ID</button></div>
+    <div class="mock-inner mock-c"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta float">Continuer avec Hubera ID</button></div>
+  </div>
+</div>
+    
+<div class="frame-col">
+  <h5>Connexion · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="fuel-login-mobile"> vue validée</label>
+  <div class="mock mobile">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Fuel</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta">Continuer avec Hubera ID</button></div>
+    <div class="mock-inner mock-b"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta dense">Continuer avec Hubera ID</button></div>
+    <div class="mock-inner mock-c"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta float">Continuer avec Hubera ID</button></div>
+  </div>
+</div>
+  </div>
+</article>
+<article class="view-block" id="fuel-trip">
+  <h4>Trajet</h4>
+  <p class="avant"><strong>Avant :</strong> Expo/React 1.4.169 : chrome hamburger + compte ; onglets trajet / véhicules / stats ; jauge EMA 1.4.168. — focus : Suivi GPS, jauge, lien Maps pour armement trajet.</p>
+  <div class="frames-row">
+    
+<div class="frame-col">
+  <h5>Trajet · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="fuel-trip-web"> vue validée</label>
+  <div class="mock web">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Fuel</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="gauge">Jauge 62%</div><div class="map-strip">Trajet en cours · 12 km</div></div>
+    <div class="mock-inner mock-b"><div class="gauge small">62%</div><div class="stats-row">12 km · 18 min</div></div>
+    <div class="mock-inner mock-c"><div class="map-fill">Carte trajet edge-to-edge<div class="gauge overlay">62%</div></div></div>
+  </div>
+</div>
+    
+<div class="frame-col">
+  <h5>Trajet · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="fuel-trip-mobile"> vue validée</label>
+  <div class="mock mobile">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Fuel</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="gauge">Jauge 62%</div><div class="map-strip">Trajet en cours · 12 km</div><nav class="hc-bottom"><span>Accueil</span><span>···</span><span>Compte</span></nav></div>
+    <div class="mock-inner mock-b"><div class="gauge small">62%</div><div class="stats-row">12 km · 18 min</div><nav class="hc-bottom"><span>Accueil</span><span>···</span><span>Compte</span></nav></div>
+    <div class="mock-inner mock-c"><div class="map-fill">Carte trajet edge-to-edge<div class="gauge overlay">62%</div></div><nav class="hc-bottom"><span>Accueil</span><span>···</span><span>Compte</span></nav></div>
+  </div>
+</div>
+  </div>
+</article>
+<article class="view-block" id="fuel-home">
+  <h4>Accueil</h4>
+  <p class="avant"><strong>Avant :</strong> Expo/React 1.4.169 : chrome hamburger + compte ; onglets trajet / véhicules / stats ; jauge EMA 1.4.168. — focus : Résumé véhicule, derniers pleins, raccourci trajet.</p>
+  <div class="frames-row">
+    
+<div class="frame-col">
+  <h5>Accueil · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="fuel-home-web"> vue validée</label>
+  <div class="mock web">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Fuel</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="hero">Bienvenue</div><div class="cards"><div class="card">Raccourci</div></div></div>
+    <div class="mock-inner mock-b"><div class="cards tight"><div class="card">A</div><div class="card">B</div></div></div>
+    <div class="mock-inner mock-c"><div class="hero bleed">Contenu plein écran</div></div>
+  </div>
+</div>
+    
+<div class="frame-col">
+  <h5>Accueil · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="fuel-home-mobile"> vue validée</label>
+  <div class="mock mobile">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Fuel</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="hero">Bienvenue</div><div class="cards"><div class="card">Raccourci</div></div><nav class="hc-bottom"><span>Accueil</span><span>···</span><span>Compte</span></nav></div>
+    <div class="mock-inner mock-b"><div class="cards tight"><div class="card">A</div><div class="card">B</div></div><nav class="hc-bottom"><span>Accueil</span><span>···</span><span>Compte</span></nav></div>
+    <div class="mock-inner mock-c"><div class="hero bleed">Contenu plein écran</div><nav class="hc-bottom"><span>Accueil</span><span>···</span><span>Compte</span></nav></div>
+  </div>
+</div>
+  </div>
+</article>
+<article class="view-block" id="fuel-account">
+  <h4>Compte</h4>
+  <p class="avant"><strong>Avant :</strong> Expo/React 1.4.169 : chrome hamburger + compte ; onglets trajet / véhicules / stats ; jauge EMA 1.4.168. — focus : Paramètres véhicule, OTA, déconnexion.</p>
+  <div class="frames-row">
+    
+<div class="frame-col">
+  <h5>Compte · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="fuel-account-web"> vue validée</label>
+  <div class="mock web">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Fuel</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list settings"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul></div>
+    <div class="mock-inner mock-b"><ul class="list settings dense"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul></div>
+    <div class="mock-inner mock-c"><ul class="list settings"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul></div>
+  </div>
+</div>
+    
+<div class="frame-col">
+  <h5>Compte · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="fuel-account-mobile"> vue validée</label>
+  <div class="mock mobile">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Fuel</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list settings"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul><nav class="hc-bottom"><span>Accueil</span><span>···</span><span>Compte</span></nav></div>
+    <div class="mock-inner mock-b"><ul class="list settings dense"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul><nav class="hc-bottom"><span>Accueil</span><span>···</span><span>Compte</span></nav></div>
+    <div class="mock-inner mock-c"><ul class="list settings"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul><nav class="hc-bottom"><span>Accueil</span><span>···</span><span>Compte</span></nav></div>
+  </div>
+</div>
+  </div>
+</article></section><section class="app-section" id="app-drive"><h2>Hubera Drive</h2>
+<article class="view-block" id="drive-login">
+  <h4>Connexion</h4>
+  <p class="avant"><strong>Avant :</strong> Flutter 1.0.6 : bottom nav Accueil/Favoris/Partagés/Fichiers ; drawer quota ; top search + compte. — focus : Cloudity session + Hubera ID picker.</p>
+  <div class="frames-row">
+    
+<div class="frame-col">
+  <h5>Connexion · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="drive-login-web"> vue validée</label>
+  <div class="mock web">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Drive</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta">Continuer avec Hubera ID</button></div>
+    <div class="mock-inner mock-b"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta dense">Continuer avec Hubera ID</button></div>
+    <div class="mock-inner mock-c"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta float">Continuer avec Hubera ID</button></div>
+  </div>
+</div>
+    
+<div class="frame-col">
+  <h5>Connexion · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="drive-login-mobile"> vue validée</label>
+  <div class="mock mobile">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Drive</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta">Continuer avec Hubera ID</button></div>
+    <div class="mock-inner mock-b"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta dense">Continuer avec Hubera ID</button></div>
+    <div class="mock-inner mock-c"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta float">Continuer avec Hubera ID</button></div>
+  </div>
+</div>
+  </div>
+</article>
+<article class="view-block" id="drive-home">
+  <h4>Accueil</h4>
+  <p class="avant"><strong>Avant :</strong> Flutter 1.0.6 : bottom nav Accueil/Favoris/Partagés/Fichiers ; drawer quota ; top search + compte. — focus : Dossiers suggérés + fichiers récents (pas l’arbre complet).</p>
+  <div class="frames-row">
+    
+<div class="frame-col">
+  <h5>Accueil · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="drive-home-web"> vue validée</label>
+  <div class="mock web">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Drive</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="chip-row"><span class="chip">Documents</span><span class="chip">Images</span></div><h5>Récents</h5><ul class="list"><li>📄 rapport.pdf</li><li>📊 budget.xlsx</li></ul></div>
+    <div class="mock-inner mock-b"><ul class="list dense"><li>Fichier 0</li><li>Fichier 1</li><li>Fichier 2</li><li>Fichier 3</li><li>Fichier 4</li><li>Fichier 5</li><li>Fichier 6</li><li>Fichier 7</li></ul></div>
+    <div class="mock-inner mock-c"><div class="fullbleed recents">Récents plein écran</div></div>
+  </div>
+</div>
+    
+<div class="frame-col">
+  <h5>Accueil · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="drive-home-mobile"> vue validée</label>
+  <div class="mock mobile">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Drive</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="chip-row"><span class="chip">Documents</span><span class="chip">Images</span></div><h5>Récents</h5><ul class="list"><li>📄 rapport.pdf</li><li>📊 budget.xlsx</li></ul><nav class="hc-bottom"><span>Accueil</span><span>★</span><span>Partagés</span><span>Fichiers</span></nav></div>
+    <div class="mock-inner mock-b"><ul class="list dense"><li>Fichier 0</li><li>Fichier 1</li><li>Fichier 2</li><li>Fichier 3</li><li>Fichier 4</li><li>Fichier 5</li><li>Fichier 6</li><li>Fichier 7</li></ul><nav class="hc-bottom"><span>Accueil</span><span>★</span><span>Partagés</span><span>Fichiers</span></nav></div>
+    <div class="mock-inner mock-c"><div class="fullbleed recents">Récents plein écran</div><nav class="hc-bottom"><span>Accueil</span><span>★</span><span>Partagés</span><span>Fichiers</span></nav></div>
+  </div>
+</div>
+  </div>
+</article>
+<article class="view-block" id="drive-account">
+  <h4>Compte</h4>
+  <p class="avant"><strong>Avant :</strong> Flutter 1.0.6 : bottom nav Accueil/Favoris/Partagés/Fichiers ; drawer quota ; top search + compte. — focus : Quota Go, paramètres sync, OTA.</p>
+  <div class="frames-row">
+    
+<div class="frame-col">
+  <h5>Compte · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="drive-account-web"> vue validée</label>
+  <div class="mock web">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Drive</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list settings"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul></div>
+    <div class="mock-inner mock-b"><ul class="list settings dense"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul></div>
+    <div class="mock-inner mock-c"><ul class="list settings"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul></div>
+  </div>
+</div>
+    
+<div class="frame-col">
+  <h5>Compte · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="drive-account-mobile"> vue validée</label>
+  <div class="mock mobile">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Drive</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list settings"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul><nav class="hc-bottom"><span>Accueil</span><span>★</span><span>Partagés</span><span>Fichiers</span></nav></div>
+    <div class="mock-inner mock-b"><ul class="list settings dense"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul><nav class="hc-bottom"><span>Accueil</span><span>★</span><span>Partagés</span><span>Fichiers</span></nav></div>
+    <div class="mock-inner mock-c"><ul class="list settings"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul><nav class="hc-bottom"><span>Accueil</span><span>★</span><span>Partagés</span><span>Fichiers</span></nav></div>
+  </div>
+</div>
+  </div>
+</article></section><section class="app-section" id="app-mail"><h2>Hubera Mail</h2>
+<article class="view-block" id="mail-login">
+  <h4>Connexion</h4>
+  <p class="avant"><strong>Avant :</strong> Flutter 1.0.5 : boîte / envoyés / brouillons ; recherche en tête ; chrome aligné suite. — focus : IMAP/API + Hubera ID.</p>
+  <div class="frames-row">
+    
+<div class="frame-col">
+  <h5>Connexion · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="mail-login-web"> vue validée</label>
+  <div class="mock web">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Mail</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta">Continuer avec Hubera ID</button></div>
+    <div class="mock-inner mock-b"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta dense">Continuer avec Hubera ID</button></div>
+    <div class="mock-inner mock-c"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta float">Continuer avec Hubera ID</button></div>
+  </div>
+</div>
+    
+<div class="frame-col">
+  <h5>Connexion · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="mail-login-mobile"> vue validée</label>
+  <div class="mock mobile">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Mail</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta">Continuer avec Hubera ID</button></div>
+    <div class="mock-inner mock-b"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta dense">Continuer avec Hubera ID</button></div>
+    <div class="mock-inner mock-c"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta float">Continuer avec Hubera ID</button></div>
+  </div>
+</div>
+  </div>
+</article>
+<article class="view-block" id="mail-inbox">
+  <h4>Boîte de réception</h4>
+  <p class="avant"><strong>Avant :</strong> Flutter 1.0.5 : boîte / envoyés / brouillons ; recherche en tête ; chrome aligné suite. — focus : Liste threads denses, swipe actions.</p>
+  <div class="frames-row">
+    
+<div class="frame-col">
+  <h5>Boîte de réception · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="mail-inbox-web"> vue validée</label>
+  <div class="mock web">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Mail</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list mail"><li><strong>exp1@hubera.cloud</strong><span>Sujet ligne 1</span></li><li><strong>exp2@hubera.cloud</strong><span>Sujet ligne 2</span></li><li><strong>exp3@hubera.cloud</strong><span>Sujet ligne 3</span></li><li><strong>exp4@hubera.cloud</strong><span>Sujet ligne 4</span></li></ul></div>
+    <div class="mock-inner mock-b"><ul class="list mail dense"><li><strong>exp1@hubera.cloud</strong><span>Sujet ligne 1</span></li><li><strong>exp2@hubera.cloud</strong><span>Sujet ligne 2</span></li><li><strong>exp3@hubera.cloud</strong><span>Sujet ligne 3</span></li><li><strong>exp4@hubera.cloud</strong><span>Sujet ligne 4</span></li><li><strong>exp1@hubera.cloud</strong><span>Sujet ligne 1</span></li><li><strong>exp2@hubera.cloud</strong><span>Sujet ligne 2</span></li><li><strong>exp3@hubera.cloud</strong><span>Sujet ligne 3</span></li><li><strong>exp4@hubera.cloud</strong><span>Sujet ligne 4</span></li></ul></div>
+    <div class="mock-inner mock-c"><ul class="list mail edge"><li><strong>exp1@hubera.cloud</strong><span>Sujet ligne 1</span></li><li><strong>exp2@hubera.cloud</strong><span>Sujet ligne 2</span></li><li><strong>exp3@hubera.cloud</strong><span>Sujet ligne 3</span></li><li><strong>exp4@hubera.cloud</strong><span>Sujet ligne 4</span></li></ul></div>
+  </div>
+</div>
+    
+<div class="frame-col">
+  <h5>Boîte de réception · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="mail-inbox-mobile"> vue validée</label>
+  <div class="mock mobile">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Mail</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list mail"><li><strong>exp1@hubera.cloud</strong><span>Sujet ligne 1</span></li><li><strong>exp2@hubera.cloud</strong><span>Sujet ligne 2</span></li><li><strong>exp3@hubera.cloud</strong><span>Sujet ligne 3</span></li><li><strong>exp4@hubera.cloud</strong><span>Sujet ligne 4</span></li></ul><nav class="hc-bottom"><span>Inbox</span><span>Envoyés</span><span>Brouillons</span></nav></div>
+    <div class="mock-inner mock-b"><ul class="list mail dense"><li><strong>exp1@hubera.cloud</strong><span>Sujet ligne 1</span></li><li><strong>exp2@hubera.cloud</strong><span>Sujet ligne 2</span></li><li><strong>exp3@hubera.cloud</strong><span>Sujet ligne 3</span></li><li><strong>exp4@hubera.cloud</strong><span>Sujet ligne 4</span></li><li><strong>exp1@hubera.cloud</strong><span>Sujet ligne 1</span></li><li><strong>exp2@hubera.cloud</strong><span>Sujet ligne 2</span></li><li><strong>exp3@hubera.cloud</strong><span>Sujet ligne 3</span></li><li><strong>exp4@hubera.cloud</strong><span>Sujet ligne 4</span></li></ul><nav class="hc-bottom"><span>Inbox</span><span>Envoyés</span><span>Brouillons</span></nav></div>
+    <div class="mock-inner mock-c"><ul class="list mail edge"><li><strong>exp1@hubera.cloud</strong><span>Sujet ligne 1</span></li><li><strong>exp2@hubera.cloud</strong><span>Sujet ligne 2</span></li><li><strong>exp3@hubera.cloud</strong><span>Sujet ligne 3</span></li><li><strong>exp4@hubera.cloud</strong><span>Sujet ligne 4</span></li></ul><nav class="hc-bottom"><span>Inbox</span><span>Envoyés</span><span>Brouillons</span></nav></div>
+  </div>
+</div>
+  </div>
+</article>
+<article class="view-block" id="mail-account">
+  <h4>Compte</h4>
+  <p class="avant"><strong>Avant :</strong> Flutter 1.0.5 : boîte / envoyés / brouillons ; recherche en tête ; chrome aligné suite. — focus : Comptes, signatures, OTA.</p>
+  <div class="frames-row">
+    
+<div class="frame-col">
+  <h5>Compte · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="mail-account-web"> vue validée</label>
+  <div class="mock web">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Mail</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list settings"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul></div>
+    <div class="mock-inner mock-b"><ul class="list settings dense"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul></div>
+    <div class="mock-inner mock-c"><ul class="list settings"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul></div>
+  </div>
+</div>
+    
+<div class="frame-col">
+  <h5>Compte · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="mail-account-mobile"> vue validée</label>
+  <div class="mock mobile">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Mail</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list settings"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul><nav class="hc-bottom"><span>Inbox</span><span>Envoyés</span><span>Brouillons</span></nav></div>
+    <div class="mock-inner mock-b"><ul class="list settings dense"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul><nav class="hc-bottom"><span>Inbox</span><span>Envoyés</span><span>Brouillons</span></nav></div>
+    <div class="mock-inner mock-c"><ul class="list settings"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul><nav class="hc-bottom"><span>Inbox</span><span>Envoyés</span><span>Brouillons</span></nav></div>
+  </div>
+</div>
+  </div>
+</article></section><section class="app-section" id="app-contacts"><h2>Hubera Contacts</h2>
+<article class="view-block" id="contacts-login">
+  <h4>Connexion</h4>
+  <p class="avant"><strong>Avant :</strong> P1 chrome : listes héritées ; pas encore overlay Samsung validé (oct. 2026). — focus : Hubera ID, scope contacts.</p>
+  <div class="frames-row">
+    
+<div class="frame-col">
+  <h5>Connexion · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="contacts-login-web"> vue validée</label>
+  <div class="mock web">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Contacts</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta">Continuer avec Hubera ID</button></div>
+    <div class="mock-inner mock-b"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta dense">Continuer avec Hubera ID</button></div>
+    <div class="mock-inner mock-c"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta float">Continuer avec Hubera ID</button></div>
+  </div>
+</div>
+    
+<div class="frame-col">
+  <h5>Connexion · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="contacts-login-mobile"> vue validée</label>
+  <div class="mock mobile">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Contacts</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta">Continuer avec Hubera ID</button></div>
+    <div class="mock-inner mock-b"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta dense">Continuer avec Hubera ID</button></div>
+    <div class="mock-inner mock-c"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta float">Continuer avec Hubera ID</button></div>
+  </div>
+</div>
+  </div>
+</article>
+<article class="view-block" id="contacts-list">
+  <h4>Liste</h4>
+  <p class="avant"><strong>Avant :</strong> P1 chrome : listes héritées ; pas encore overlay Samsung validé (oct. 2026). — focus : Alphabet sidebar, recherche, groupes.</p>
+  <div class="frames-row">
+    
+<div class="frame-col">
+  <h5>Liste · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="contacts-list-web"> vue validée</label>
+  <div class="mock web">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Contacts</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list contacts"><li>Alice Martin</li><li>Bob Dupont</li><li>Carla Hubera</li></ul></div>
+    <div class="mock-inner mock-b"><ul class="list contacts dense"><li>Contact A</li><li>Contact B</li><li>Contact C</li><li>Contact D</li><li>Contact E</li><li>Contact F</li><li>Contact G</li><li>Contact H</li></ul></div>
+    <div class="mock-inner mock-c"><ul class="list contacts"><li>C0</li><li>C1</li><li>C2</li><li>C3</li><li>C4</li><li>C5</li><li>C6</li><li>C7</li><li>C8</li><li>C9</li><li>C10</li><li>C11</li></ul></div>
+  </div>
+</div>
+    
+<div class="frame-col">
+  <h5>Liste · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="contacts-list-mobile"> vue validée</label>
+  <div class="mock mobile">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Contacts</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list contacts"><li>Alice Martin</li><li>Bob Dupont</li><li>Carla Hubera</li></ul><nav class="hc-bottom"><span>Accueil</span><span>···</span><span>Compte</span></nav></div>
+    <div class="mock-inner mock-b"><ul class="list contacts dense"><li>Contact A</li><li>Contact B</li><li>Contact C</li><li>Contact D</li><li>Contact E</li><li>Contact F</li><li>Contact G</li><li>Contact H</li></ul><nav class="hc-bottom"><span>Accueil</span><span>···</span><span>Compte</span></nav></div>
+    <div class="mock-inner mock-c"><ul class="list contacts"><li>C0</li><li>C1</li><li>C2</li><li>C3</li><li>C4</li><li>C5</li><li>C6</li><li>C7</li><li>C8</li><li>C9</li><li>C10</li><li>C11</li></ul><nav class="hc-bottom"><span>Accueil</span><span>···</span><span>Compte</span></nav></div>
+  </div>
+</div>
+  </div>
+</article>
+<article class="view-block" id="contacts-fiche">
+  <h4>Fiche contact</h4>
+  <p class="avant"><strong>Avant :</strong> P1 chrome : listes héritées ; pas encore overlay Samsung validé (oct. 2026). — focus : Nom, tel, adresse lien Maps, notes.</p>
+  <div class="frames-row">
+    
+<div class="frame-col">
+  <h5>Fiche contact · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="contacts-fiche-web"> vue validée</label>
+  <div class="mock web">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Contacts</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="card"><h3>Alice Martin</h3><p>📞 +33 6 …</p><p>📍 Ouvrir dans Maps</p></div></div>
+    <div class="mock-inner mock-b"><div class="card dense"><h3>Alice Martin</h3><p>Tel · Mail · Adresse</p></div></div>
+    <div class="mock-inner mock-c"><div class="card bleed"><h3>Alice Martin</h3><div class="hero-photo">Photo</div></div></div>
+  </div>
+</div>
+    
+<div class="frame-col">
+  <h5>Fiche contact · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="contacts-fiche-mobile"> vue validée</label>
+  <div class="mock mobile">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Contacts</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="card"><h3>Alice Martin</h3><p>📞 +33 6 …</p><p>📍 Ouvrir dans Maps</p></div><nav class="hc-bottom"><span>Accueil</span><span>···</span><span>Compte</span></nav></div>
+    <div class="mock-inner mock-b"><div class="card dense"><h3>Alice Martin</h3><p>Tel · Mail · Adresse</p></div><nav class="hc-bottom"><span>Accueil</span><span>···</span><span>Compte</span></nav></div>
+    <div class="mock-inner mock-c"><div class="card bleed"><h3>Alice Martin</h3><div class="hero-photo">Photo</div></div><nav class="hc-bottom"><span>Accueil</span><span>···</span><span>Compte</span></nav></div>
+  </div>
+</div>
+  </div>
+</article>
+<article class="view-block" id="contacts-account">
+  <h4>Compte</h4>
+  <p class="avant"><strong>Avant :</strong> P1 chrome : listes héritées ; pas encore overlay Samsung validé (oct. 2026). — focus : Sync, export, OTA.</p>
+  <div class="frames-row">
+    
+<div class="frame-col">
+  <h5>Compte · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="contacts-account-web"> vue validée</label>
+  <div class="mock web">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Contacts</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list settings"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul></div>
+    <div class="mock-inner mock-b"><ul class="list settings dense"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul></div>
+    <div class="mock-inner mock-c"><ul class="list settings"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul></div>
+  </div>
+</div>
+    
+<div class="frame-col">
+  <h5>Compte · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="contacts-account-mobile"> vue validée</label>
+  <div class="mock mobile">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Contacts</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list settings"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul><nav class="hc-bottom"><span>Accueil</span><span>···</span><span>Compte</span></nav></div>
+    <div class="mock-inner mock-b"><ul class="list settings dense"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul><nav class="hc-bottom"><span>Accueil</span><span>···</span><span>Compte</span></nav></div>
+    <div class="mock-inner mock-c"><ul class="list settings"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul><nav class="hc-bottom"><span>Accueil</span><span>···</span><span>Compte</span></nav></div>
+  </div>
+</div>
+  </div>
+</article></section><section class="app-section" id="app-maps"><h2>Hubera Maps</h2>
+<article class="view-block" id="maps-login">
+  <h4>Connexion</h4>
+  <p class="avant"><strong>Avant :</strong> 0.1.88 : carte plein écran ; recherche sous barre d’état ; onglets Carte / Trajet / Lieux ; garage Fuel. — focus : Token Maps / Hubera ID SSO.</p>
+  <div class="frames-row">
+    
+<div class="frame-col">
+  <h5>Connexion · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="maps-login-web"> vue validée</label>
+  <div class="mock web">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Maps</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta">Continuer avec Hubera ID</button></div>
+    <div class="mock-inner mock-b"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta dense">Continuer avec Hubera ID</button></div>
+    <div class="mock-inner mock-c"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta float">Continuer avec Hubera ID</button></div>
+  </div>
+</div>
+    
+<div class="frame-col">
+  <h5>Connexion · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="maps-login-mobile"> vue validée</label>
+  <div class="mock mobile">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Maps</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta">Continuer avec Hubera ID</button></div>
+    <div class="mock-inner mock-b"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta dense">Continuer avec Hubera ID</button></div>
+    <div class="mock-inner mock-c"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta float">Continuer avec Hubera ID</button></div>
+  </div>
+</div>
+  </div>
+</article>
+<article class="view-block" id="maps-map">
+  <h4>Carte + recherche</h4>
+  <p class="avant"><strong>Avant :</strong> 0.1.88 : carte plein écran ; recherche sous barre d’état ; onglets Carte / Trajet / Lieux ; garage Fuel. — focus : Tuiles, POI, barre recherche (pas dans le tiroir).</p>
+  <div class="frames-row">
+    
+<div class="frame-col">
+  <h5>Carte + recherche · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="maps-map-web"> vue validée</label>
+  <div class="mock web">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Maps</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="search-bar">🔍 Rechercher un lieu</div><div class="map-fill">Carte OSM</div></div>
+    <div class="mock-inner mock-b"><div class="search-bar tight">Recherche</div><div class="map-fill">Carte</div></div>
+    <div class="mock-inner mock-c"><div class="map-fill full">Carte + recherche<input class="search overlay" placeholder="Rechercher"/></div></div>
+  </div>
+</div>
+    
+<div class="frame-col">
+  <h5>Carte + recherche · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="maps-map-mobile"> vue validée</label>
+  <div class="mock mobile">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Maps</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="search-bar">🔍 Rechercher un lieu</div><div class="map-fill">Carte OSM</div><nav class="hc-bottom"><span>Carte</span><span>Trajet</span><span>Lieux</span></nav></div>
+    <div class="mock-inner mock-b"><div class="search-bar tight">Recherche</div><div class="map-fill">Carte</div><nav class="hc-bottom"><span>Carte</span><span>Trajet</span><span>Lieux</span></nav></div>
+    <div class="mock-inner mock-c"><div class="map-fill full">Carte + recherche<input class="search overlay" placeholder="Rechercher"/></div><nav class="hc-bottom"><span>Carte</span><span>Trajet</span><span>Lieux</span></nav></div>
+  </div>
+</div>
+  </div>
+</article>
+<article class="view-block" id="maps-account">
+  <h4>Compte</h4>
+  <p class="avant"><strong>Avant :</strong> 0.1.88 : carte plein écran ; recherche sous barre d’état ; onglets Carte / Trajet / Lieux ; garage Fuel. — focus : Tuiles offline, OTA, calibrage GPS.</p>
+  <div class="frames-row">
+    
+<div class="frame-col">
+  <h5>Compte · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="maps-account-web"> vue validée</label>
+  <div class="mock web">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Maps</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list settings"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul></div>
+    <div class="mock-inner mock-b"><ul class="list settings dense"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul></div>
+    <div class="mock-inner mock-c"><ul class="list settings"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul></div>
+  </div>
+</div>
+    
+<div class="frame-col">
+  <h5>Compte · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="maps-account-mobile"> vue validée</label>
+  <div class="mock mobile">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Maps</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list settings"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul><nav class="hc-bottom"><span>Carte</span><span>Trajet</span><span>Lieux</span></nav></div>
+    <div class="mock-inner mock-b"><ul class="list settings dense"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul><nav class="hc-bottom"><span>Carte</span><span>Trajet</span><span>Lieux</span></nav></div>
+    <div class="mock-inner mock-c"><ul class="list settings"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul><nav class="hc-bottom"><span>Carte</span><span>Trajet</span><span>Lieux</span></nav></div>
+  </div>
+</div>
+  </div>
+</article></section><section class="app-section" id="app-photos"><h2>Hubera Photos</h2>
+<article class="view-block" id="photos-login">
+  <h4>Connexion</h4>
+  <p class="avant"><strong>Avant :</strong> Release 1.0.11 : grille photos ; bottom nav à harmoniser avec chrome vague 1. — focus : Hubera ID + stockage Drive lié.</p>
+  <div class="frames-row">
+    
+<div class="frame-col">
+  <h5>Connexion · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="photos-login-web"> vue validée</label>
+  <div class="mock web">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Photos</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta">Continuer avec Hubera ID</button></div>
+    <div class="mock-inner mock-b"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta dense">Continuer avec Hubera ID</button></div>
+    <div class="mock-inner mock-c"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta float">Continuer avec Hubera ID</button></div>
+  </div>
+</div>
+    
+<div class="frame-col">
+  <h5>Connexion · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="photos-login-mobile"> vue validée</label>
+  <div class="mock mobile">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Photos</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta">Continuer avec Hubera ID</button></div>
+    <div class="mock-inner mock-b"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta dense">Continuer avec Hubera ID</button></div>
+    <div class="mock-inner mock-c"><div class="fld"><label>E-mail</label><div class="inp"></div></div><div class="fld"><label>Mot de passe</label><div class="inp"></div></div><button class="cta float">Continuer avec Hubera ID</button></div>
+  </div>
+</div>
+  </div>
+</article>
+<article class="view-block" id="photos-photos">
+  <h4>Photos</h4>
+  <p class="avant"><strong>Avant :</strong> Release 1.0.11 : grille photos ; bottom nav à harmoniser avec chrome vague 1. — focus : Grille chronologique, sélection multi.</p>
+  <div class="frames-row">
+    
+<div class="frame-col">
+  <h5>Photos · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="photos-photos-web"> vue validée</label>
+  <div class="mock web">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Photos</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="grid"><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div></div></div>
+    <div class="mock-inner mock-b"><div class="grid tight"><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div></div></div>
+    <div class="mock-inner mock-c"><div class="grid edge"><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div></div></div>
+  </div>
+</div>
+    
+<div class="frame-col">
+  <h5>Photos · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="photos-photos-mobile"> vue validée</label>
+  <div class="mock mobile">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Photos</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="grid"><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div></div><nav class="hc-bottom"><span>Photos</span><span>Coll.</span><span>＋</span><span>🔍</span><span>Compte</span></nav></div>
+    <div class="mock-inner mock-b"><div class="grid tight"><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div></div><nav class="hc-bottom"><span>Photos</span><span>Coll.</span><span>＋</span><span>🔍</span><span>Compte</span></nav></div>
+    <div class="mock-inner mock-c"><div class="grid edge"><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div></div><nav class="hc-bottom"><span>Photos</span><span>Coll.</span><span>＋</span><span>🔍</span><span>Compte</span></nav></div>
+  </div>
+</div>
+  </div>
+</article>
+<article class="view-block" id="photos-collections">
+  <h4>Collections</h4>
+  <p class="avant"><strong>Avant :</strong> Release 1.0.11 : grille photos ; bottom nav à harmoniser avec chrome vague 1. — focus : Albums, partages, favoris.</p>
+  <div class="frames-row">
+    
+<div class="frame-col">
+  <h5>Collections · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="photos-collections-web"> vue validée</label>
+  <div class="mock web">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Photos</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list"><li>Album Vacances</li><li>Favoris</li></ul></div>
+    <div class="mock-inner mock-b"><ul class="list dense"><li>Album 0</li><li>Album 1</li><li>Album 2</li><li>Album 3</li><li>Album 4</li><li>Album 5</li></ul></div>
+    <div class="mock-inner mock-c"><div class="collections-scroll">Carrousel albums plein largeur</div></div>
+  </div>
+</div>
+    
+<div class="frame-col">
+  <h5>Collections · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="photos-collections-mobile"> vue validée</label>
+  <div class="mock mobile">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Photos</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list"><li>Album Vacances</li><li>Favoris</li></ul><nav class="hc-bottom"><span>Photos</span><span>Coll.</span><span>＋</span><span>🔍</span><span>Compte</span></nav></div>
+    <div class="mock-inner mock-b"><ul class="list dense"><li>Album 0</li><li>Album 1</li><li>Album 2</li><li>Album 3</li><li>Album 4</li><li>Album 5</li></ul><nav class="hc-bottom"><span>Photos</span><span>Coll.</span><span>＋</span><span>🔍</span><span>Compte</span></nav></div>
+    <div class="mock-inner mock-c"><div class="collections-scroll">Carrousel albums plein largeur</div><nav class="hc-bottom"><span>Photos</span><span>Coll.</span><span>＋</span><span>🔍</span><span>Compte</span></nav></div>
+  </div>
+</div>
+  </div>
+</article>
+<article class="view-block" id="photos-create">
+  <h4>Créer</h4>
+  <p class="avant"><strong>Avant :</strong> Release 1.0.11 : grille photos ; bottom nav à harmoniser avec chrome vague 1. — focus : Import appareil, album, lien partage.</p>
+  <div class="frames-row">
+    
+<div class="frame-col">
+  <h5>Créer · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="photos-create-web"> vue validée</label>
+  <div class="mock web">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Photos</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><button class="cta">Importer</button><button class="cta secondary">Nouvel album</button></div>
+    <div class="mock-inner mock-b"><div class="action-list"><div>Importer</div><div>Scan</div><div>Album</div></div></div>
+    <div class="mock-inner mock-c"><div class="fab-col">FAB + actions</div></div>
+  </div>
+</div>
+    
+<div class="frame-col">
+  <h5>Créer · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="photos-create-mobile"> vue validée</label>
+  <div class="mock mobile">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Photos</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><button class="cta">Importer</button><button class="cta secondary">Nouvel album</button><nav class="hc-bottom"><span>Photos</span><span>Coll.</span><span>＋</span><span>🔍</span><span>Compte</span></nav></div>
+    <div class="mock-inner mock-b"><div class="action-list"><div>Importer</div><div>Scan</div><div>Album</div></div><nav class="hc-bottom"><span>Photos</span><span>Coll.</span><span>＋</span><span>🔍</span><span>Compte</span></nav></div>
+    <div class="mock-inner mock-c"><div class="fab-col">FAB + actions</div><nav class="hc-bottom"><span>Photos</span><span>Coll.</span><span>＋</span><span>🔍</span><span>Compte</span></nav></div>
+  </div>
+</div>
+  </div>
+</article>
+<article class="view-block" id="photos-search">
+  <h4>Recherche</h4>
+  <p class="avant"><strong>Avant :</strong> Release 1.0.11 : grille photos ; bottom nav à harmoniser avec chrome vague 1. — focus : Texte + filtres date/lieu.</p>
+  <div class="frames-row">
+    
+<div class="frame-col">
+  <h5>Recherche · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="photos-search-web"> vue validée</label>
+  <div class="mock web">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Photos</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="inp wide">Rechercher date, lieu…</div><div class="grid small">résultats</div></div>
+    <div class="mock-inner mock-b"><div class="inp wide">Q</div><div class="row">hit</div><div class="row">hit</div><div class="row">hit</div><div class="row">hit</div><div class="row">hit</div><div class="row">hit</div></div>
+    <div class="mock-inner mock-c"><div class="search-full">Recherche plein écran</div></div>
+  </div>
+</div>
+    
+<div class="frame-col">
+  <h5>Recherche · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="photos-search-mobile"> vue validée</label>
+  <div class="mock mobile">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Photos</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="inp wide">Rechercher date, lieu…</div><div class="grid small">résultats</div><nav class="hc-bottom"><span>Photos</span><span>Coll.</span><span>＋</span><span>🔍</span><span>Compte</span></nav></div>
+    <div class="mock-inner mock-b"><div class="inp wide">Q</div><div class="row">hit</div><div class="row">hit</div><div class="row">hit</div><div class="row">hit</div><div class="row">hit</div><div class="row">hit</div><nav class="hc-bottom"><span>Photos</span><span>Coll.</span><span>＋</span><span>🔍</span><span>Compte</span></nav></div>
+    <div class="mock-inner mock-c"><div class="search-full">Recherche plein écran</div><nav class="hc-bottom"><span>Photos</span><span>Coll.</span><span>＋</span><span>🔍</span><span>Compte</span></nav></div>
+  </div>
+</div>
+  </div>
+</article>
+<article class="view-block" id="photos-account">
+  <h4>Compte</h4>
+  <p class="avant"><strong>Avant :</strong> Release 1.0.11 : grille photos ; bottom nav à harmoniser avec chrome vague 1. — focus : Quota, qualité upload, OTA.</p>
+  <div class="frames-row">
+    
+<div class="frame-col">
+  <h5>Compte · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="photos-account-web"> vue validée</label>
+  <div class="mock web">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Photos</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list settings"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul></div>
+    <div class="mock-inner mock-b"><ul class="list settings dense"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul></div>
+    <div class="mock-inner mock-c"><ul class="list settings"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul></div>
+  </div>
+</div>
+    
+<div class="frame-col">
+  <h5>Compte · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="photos-account-mobile"> vue validée</label>
+  <div class="mock mobile">
+    <header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Photos</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list settings"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul><nav class="hc-bottom"><span>Photos</span><span>Coll.</span><span>＋</span><span>🔍</span><span>Compte</span></nav></div>
+    <div class="mock-inner mock-b"><ul class="list settings dense"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul><nav class="hc-bottom"><span>Photos</span><span>Coll.</span><span>＋</span><span>🔍</span><span>Compte</span></nav></div>
+    <div class="mock-inner mock-c"><ul class="list settings"><li>Profil Hubera ID</li><li>Version · OTA</li><li>Autres apps</li></ul><nav class="hc-bottom"><span>Photos</span><span>Coll.</span><span>＋</span><span>🔍</span><span>Compte</span></nav></div>
+  </div>
+</div>
+  </div>
+</article></section>
+</div>
+<script>
+(function() {
+  const root = document.documentElement;
+  const vSel = document.getElementById('variantSel');
+  const tSel = document.getElementById('themeSel');
+  const VK = 'hubera-da-vague1-variant';
+  const TK = 'hubera-da-vague1-theme';
+  const valK = 'hubera-da-vague1-validated';
+  function loadValidated() {
+    let m = {};
+    try { m = JSON.parse(localStorage.getItem(valK) || '{}'); } catch(e) {}
+    document.querySelectorAll('.validate input').forEach(cb => {
+      cb.checked = !!m[cb.dataset.vkey];
+      cb.addEventListener('change', () => {
+        m[cb.dataset.vkey] = cb.checked;
+        localStorage.setItem(valK, JSON.stringify(m));
+      });
+    });
+  }
+  vSel.value = localStorage.getItem(VK) || 'a';
+  tSel.value = localStorage.getItem(TK) || 'light';
+  root.dataset.variant = vSel.value;
+  root.dataset.theme = tSel.value;
+  vSel.addEventListener('change', () => { root.dataset.variant = vSel.value; localStorage.setItem(VK, vSel.value); });
+  tSel.addEventListener('change', () => { root.dataset.theme = tSel.value; localStorage.setItem(TK, tSel.value); });
+  loadValidated();
+})();
+</script>
+</body>
+</html>

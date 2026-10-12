@@ -30,6 +30,7 @@ const navIcons = {
   gantt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h10M4 12h16M4 18h7"/></svg>',
   inbox: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h5"/></svg>',
   account: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="3"/><path d="M5 19c1.5-3 4-5 7-5s5.5 2 7 5"/></svg>',
+  apps: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="6" cy="6" r="2"/><circle cx="12" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="6" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="18" cy="12" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="12" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>',
 };
 const suiteLinks = [
   { title: 'Music', slug: 'music' },
@@ -188,17 +189,23 @@ function shell(inner) {
         <button type="button" data-go="gantt" class="drawer-item ${route === 'gantt' ? 'on' : ''}">${navIcons.gantt}<span>Gantt</span></button>
         <button type="button" data-go="inbox" class="drawer-item ${route === 'inbox' ? 'on' : ''}">${navIcons.inbox}<span>Retours</span></button>
         <button type="button" data-go="account" class="drawer-item ${route === 'account' ? 'on' : ''}">${navIcons.account}<span>Compte / MAJ</span></button>
-        <p class="drawer-label">Apps Hubera</p>
-        <div class="drawer-suite">
-          ${suiteLinks.map((a) => `<button type="button" class="suite-chip" data-hubera-slug="${a.slug}">${esc(a.title)}</button>`).join('')}
-        </div>
       </div>
     </aside>
     <header class="top">
       <button type="button" class="icon-btn" id="menuBtn" aria-label="Menu">${hamburgerSvg}</button>
       <strong class="top-title">${esc(titles[route] || 'Docs')}</strong>
+      <button type="button" class="icon-btn" id="waffleBtn" aria-label="Apps Hubera">${navIcons.apps || navIcons.dash}</button>
       <button type="button" class="avatar" id="accountBtn" aria-label="Compte">${navIcons.account}</button>
     </header>
+    <div class="waffle" id="waffle" hidden>
+      <button type="button" class="waffle-scrim" data-close-waffle aria-label="Fermer"></button>
+      <div class="waffle-sheet" role="dialog" aria-label="Apps Hubera">
+        <strong>Apps Hubera</strong>
+        <div class="drawer-suite">
+          ${suiteLinks.map((a) => `<button type="button" class="suite-chip" data-hubera-slug="${a.slug}">${esc(a.title)}</button>`).join('')}
+        </div>
+      </div>
+    </div>
     <div class="view">${inner}</div>
     ${hideBottom ? '' : `<nav class="bottom">
       ${bottomNav.map((v) => `<button type="button" data-go="${v}" class="${v === route ? 'on' : ''}">${navIcons[v] || ''}<span>${labels[v]}</span></button>`).join('')}
@@ -234,6 +241,14 @@ function bindShell() {
   });
   $('.drawer-sheet')?.addEventListener('click', (e) => e.stopPropagation());
   $('#accountBtn')?.addEventListener('click', () => go('account'));
+  const waffle = $('#waffle');
+  $('#waffleBtn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    waffle?.removeAttribute('hidden');
+  });
+  document.querySelectorAll('[data-close-waffle]').forEach((el) => {
+    el.onclick = () => waffle?.setAttribute('hidden', '');
+  });
   document.querySelectorAll('[data-go]').forEach((b) => {
     if (b.tagName === 'A') return;
     b.onclick = () => {
@@ -779,7 +794,12 @@ async function viewAccount() {
     <p class="lead">${esc(me?.email || '')}</p>
     <div class="card">
       <strong>Version serveur ${esc(ver.version || '')}</strong>
-      <p class="lead">Mise à jour Android jamais forcée (${esc(String(ver.forceUpdate))} / mandatory ${esc(String(ver.mandatory))}).</p>
+      <p class="lead">${
+        ver.apkAvailable
+          ? `Mise à jour v${esc(ver.version || '')} disponible — jamais forcée.`
+          : 'Application à jour — aucune mise à jour disponible.'
+      }</p>
+      <p class="lead">forceUpdate=${esc(String(ver.forceUpdate))} · mandatory=${esc(String(ver.mandatory))}</p>
     </div>
     <h2>Notes</h2>
     <ul class="list">${list.map((n) => `<li><strong>${esc(n.version)} — ${esc(n.title)}</strong><div class="lead">${(n.notes || []).map((x) => esc(x)).join('<br>')}</div></li>`).join('') || '<li>Pas de notes</li>'}</ul>
@@ -1007,6 +1027,7 @@ async function render() {
   if (!views.includes(route)) route = 'dash';
   await renderers[route]();
   bindShell();
+  app.classList.toggle('wide', route === 'kanban');
 }
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
