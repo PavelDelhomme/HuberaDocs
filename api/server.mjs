@@ -915,6 +915,19 @@ app.patch('/api/remarks/:id', requireAuth, (req, res) => {
   res.json({ remark: { ...cur, app: appName, body, kind } });
 });
 
+app.get('/labo/:file', (req, res) => {
+  const file = String(req.params.file || '');
+  if (!/^labo-da-vague[12]\.html$/.test(file) && file !== 'README.md') {
+    return res.status(404).type('text').send('introuvable');
+  }
+  const p = join(CONTENT_DIR, 'design', file);
+  if (!existsSync(p)) return res.status(404).type('text').send('introuvable');
+  res.setHeader('Cache-Control', 'no-store');
+  if (file.endsWith('.md')) res.type('text/plain; charset=utf-8');
+  else res.type('html');
+  res.sendFile(p);
+});
+
 app.use(express.static(WEB_DIR, {
   maxAge: 0,
   etag: true,

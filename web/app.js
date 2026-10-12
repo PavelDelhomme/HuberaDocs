@@ -461,6 +461,11 @@ async function viewDash() {
       <div class="card tap" data-go="kanban"><b>${count('done')}</b><span>Faits</span></div>
       <div class="card tap" data-go="inbox"><b>${d.remarks}</b><span>Notes / retours</span></div>
     </div>
+    <h2>Labo DA</h2>
+    <ul class="list">
+      <li><a href="/labo/labo-da-vague1.html" target="_blank" rel="noopener">Vague 1 — Music Fuel Drive Mail Contacts Maps Photos</a><div class="lead">Keep / Gmail dense / Maps plein écran. Cases « vue validée ».</div></li>
+      <li><a href="/labo/labo-da-vague2.html" target="_blank" rel="noopener">Vague 2 — Calendar Pass Jobs Budget Tasks Stream Office Notes Cook Docs Press ID</a><div class="lead">Même chrome. Pas de remplacement UI prod tant que tu n’as pas coché.</div></li>
+    </ul>
     <h2>Tes derniers rapports / mails</h2>
     <ul class="list">${d.recentReports.map((r) => `<li class="tap" data-go="reports" data-f="${esc(r.filename || '')}"><strong>${esc(r.title)}</strong><br><small>${(r.sent_at || '').slice(0, 16)} · ${esc(r.kind)}</small><div class="lead">${esc(r.summary || '')}</div></li>`).join('') || '<li>Pas encore de PDF</li>'}</ul>
     <h2>Tâches récentes</h2>
