@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light" data-variant="a">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Labo DA — Hubera vague 2</title>
+<style>
+:root, [data-theme="light"] {
+  --bg: #eef2f3; --surface: #fff; --text: #1c2628; --muted: #5a6a6e;
+  --primary: #0E4D5C; --accent: #C9782A; --border: #d0dadc; --shadow: rgba(14,77,92,.12);
+}
+[data-theme="dark"] {
+  --bg: #0f1415; --surface: #1a2224; --text: #e6ecee; --muted: #9aa8ac;
+  --border: #2a3538; --shadow: rgba(0,0,0,.35);
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.45; }
+.page { max-width: 1400px; margin: 0 auto; padding: 1rem 1.25rem 3rem; }
+header.lab-header { position: sticky; top: 0; z-index: 100; background: var(--surface); border-bottom: 1px solid var(--border); padding: .75rem 1.25rem; box-shadow: 0 2px 8px var(--shadow); }
+.lab-header h1 { margin: 0 0 .5rem; font-size: 1.25rem; color: var(--primary); }
+.controls { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
+.controls label { font-size: .85rem; color: var(--muted); }
+.controls select, .controls button { padding: .35rem .6rem; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+.controls button.print { background: var(--primary); color: #fff; border-color: var(--primary); }
+.app-nav { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0; }
+.app-nav a { font-size: .8rem; padding: .25rem .5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; text-decoration: none; color: var(--primary); }
+.app-section { margin-top: 2.5rem; padding-top: 1rem; border-top: 2px solid var(--primary); }
+.app-section h2 { color: var(--primary); }
+.view-block { margin: 1.5rem 0; padding: 1rem; background: var(--surface); border-radius: 12px; border: 1px solid var(--border); }
+.view-block h4 { margin: 0 0 .5rem; }
+.avant { font-size: .9rem; color: var(--muted); margin: 0 0 1rem; }
+.frames-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width: 900px) { .frames-row { grid-template-columns: 1fr; } }
+.frame-col h5 { margin: 0 0 .35rem; font-size: .85rem; }
+.validate { display: block; font-size: .75rem; margin-bottom: .5rem; color: var(--muted); }
+.mock { background: var(--bg); border: 2px solid var(--border); border-radius: 10px; overflow: hidden; position: relative; }
+.mock.web { min-height: 220px; }
+.mock.mobile { max-width: 280px; min-height: 420px; border-radius: 24px; }
+.hc-top { display: flex; align-items: center; gap: .5rem; padding: .4rem .6rem; background: var(--primary); color: #fff; font-size: .75rem; }
+[data-variant="b"] .hc-top { padding: .25rem .5rem; background: #c5221f; }
+[data-variant="c"] .hc-top { background: transparent; color: var(--text); position: absolute; top: 0; left: 0; right: 0; z-index: 2; }
+[data-variant="c"] .mock { position: relative; }
+.hc-title { flex: 1; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hc-actions { display: flex; align-items: center; gap: .35rem; }
+.hc-btn { background: transparent; border: none; color: inherit; cursor: default; font-size: .85rem; }
+.hc-waffle { width: 1.1rem; height: 1.1rem; display: grid; grid-template-columns: repeat(3,1fr); gap: 2px; padding: 0; border: none; background: transparent; cursor: default; }
+.hc-waffle span { background: currentColor; border-radius: 1px; opacity: .9; }
+.hc-avatar { width: 1.4rem; height: 1.4rem; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: .65rem; font-weight: 700; }
+.mock-inner { padding: .75rem; font-size: .72rem; }
+[data-variant="b"] .mock-inner { padding: .35rem .5rem; }
+[data-variant="c"] .mock-inner { padding: 0; min-height: 160px; }
+html[data-variant="a"] .mock-b, html[data-variant="a"] .mock-c { display: none; }
+html[data-variant="b"] .mock-a, html[data-variant="b"] .mock-c { display: none; }
+html[data-variant="c"] .mock-a, html[data-variant="c"] .mock-b { display: none; }
+.fld { margin-bottom: .5rem; }
+.inp { height: 1.4rem; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; }
+.inp.wide { height: 2rem; margin-bottom: .5rem; }
+.cta { display: block; width: 100%; margin-top: .5rem; padding: .5rem; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-size: .75rem; }
+.cta.dense { padding: .35rem; }
+.cta.float { margin: 0; }
+.cta.secondary { background: var(--primary); margin-top: .35rem; }
+.list { list-style: none; padding: 0; margin: 0; }
+.list li { padding: .45rem .5rem; border-bottom: 1px solid var(--border); background: var(--surface); }
+.list.dense li { padding: .25rem .4rem; font-size: .68rem; }
+.list.mail li span { display: block; color: var(--muted); font-size: .65rem; }
+.chip-row { display: flex; gap: .35rem; flex-wrap: wrap; margin-bottom: .5rem; }
+.chip { padding: .2rem .45rem; background: var(--primary); color: #fff; border-radius: 999px; font-size: .65rem; }
+.grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 4px; }
+.grid.tight { gap: 2px; }
+.grid.edge { margin: 0; }
+.thumb { aspect-ratio: 1; background: linear-gradient(135deg, var(--primary), var(--accent)); opacity: .85; border-radius: 2px; }
+.map-fill { min-height: 100px; background: linear-gradient(180deg,#8ecae6,#219ebc); color: #023047; display: flex; align-items: center; justify-content: center; border-radius: 6px; position: relative; }
+.map-fill.full { min-height: 140px; border-radius: 0; }
+.search-bar { padding: .4rem; background: var(--surface); border: 1px solid var(--border); margin-bottom: .4rem; border-radius: 6px; }
+.search.overlay { position: absolute; top: .5rem; left: .5rem; right: .5rem; padding: .35rem; border-radius: 8px; border: none; }
+.gauge { font-size: 1.2rem; font-weight: 700; color: var(--accent); text-align: center; padding: .5rem; }
+.gauge.small { font-size: .9rem; }
+.gauge.overlay { position: absolute; bottom: .5rem; right: .5rem; background: var(--surface); padding: .25rem .5rem; border-radius: 8px; font-size: .75rem; }
+.hc-bottom { display: flex; justify-content: space-around; padding: .4rem; font-size: .6rem; background: var(--surface); border-top: 1px solid var(--border); color: var(--muted); }
+[data-variant="c"] .hc-bottom { background: rgba(0,0,0,.45); color: #fff; }
+.card { padding: .75rem; background: var(--surface); border-radius: 8px; border: 1px solid var(--border); }
+.hero { padding: 1rem; background: linear-gradient(90deg, var(--primary), #156574); color: #fff; border-radius: 8px; margin-bottom: .5rem; }
+.hero.bleed { border-radius: 0; margin: 0; min-height: 80px; }
+.player-full { min-height: 120px; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; }
+.search-full { min-height: 100px; padding: 1rem; background: var(--surface); }
+@media print {
+  .lab-header { position: static; }
+  .controls button.print { display: none; }
+  .mock { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<header class="lab-header">
+  <h1>Labo DA — Vague 2 (Calendar, Pass, Jobs, Budget, Tasks, Stream, Office, Notes, Cook, Docs, Press, ID)</h1>
+  <div class="controls">
+    <label>Variante <select id="variantSel"><option value="a">A — Keep aéré (teal / orange)</option><option value="b">B — Gmail dense</option><option value="c">C — Maps plein écran</option></select></label>
+    <label>Thème <select id="themeSel"><option value="light">Clair</option><option value="dark">Sombre</option></select></label>
+    <button type="button" class="print" onclick="window.print()">Imprimer / PDF</button>
+  </div>
+  <p style="margin:.5rem 0 0;font-size:.8rem;color:var(--muted)">Même chrome Keep que la vague 1. Tu coches vue par vue. Pas de remplacement UI prod tant que tu n’as pas validé.</p>
+</header>
+<div class="page">
+<nav class="app-nav"><a href="#app-calendar">Hubera Calendar</a><a href="#app-pass">Hubera Pass</a><a href="#app-jobs">Hubera Jobs</a><a href="#app-budget">Hubera Budget</a><a href="#app-tasks">Hubera Tasks</a><a href="#app-stream">Hubera Stream</a><a href="#app-office">Hubera Office</a><a href="#app-notes">Hubera Notes</a><a href="#app-cook">Hubera Cook</a><a href="#app-docs">Hubera Docs</a><a href="#app-cms">Hubera Press</a><a href="#app-id">Hubera ID</a></nav>
+<section class="app-section" id="app-calendar"><h2>Hubera Calendar</h2><article class="view-block" id="calendar-semaine">
+  <h4>Semaine</h4>
+  <p class="avant"><strong>Avant :</strong> Grille semaine type Google, URLs /app/r/*, agendas Nom / Anniversaires / Tâches.</p>
+  <div class="frames-row">
+<div class="frame-col">
+  <h5>Semaine · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="calendar-semaine-web"> vue validée</label>
+  <div class="mock web"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Calendar</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list"><li>Lun 12 — standup</li><li>Mar 13 — Maps QA</li></ul></div>
+    <div class="mock-inner mock-b"><ul class="list"><li>Lun 12 — standup</li><li>Mar 13 — Maps QA</li></ul></div>
+    <div class="mock-inner mock-c"><ul class="list"><li>Lun 12 — standup</li><li>Mar 13 — Maps QA</li></ul></div>
+  </div>
+</div>
+<div class="frame-col">
+  <h5>Semaine · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="calendar-semaine-mobile"> vue validée</label>
+  <div class="mock mobile"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Calendar</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list"><li>Lun 12 — standup</li><li>Mar 13 — Maps QA</li></ul></div>
+    <div class="mock-inner mock-b"><ul class="list"><li>Lun 12 — standup</li><li>Mar 13 — Maps QA</li></ul></div>
+    <div class="mock-inner mock-c"><ul class="list"><li>Lun 12 — standup</li><li>Mar 13 — Maps QA</li></ul></div>
+    <div class="hc-bottom"><span>Home</span><span>Liste</span><span>Compte</span></div>
+  </div>
+</div>
+  </div>
+</article><article class="view-block" id="calendar-jour">
+  <h4>Jour</h4>
+  <p class="avant"><strong>Avant :</strong> Grille semaine type Google, URLs /app/r/*, agendas Nom / Anniversaires / Tâches.</p>
+  <div class="frames-row">
+<div class="frame-col">
+  <h5>Jour · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="calendar-jour-web"> vue validée</label>
+  <div class="mock web"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Calendar</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="chip-row"><span class="chip">09:00</span><span class="chip">14:00</span></div><ul class="list dense"><li>Standup</li></ul></div>
+    <div class="mock-inner mock-b"><div class="chip-row"><span class="chip">09:00</span><span class="chip">14:00</span></div><ul class="list dense"><li>Standup</li></ul></div>
+    <div class="mock-inner mock-c"><div class="chip-row"><span class="chip">09:00</span><span class="chip">14:00</span></div><ul class="list dense"><li>Standup</li></ul></div>
+  </div>
+</div>
+<div class="frame-col">
+  <h5>Jour · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="calendar-jour-mobile"> vue validée</label>
+  <div class="mock mobile"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Calendar</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="chip-row"><span class="chip">09:00</span><span class="chip">14:00</span></div><ul class="list dense"><li>Standup</li></ul></div>
+    <div class="mock-inner mock-b"><div class="chip-row"><span class="chip">09:00</span><span class="chip">14:00</span></div><ul class="list dense"><li>Standup</li></ul></div>
+    <div class="mock-inner mock-c"><div class="chip-row"><span class="chip">09:00</span><span class="chip">14:00</span></div><ul class="list dense"><li>Standup</li></ul></div>
+    <div class="hc-bottom"><span>Home</span><span>Liste</span><span>Compte</span></div>
+  </div>
+</div>
+  </div>
+</article></section><section class="app-section" id="app-pass"><h2>Hubera Pass</h2><article class="view-block" id="pass-coffre">
+  <h4>Coffre</h4>
+  <p class="avant"><strong>Avant :</strong> Coffre master / passkey. Chrome Keep, pas la nav suite dans le hamburger.</p>
+  <div class="frames-row">
+<div class="frame-col">
+  <h5>Coffre · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="pass-coffre-web"> vue validée</label>
+  <div class="mock web"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Pass</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list"><li>maily.ovh</li><li>GitHub</li></ul><button class="cta">Nouveau</button></div>
+    <div class="mock-inner mock-b"><ul class="list"><li>maily.ovh</li><li>GitHub</li></ul><button class="cta">Nouveau</button></div>
+    <div class="mock-inner mock-c"><ul class="list"><li>maily.ovh</li><li>GitHub</li></ul><button class="cta">Nouveau</button></div>
+  </div>
+</div>
+<div class="frame-col">
+  <h5>Coffre · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="pass-coffre-mobile"> vue validée</label>
+  <div class="mock mobile"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Pass</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list"><li>maily.ovh</li><li>GitHub</li></ul><button class="cta">Nouveau</button></div>
+    <div class="mock-inner mock-b"><ul class="list"><li>maily.ovh</li><li>GitHub</li></ul><button class="cta">Nouveau</button></div>
+    <div class="mock-inner mock-c"><ul class="list"><li>maily.ovh</li><li>GitHub</li></ul><button class="cta">Nouveau</button></div>
+    <div class="hc-bottom"><span>Home</span><span>Liste</span><span>Compte</span></div>
+  </div>
+</div>
+  </div>
+</article><article class="view-block" id="pass-déverrouiller">
+  <h4>Déverrouiller</h4>
+  <p class="avant"><strong>Avant :</strong> Coffre master / passkey. Chrome Keep, pas la nav suite dans le hamburger.</p>
+  <div class="frames-row">
+<div class="frame-col">
+  <h5>Déverrouiller · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="pass-deverrouiller-web"> vue validée</label>
+  <div class="mock web"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Pass</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="fld"><label>Master</label><div class="inp"></div></div><button class="cta">Ouvrir le coffre</button></div>
+    <div class="mock-inner mock-b"><div class="fld"><label>Master</label><div class="inp"></div></div><button class="cta">Ouvrir le coffre</button></div>
+    <div class="mock-inner mock-c"><div class="fld"><label>Master</label><div class="inp"></div></div><button class="cta">Ouvrir le coffre</button></div>
+  </div>
+</div>
+<div class="frame-col">
+  <h5>Déverrouiller · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="pass-deverrouiller-mobile"> vue validée</label>
+  <div class="mock mobile"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Pass</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="fld"><label>Master</label><div class="inp"></div></div><button class="cta">Ouvrir le coffre</button></div>
+    <div class="mock-inner mock-b"><div class="fld"><label>Master</label><div class="inp"></div></div><button class="cta">Ouvrir le coffre</button></div>
+    <div class="mock-inner mock-c"><div class="fld"><label>Master</label><div class="inp"></div></div><button class="cta">Ouvrir le coffre</button></div>
+    <div class="hc-bottom"><span>Home</span><span>Liste</span><span>Compte</span></div>
+  </div>
+</div>
+  </div>
+</article></section><section class="app-section" id="app-jobs"><h2>Hubera Jobs</h2><article class="view-block" id="jobs-board">
+  <h4>Board</h4>
+  <p class="avant"><strong>Avant :</strong> Kanban missions / clients. Prod jobbingtrack inchangée.</p>
+  <div class="frames-row">
+<div class="frame-col">
+  <h5>Board · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="jobs-board-web"> vue validée</label>
+  <div class="mock web"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Jobs</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="chip-row"><span class="chip">À faire</span><span class="chip">En cours</span><span class="chip">Fait</span></div></div>
+    <div class="mock-inner mock-b"><div class="chip-row"><span class="chip">À faire</span><span class="chip">En cours</span><span class="chip">Fait</span></div></div>
+    <div class="mock-inner mock-c"><div class="chip-row"><span class="chip">À faire</span><span class="chip">En cours</span><span class="chip">Fait</span></div></div>
+  </div>
+</div>
+<div class="frame-col">
+  <h5>Board · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="jobs-board-mobile"> vue validée</label>
+  <div class="mock mobile"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Jobs</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="chip-row"><span class="chip">À faire</span><span class="chip">En cours</span><span class="chip">Fait</span></div></div>
+    <div class="mock-inner mock-b"><div class="chip-row"><span class="chip">À faire</span><span class="chip">En cours</span><span class="chip">Fait</span></div></div>
+    <div class="mock-inner mock-c"><div class="chip-row"><span class="chip">À faire</span><span class="chip">En cours</span><span class="chip">Fait</span></div></div>
+    <div class="hc-bottom"><span>Home</span><span>Liste</span><span>Compte</span></div>
+  </div>
+</div>
+  </div>
+</article><article class="view-block" id="jobs-fiche">
+  <h4>Fiche</h4>
+  <p class="avant"><strong>Avant :</strong> Kanban missions / clients. Prod jobbingtrack inchangée.</p>
+  <div class="frames-row">
+<div class="frame-col">
+  <h5>Fiche · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="jobs-fiche-web"> vue validée</label>
+  <div class="mock web"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Jobs</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="card">Mission Rennes · 2h</div></div>
+    <div class="mock-inner mock-b"><div class="card">Mission Rennes · 2h</div></div>
+    <div class="mock-inner mock-c"><div class="card">Mission Rennes · 2h</div></div>
+  </div>
+</div>
+<div class="frame-col">
+  <h5>Fiche · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="jobs-fiche-mobile"> vue validée</label>
+  <div class="mock mobile"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Jobs</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="card">Mission Rennes · 2h</div></div>
+    <div class="mock-inner mock-b"><div class="card">Mission Rennes · 2h</div></div>
+    <div class="mock-inner mock-c"><div class="card">Mission Rennes · 2h</div></div>
+    <div class="hc-bottom"><span>Home</span><span>Liste</span><span>Compte</span></div>
+  </div>
+</div>
+  </div>
+</article></section><section class="app-section" id="app-budget"><h2>Hubera Budget</h2><article class="view-block" id="budget-accueil">
+  <h4>Accueil</h4>
+  <p class="avant"><strong>Avant :</strong> Landing + Expo /app/. DA chrome Keep.</p>
+  <div class="frames-row">
+<div class="frame-col">
+  <h5>Accueil · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="budget-accueil-web"> vue validée</label>
+  <div class="mock web"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Budget</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="gauge">1 240 €</div><ul class="list dense"><li>Courses</li><li>Fuel</li></ul></div>
+    <div class="mock-inner mock-b"><div class="gauge">1 240 €</div><ul class="list dense"><li>Courses</li><li>Fuel</li></ul></div>
+    <div class="mock-inner mock-c"><div class="gauge">1 240 €</div><ul class="list dense"><li>Courses</li><li>Fuel</li></ul></div>
+  </div>
+</div>
+<div class="frame-col">
+  <h5>Accueil · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="budget-accueil-mobile"> vue validée</label>
+  <div class="mock mobile"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Budget</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="gauge">1 240 €</div><ul class="list dense"><li>Courses</li><li>Fuel</li></ul></div>
+    <div class="mock-inner mock-b"><div class="gauge">1 240 €</div><ul class="list dense"><li>Courses</li><li>Fuel</li></ul></div>
+    <div class="mock-inner mock-c"><div class="gauge">1 240 €</div><ul class="list dense"><li>Courses</li><li>Fuel</li></ul></div>
+    <div class="hc-bottom"><span>Home</span><span>Liste</span><span>Compte</span></div>
+  </div>
+</div>
+  </div>
+</article><article class="view-block" id="budget-mois">
+  <h4>Mois</h4>
+  <p class="avant"><strong>Avant :</strong> Landing + Expo /app/. DA chrome Keep.</p>
+  <div class="frames-row">
+<div class="frame-col">
+  <h5>Mois · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="budget-mois-web"> vue validée</label>
+  <div class="mock web"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Budget</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list"><li>Octobre</li><li>Septembre</li></ul></div>
+    <div class="mock-inner mock-b"><ul class="list"><li>Octobre</li><li>Septembre</li></ul></div>
+    <div class="mock-inner mock-c"><ul class="list"><li>Octobre</li><li>Septembre</li></ul></div>
+  </div>
+</div>
+<div class="frame-col">
+  <h5>Mois · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="budget-mois-mobile"> vue validée</label>
+  <div class="mock mobile"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Budget</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list"><li>Octobre</li><li>Septembre</li></ul></div>
+    <div class="mock-inner mock-b"><ul class="list"><li>Octobre</li><li>Septembre</li></ul></div>
+    <div class="mock-inner mock-c"><ul class="list"><li>Octobre</li><li>Septembre</li></ul></div>
+    <div class="hc-bottom"><span>Home</span><span>Liste</span><span>Compte</span></div>
+  </div>
+</div>
+  </div>
+</article></section><section class="app-section" id="app-tasks"><h2>Hubera Tasks</h2><article class="view-block" id="tasks-liste">
+  <h4>Liste</h4>
+  <p class="avant"><strong>Avant :</strong> Liste / overlay Calendar. Hamburger = Tasks seulement.</p>
+  <div class="frames-row">
+<div class="frame-col">
+  <h5>Liste · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="tasks-liste-web"> vue validée</label>
+  <div class="mock web"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Tasks</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list"><li>☐ Overlay Maps</li><li>☑ OTA Music</li></ul></div>
+    <div class="mock-inner mock-b"><ul class="list"><li>☐ Overlay Maps</li><li>☑ OTA Music</li></ul></div>
+    <div class="mock-inner mock-c"><ul class="list"><li>☐ Overlay Maps</li><li>☑ OTA Music</li></ul></div>
+  </div>
+</div>
+<div class="frame-col">
+  <h5>Liste · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="tasks-liste-mobile"> vue validée</label>
+  <div class="mock mobile"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Tasks</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list"><li>☐ Overlay Maps</li><li>☑ OTA Music</li></ul></div>
+    <div class="mock-inner mock-b"><ul class="list"><li>☐ Overlay Maps</li><li>☑ OTA Music</li></ul></div>
+    <div class="mock-inner mock-c"><ul class="list"><li>☐ Overlay Maps</li><li>☑ OTA Music</li></ul></div>
+    <div class="hc-bottom"><span>Home</span><span>Liste</span><span>Compte</span></div>
+  </div>
+</div>
+  </div>
+</article><article class="view-block" id="tasks-nouveau">
+  <h4>Nouveau</h4>
+  <p class="avant"><strong>Avant :</strong> Liste / overlay Calendar. Hamburger = Tasks seulement.</p>
+  <div class="frames-row">
+<div class="frame-col">
+  <h5>Nouveau · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="tasks-nouveau-web"> vue validée</label>
+  <div class="mock web"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Tasks</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="fld"><label>Titre</label><div class="inp"></div></div><button class="cta">Ajouter</button></div>
+    <div class="mock-inner mock-b"><div class="fld"><label>Titre</label><div class="inp"></div></div><button class="cta">Ajouter</button></div>
+    <div class="mock-inner mock-c"><div class="fld"><label>Titre</label><div class="inp"></div></div><button class="cta">Ajouter</button></div>
+  </div>
+</div>
+<div class="frame-col">
+  <h5>Nouveau · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="tasks-nouveau-mobile"> vue validée</label>
+  <div class="mock mobile"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Tasks</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="fld"><label>Titre</label><div class="inp"></div></div><button class="cta">Ajouter</button></div>
+    <div class="mock-inner mock-b"><div class="fld"><label>Titre</label><div class="inp"></div></div><button class="cta">Ajouter</button></div>
+    <div class="mock-inner mock-c"><div class="fld"><label>Titre</label><div class="inp"></div></div><button class="cta">Ajouter</button></div>
+    <div class="hc-bottom"><span>Home</span><span>Liste</span><span>Compte</span></div>
+  </div>
+</div>
+  </div>
+</article></section><section class="app-section" id="app-stream"><h2>Hubera Stream</h2><article class="view-block" id="stream-bibliothèque">
+  <h4>Bibliothèque</h4>
+  <p class="avant"><strong>Avant :</strong> Catalogue perso owner. Cookie suite. Pas d’index public.</p>
+  <div class="frames-row">
+<div class="frame-col">
+  <h5>Bibliothèque · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="stream-bibliotheque-web"> vue validée</label>
+  <div class="mock web"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Stream</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="grid"><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div></div></div>
+    <div class="mock-inner mock-b"><div class="grid"><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div></div></div>
+    <div class="mock-inner mock-c"><div class="grid"><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div></div></div>
+  </div>
+</div>
+<div class="frame-col">
+  <h5>Bibliothèque · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="stream-bibliotheque-mobile"> vue validée</label>
+  <div class="mock mobile"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Stream</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="grid"><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div></div></div>
+    <div class="mock-inner mock-b"><div class="grid"><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div></div></div>
+    <div class="mock-inner mock-c"><div class="grid"><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div></div></div>
+    <div class="hc-bottom"><span>Home</span><span>Liste</span><span>Compte</span></div>
+  </div>
+</div>
+  </div>
+</article><article class="view-block" id="stream-sources">
+  <h4>Sources</h4>
+  <p class="avant"><strong>Avant :</strong> Catalogue perso owner. Cookie suite. Pas d’index public.</p>
+  <div class="frames-row">
+<div class="frame-col">
+  <h5>Sources · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="stream-sources-web"> vue validée</label>
+  <div class="mock web"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Stream</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list"><li>URL perso</li><li>Magnet manuel</li></ul></div>
+    <div class="mock-inner mock-b"><ul class="list"><li>URL perso</li><li>Magnet manuel</li></ul></div>
+    <div class="mock-inner mock-c"><ul class="list"><li>URL perso</li><li>Magnet manuel</li></ul></div>
+  </div>
+</div>
+<div class="frame-col">
+  <h5>Sources · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="stream-sources-mobile"> vue validée</label>
+  <div class="mock mobile"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Stream</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list"><li>URL perso</li><li>Magnet manuel</li></ul></div>
+    <div class="mock-inner mock-b"><ul class="list"><li>URL perso</li><li>Magnet manuel</li></ul></div>
+    <div class="mock-inner mock-c"><ul class="list"><li>URL perso</li><li>Magnet manuel</li></ul></div>
+    <div class="hc-bottom"><span>Home</span><span>Liste</span><span>Compte</span></div>
+  </div>
+</div>
+  </div>
+</article></section><section class="app-section" id="app-office"><h2>Hubera Office</h2><article class="view-block" id="office-accueil">
+  <h4>Accueil</h4>
+  <p class="avant"><strong>Avant :</strong> Docs / tableur locaux. Chrome kit.</p>
+  <div class="frames-row">
+<div class="frame-col">
+  <h5>Accueil · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="office-accueil-web"> vue validée</label>
+  <div class="mock web"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Office</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="chip-row"><span class="chip">Doc</span><span class="chip">Sheet</span></div></div>
+    <div class="mock-inner mock-b"><div class="chip-row"><span class="chip">Doc</span><span class="chip">Sheet</span></div></div>
+    <div class="mock-inner mock-c"><div class="chip-row"><span class="chip">Doc</span><span class="chip">Sheet</span></div></div>
+  </div>
+</div>
+<div class="frame-col">
+  <h5>Accueil · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="office-accueil-mobile"> vue validée</label>
+  <div class="mock mobile"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Office</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="chip-row"><span class="chip">Doc</span><span class="chip">Sheet</span></div></div>
+    <div class="mock-inner mock-b"><div class="chip-row"><span class="chip">Doc</span><span class="chip">Sheet</span></div></div>
+    <div class="mock-inner mock-c"><div class="chip-row"><span class="chip">Doc</span><span class="chip">Sheet</span></div></div>
+    <div class="hc-bottom"><span>Home</span><span>Liste</span><span>Compte</span></div>
+  </div>
+</div>
+  </div>
+</article><article class="view-block" id="office-doc">
+  <h4>Doc</h4>
+  <p class="avant"><strong>Avant :</strong> Docs / tableur locaux. Chrome kit.</p>
+  <div class="frames-row">
+<div class="frame-col">
+  <h5>Doc · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="office-doc-web"> vue validée</label>
+  <div class="mock web"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Office</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="hero">Titre</div><p class="avant">Corps…</p></div>
+    <div class="mock-inner mock-b"><div class="hero">Titre</div><p class="avant">Corps…</p></div>
+    <div class="mock-inner mock-c"><div class="hero">Titre</div><p class="avant">Corps…</p></div>
+  </div>
+</div>
+<div class="frame-col">
+  <h5>Doc · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="office-doc-mobile"> vue validée</label>
+  <div class="mock mobile"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Office</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="hero">Titre</div><p class="avant">Corps…</p></div>
+    <div class="mock-inner mock-b"><div class="hero">Titre</div><p class="avant">Corps…</p></div>
+    <div class="mock-inner mock-c"><div class="hero">Titre</div><p class="avant">Corps…</p></div>
+    <div class="hc-bottom"><span>Home</span><span>Liste</span><span>Compte</span></div>
+  </div>
+</div>
+  </div>
+</article></section><section class="app-section" id="app-notes"><h2>Hubera Notes</h2><article class="view-block" id="notes-liste">
+  <h4>Liste</h4>
+  <p class="avant"><strong>Avant :</strong> Notes Keep-like. Hamburger = notes.</p>
+  <div class="frames-row">
+<div class="frame-col">
+  <h5>Liste · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="notes-liste-web"> vue validée</label>
+  <div class="mock web"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Notes</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list"><li>Courses</li><li>Rennes GPS</li></ul></div>
+    <div class="mock-inner mock-b"><ul class="list"><li>Courses</li><li>Rennes GPS</li></ul></div>
+    <div class="mock-inner mock-c"><ul class="list"><li>Courses</li><li>Rennes GPS</li></ul></div>
+  </div>
+</div>
+<div class="frame-col">
+  <h5>Liste · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="notes-liste-mobile"> vue validée</label>
+  <div class="mock mobile"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Notes</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list"><li>Courses</li><li>Rennes GPS</li></ul></div>
+    <div class="mock-inner mock-b"><ul class="list"><li>Courses</li><li>Rennes GPS</li></ul></div>
+    <div class="mock-inner mock-c"><ul class="list"><li>Courses</li><li>Rennes GPS</li></ul></div>
+    <div class="hc-bottom"><span>Home</span><span>Liste</span><span>Compte</span></div>
+  </div>
+</div>
+  </div>
+</article><article class="view-block" id="notes-éditeur">
+  <h4>Éditeur</h4>
+  <p class="avant"><strong>Avant :</strong> Notes Keep-like. Hamburger = notes.</p>
+  <div class="frames-row">
+<div class="frame-col">
+  <h5>Éditeur · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="notes-editeur-web"> vue validée</label>
+  <div class="mock web"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Notes</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="inp wide"></div><button class="cta secondary">Enregistrer</button></div>
+    <div class="mock-inner mock-b"><div class="inp wide"></div><button class="cta secondary">Enregistrer</button></div>
+    <div class="mock-inner mock-c"><div class="inp wide"></div><button class="cta secondary">Enregistrer</button></div>
+  </div>
+</div>
+<div class="frame-col">
+  <h5>Éditeur · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="notes-editeur-mobile"> vue validée</label>
+  <div class="mock mobile"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Notes</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="inp wide"></div><button class="cta secondary">Enregistrer</button></div>
+    <div class="mock-inner mock-b"><div class="inp wide"></div><button class="cta secondary">Enregistrer</button></div>
+    <div class="mock-inner mock-c"><div class="inp wide"></div><button class="cta secondary">Enregistrer</button></div>
+    <div class="hc-bottom"><span>Home</span><span>Liste</span><span>Compte</span></div>
+  </div>
+</div>
+  </div>
+</article></section><section class="app-section" id="app-cook"><h2>Hubera Cook</h2><article class="view-block" id="cook-frigo">
+  <h4>Frigo</h4>
+  <p class="avant"><strong>Avant :</strong> Frigo / recettes / planning / courses. Couleurs Cook, login ID.</p>
+  <div class="frames-row">
+<div class="frame-col">
+  <h5>Frigo · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="cook-frigo-web"> vue validée</label>
+  <div class="mock web"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Cook</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list"><li>Œufs</li><li>Lait</li></ul><button class="cta">Ajouter</button></div>
+    <div class="mock-inner mock-b"><ul class="list"><li>Œufs</li><li>Lait</li></ul><button class="cta">Ajouter</button></div>
+    <div class="mock-inner mock-c"><ul class="list"><li>Œufs</li><li>Lait</li></ul><button class="cta">Ajouter</button></div>
+  </div>
+</div>
+<div class="frame-col">
+  <h5>Frigo · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="cook-frigo-mobile"> vue validée</label>
+  <div class="mock mobile"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Cook</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list"><li>Œufs</li><li>Lait</li></ul><button class="cta">Ajouter</button></div>
+    <div class="mock-inner mock-b"><ul class="list"><li>Œufs</li><li>Lait</li></ul><button class="cta">Ajouter</button></div>
+    <div class="mock-inner mock-c"><ul class="list"><li>Œufs</li><li>Lait</li></ul><button class="cta">Ajouter</button></div>
+    <div class="hc-bottom"><span>Home</span><span>Liste</span><span>Compte</span></div>
+  </div>
+</div>
+  </div>
+</article><article class="view-block" id="cook-recettes">
+  <h4>Recettes</h4>
+  <p class="avant"><strong>Avant :</strong> Frigo / recettes / planning / courses. Couleurs Cook, login ID.</p>
+  <div class="frames-row">
+<div class="frame-col">
+  <h5>Recettes · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="cook-recettes-web"> vue validée</label>
+  <div class="mock web"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Cook</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list"><li>Omelette</li><li>Gratin</li></ul></div>
+    <div class="mock-inner mock-b"><ul class="list"><li>Omelette</li><li>Gratin</li></ul></div>
+    <div class="mock-inner mock-c"><ul class="list"><li>Omelette</li><li>Gratin</li></ul></div>
+  </div>
+</div>
+<div class="frame-col">
+  <h5>Recettes · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="cook-recettes-mobile"> vue validée</label>
+  <div class="mock mobile"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Cook</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list"><li>Omelette</li><li>Gratin</li></ul></div>
+    <div class="mock-inner mock-b"><ul class="list"><li>Omelette</li><li>Gratin</li></ul></div>
+    <div class="mock-inner mock-c"><ul class="list"><li>Omelette</li><li>Gratin</li></ul></div>
+    <div class="hc-bottom"><span>Home</span><span>Liste</span><span>Compte</span></div>
+  </div>
+</div>
+  </div>
+</article></section><section class="app-section" id="app-docs"><h2>Hubera Docs</h2><article class="view-block" id="docs-kanban">
+  <h4>Kanban</h4>
+  <p class="avant"><strong>Avant :</strong> Cockpit Paul. Kanban plein écran. Waffle Keep.</p>
+  <div class="frames-row">
+<div class="frame-col">
+  <h5>Kanban · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="docs-kanban-web"> vue validée</label>
+  <div class="mock web"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Docs</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="chip-row"><span class="chip">todo</span><span class="chip">doing</span><span class="chip">done</span></div></div>
+    <div class="mock-inner mock-b"><div class="chip-row"><span class="chip">todo</span><span class="chip">doing</span><span class="chip">done</span></div></div>
+    <div class="mock-inner mock-c"><div class="chip-row"><span class="chip">todo</span><span class="chip">doing</span><span class="chip">done</span></div></div>
+  </div>
+</div>
+<div class="frame-col">
+  <h5>Kanban · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="docs-kanban-mobile"> vue validée</label>
+  <div class="mock mobile"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Docs</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="chip-row"><span class="chip">todo</span><span class="chip">doing</span><span class="chip">done</span></div></div>
+    <div class="mock-inner mock-b"><div class="chip-row"><span class="chip">todo</span><span class="chip">doing</span><span class="chip">done</span></div></div>
+    <div class="mock-inner mock-c"><div class="chip-row"><span class="chip">todo</span><span class="chip">doing</span><span class="chip">done</span></div></div>
+    <div class="hc-bottom"><span>Home</span><span>Liste</span><span>Compte</span></div>
+  </div>
+</div>
+  </div>
+</article><article class="view-block" id="docs-rapport">
+  <h4>Rapport</h4>
+  <p class="avant"><strong>Avant :</strong> Cockpit Paul. Kanban plein écran. Waffle Keep.</p>
+  <div class="frames-row">
+<div class="frame-col">
+  <h5>Rapport · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="docs-rapport-web"> vue validée</label>
+  <div class="mock web"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Docs</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="card">PDF + mail du soir</div></div>
+    <div class="mock-inner mock-b"><div class="card">PDF + mail du soir</div></div>
+    <div class="mock-inner mock-c"><div class="card">PDF + mail du soir</div></div>
+  </div>
+</div>
+<div class="frame-col">
+  <h5>Rapport · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="docs-rapport-mobile"> vue validée</label>
+  <div class="mock mobile"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Docs</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="card">PDF + mail du soir</div></div>
+    <div class="mock-inner mock-b"><div class="card">PDF + mail du soir</div></div>
+    <div class="mock-inner mock-c"><div class="card">PDF + mail du soir</div></div>
+    <div class="hc-bottom"><span>Home</span><span>Liste</span><span>Compte</span></div>
+  </div>
+</div>
+  </div>
+</article></section><section class="app-section" id="app-cms"><h2>Hubera Press</h2><article class="view-block" id="cms-tenants">
+  <h4>Tenants</h4>
+  <p class="avant"><strong>Avant :</strong> Landings CMS. Pont cookie suite → JWT.</p>
+  <div class="frames-row">
+<div class="frame-col">
+  <h5>Tenants · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="cms-tenants-web"> vue validée</label>
+  <div class="mock web"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Press</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list"><li>maps.hubera.cloud</li><li>music.hubera.cloud</li></ul></div>
+    <div class="mock-inner mock-b"><ul class="list"><li>maps.hubera.cloud</li><li>music.hubera.cloud</li></ul></div>
+    <div class="mock-inner mock-c"><ul class="list"><li>maps.hubera.cloud</li><li>music.hubera.cloud</li></ul></div>
+  </div>
+</div>
+<div class="frame-col">
+  <h5>Tenants · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="cms-tenants-mobile"> vue validée</label>
+  <div class="mock mobile"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Press</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ul class="list"><li>maps.hubera.cloud</li><li>music.hubera.cloud</li></ul></div>
+    <div class="mock-inner mock-b"><ul class="list"><li>maps.hubera.cloud</li><li>music.hubera.cloud</li></ul></div>
+    <div class="mock-inner mock-c"><ul class="list"><li>maps.hubera.cloud</li><li>music.hubera.cloud</li></ul></div>
+    <div class="hc-bottom"><span>Home</span><span>Liste</span><span>Compte</span></div>
+  </div>
+</div>
+  </div>
+</article><article class="view-block" id="cms-éditeur">
+  <h4>Éditeur</h4>
+  <p class="avant"><strong>Avant :</strong> Landings CMS. Pont cookie suite → JWT.</p>
+  <div class="frames-row">
+<div class="frame-col">
+  <h5>Éditeur · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="cms-editeur-web"> vue validée</label>
+  <div class="mock web"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Press</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="inp wide"></div><button class="cta">Publier</button></div>
+    <div class="mock-inner mock-b"><div class="inp wide"></div><button class="cta">Publier</button></div>
+    <div class="mock-inner mock-c"><div class="inp wide"></div><button class="cta">Publier</button></div>
+  </div>
+</div>
+<div class="frame-col">
+  <h5>Éditeur · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="cms-editeur-mobile"> vue validée</label>
+  <div class="mock mobile"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera Press</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="inp wide"></div><button class="cta">Publier</button></div>
+    <div class="mock-inner mock-b"><div class="inp wide"></div><button class="cta">Publier</button></div>
+    <div class="mock-inner mock-c"><div class="inp wide"></div><button class="cta">Publier</button></div>
+    <div class="hc-bottom"><span>Home</span><span>Liste</span><span>Compte</span></div>
+  </div>
+</div>
+  </div>
+</article></section><section class="app-section" id="app-id"><h2>Hubera ID</h2><article class="view-block" id="id-landing">
+  <h4>Landing</h4>
+  <p class="avant"><strong>Avant :</strong> Landing publique générique. Détail owner = allowlist Paul, pas la home.</p>
+  <div class="frames-row">
+<div class="frame-col">
+  <h5>Landing · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="id-landing-web"> vue validée</label>
+  <div class="mock web"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera ID</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="hero">Hubera ID</div><button class="cta">Connexion</button></div>
+    <div class="mock-inner mock-b"><div class="hero">Hubera ID</div><button class="cta">Connexion</button></div>
+    <div class="mock-inner mock-c"><div class="hero">Hubera ID</div><button class="cta">Connexion</button></div>
+  </div>
+</div>
+<div class="frame-col">
+  <h5>Landing · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="id-landing-mobile"> vue validée</label>
+  <div class="mock mobile"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera ID</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><div class="hero">Hubera ID</div><button class="cta">Connexion</button></div>
+    <div class="mock-inner mock-b"><div class="hero">Hubera ID</div><button class="cta">Connexion</button></div>
+    <div class="mock-inner mock-c"><div class="hero">Hubera ID</div><button class="cta">Connexion</button></div>
+    <div class="hc-bottom"><span>Home</span><span>Liste</span><span>Compte</span></div>
+  </div>
+</div>
+  </div>
+</article><article class="view-block" id="id-migrate">
+  <h4>Migrate</h4>
+  <p class="avant"><strong>Avant :</strong> Landing publique générique. Détail owner = allowlist Paul, pas la home.</p>
+  <div class="frames-row">
+<div class="frame-col">
+  <h5>Migrate · Web</h5>
+  <label class="validate"><input type="checkbox" data-vkey="id-migrate-web"> vue validée</label>
+  <div class="mock web"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera ID</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ol><li>Même e-mail</li><li>Login local reste</li></ol></div>
+    <div class="mock-inner mock-b"><ol><li>Même e-mail</li><li>Login local reste</li></ol></div>
+    <div class="mock-inner mock-c"><ol><li>Même e-mail</li><li>Login local reste</li></ol></div>
+  </div>
+</div>
+<div class="frame-col">
+  <h5>Migrate · Mobile</h5>
+  <label class="validate"><input type="checkbox" data-vkey="id-migrate-mobile"> vue validée</label>
+  <div class="mock mobile"><header class="hc-top">
+  <button type="button" class="hc-btn" aria-label="Menu">☰</button>
+  <span class="hc-title">Hubera ID</span>
+  <div class="hc-actions">
+    <button type="button" class="hc-btn" aria-label="Notifications">🔔</button>
+    <button type="button" class="hc-waffle" aria-label="Apps Hubera"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <span class="hc-avatar">P</span>
+  </div>
+</header>
+    <div class="mock-inner mock-a"><ol><li>Même e-mail</li><li>Login local reste</li></ol></div>
+    <div class="mock-inner mock-b"><ol><li>Même e-mail</li><li>Login local reste</li></ol></div>
+    <div class="mock-inner mock-c"><ol><li>Même e-mail</li><li>Login local reste</li></ol></div>
+    <div class="hc-bottom"><span>Home</span><span>Liste</span><span>Compte</span></div>
+  </div>
+</div>
+  </div>
+</article></section>
+</div>
+<script>
+(function() {
+  const root = document.documentElement;
+  const vSel = document.getElementById('variantSel');
+  const tSel = document.getElementById('themeSel');
+  const VK = 'hubera-da-vague2-variant';
+  const TK = 'hubera-da-vague2-theme';
+  const valK = 'hubera-da-vague2-validated';
+  function loadValidated() {
+    let m = {};
+    try { m = JSON.parse(localStorage.getItem(valK) || '{}'); } catch(e) {}
+    document.querySelectorAll('.validate input').forEach(cb => {
+      cb.checked = !!m[cb.dataset.vkey];
+      cb.addEventListener('change', () => {
+        m[cb.dataset.vkey] = cb.checked;
+        localStorage.setItem(valK, JSON.stringify(m));
+      });
+    });
+  }
+  vSel.value = localStorage.getItem(VK) || 'a';
+  tSel.value = localStorage.getItem(TK) || 'light';
+  root.dataset.variant = vSel.value;
+  root.dataset.theme = tSel.value;
+  vSel.addEventListener('change', () => { root.dataset.variant = vSel.value; localStorage.setItem(VK, vSel.value); });
+  tSel.addEventListener('change', () => { root.dataset.theme = tSel.value; localStorage.setItem(TK, tSel.value); });
+  loadValidated();
+})();
+</script>
+</body>
+</html>

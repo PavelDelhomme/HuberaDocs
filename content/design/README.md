@@ -38,7 +38,15 @@ Tokens plateforme (import futur) : `platform/design-tokens/` dans le meta-repo H
 3. Cocher les vues validées avant de figer une spec produit.
 4. Imprimer ou « Enregistrer en PDF » pour archiver une revue (styles `@media print` inclus).
 
+## Vague 2 (12 oct. 2026)
+
+| Ressource | Description |
+|-----------|-------------|
+| [`labo-da-vague2.html`](labo-da-vague2.html) | Calendar, Pass, Jobs, Budget, Tasks, Stream, Office, Notes, Cook, Docs, Press, ID — A/B/C, clair/sombre |
+
+Pas de remplacement UI prod tant que les cases « vue validée » ne sont pas cochées.
+
 ## Suite
 
-- Vague 2 : Calendar, Pass, Jobs, ID, Docs natif — après gel vague 1.
-- Unification `@hubera/theme` : hors scope Lot 0.
+- Unification `@hubera/theme` : hors scope tant que Music / Maps / Fuel OTA+hors-ligne restent le tronc.
+- Vague 1 gel : tu coches dans le labo 1.
