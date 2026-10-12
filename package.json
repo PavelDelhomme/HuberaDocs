@@ -6,7 +6,8 @@
   "description": "Hubera Docs — cockpit Paul (tâches, documentation, rapports, Gantt)",
   "scripts": {
     "start": "node api/server.mjs",
-    "dev": "node --watch api/server.mjs"
+    "dev": "node --watch api/server.mjs",
+    "test": "node --test api/labo-files.test.mjs"
   },
   "dependencies": {
     "better-sqlite3": "^12.4.1",

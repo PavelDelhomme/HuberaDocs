@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>Hubera — mock GPS physique · 12 oct 2026</title>
+  <style>
+    @page { size: A4; margin: 0; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; font-family: "Liberation Sans", "Noto Sans", sans-serif; color: #1a2330; font-size: 9.5pt; line-height: 1.4; background: #fff; }
+    .page { width: 210mm; min-height: 297mm; padding: 13mm 14mm 17mm; position: relative; }
+    .topbar { display: flex; justify-content: space-between; border-bottom: 3px solid #0e4d5c; padding-bottom: 6px; margin-bottom: 9px; }
+    .brand { font-weight: 800; letter-spacing: 0.12em; font-size: 10.5pt; color: #0e4d5c; text-transform: uppercase; }
+    .meta { font-size: 8pt; color: #5a6878; }
+    h1 { font-size: 15.5pt; margin: 3px 0 7px; color: #0e4d5c; }
+    h2 { font-size: 11.2pt; color: #0e4d5c; margin: 10px 0 5px; border-left: 5px solid #c9782a; padding-left: 8px; }
+    p { margin: 0 0 5px; }
+    table { width: 100%; border-collapse: collapse; font-size: 8pt; margin: 3px 0 8px; }
+    th { background: #0e4d5c; color: #fff; text-align: left; padding: 3px 5px; }
+    td { border-bottom: 1px solid #dce6ea; padding: 3px 5px; vertical-align: top; }
+    tr:nth-child(even) td { background: #f6fafb; }
+    .ok { color: #1b7a4a; font-weight: 700; }
+    .later { color: #8a5a12; font-weight: 700; }
+    .okbox { background: #eef8f2; border-left: 4px solid #1b7a4a; padding: 6px 8px; margin: 5px 0; }
+    .note { background: #fff8ee; border-left: 4px solid #c9782a; padding: 6px 8px; margin: 5px 0; }
+    .footer { position: absolute; left: 14mm; right: 14mm; bottom: 8mm; font-size: 7.3pt; color: #6b7785; border-top: 1px solid #d5e3e6; padding-top: 4px; display: flex; justify-content: space-between; }
+    ul { margin: 2px 0 7px 17px; }
+    code { font-family: "Liberation Mono", "Noto Sans Mono", monospace; font-size: 7.5pt; background: #eef3f5; padding: 1px 3px; }
+    .kicker { color: #c9782a; font-weight: 700; font-size: 8.2pt; letter-spacing: 0.12em; text-transform: uppercase; }
+  </style>
+</head>
+<body>
+<section class="page">
+  <div class="topbar">
+    <div class="brand">HUBERA MAPS · hubera.cloud</div>
+    <div class="meta">12 octobre 2026 · ~18h55 Europe/Paris</div>
+  </div>
+  <div class="kicker">Lot suivant · PDF · aucun secret</div>
+  <h1>Mock GPS physique : le système bouge, Maps pas encore</h1>
+  <p>Enchaîné juste après le récap Docs labo + Photos. Plus de <code>adb emu geo</code> (émulateur seulement). Harnais <code>cmd location providers</code> sur Samsung Android 16.</p>
+  <div class="okbox">
+    Samsung : <strong>5/5 points</strong> Rennes → Saint-Jacques injectés.
+    <code>dumpsys location</code> : GPS <strong>et</strong> fused = <code>48.103, -1.6935</code> marqués <code>mock</code>.
+    Tests Python <strong>4/4</strong>. Pas de nouvel APK. <code>forceUpdate</code> inchangé. Pas de <code>down -v</code>.
+  </div>
+  <h2>Appareils</h2>
+  <table>
+    <tr><th>Téléphone</th><th>OS</th><th>Mock</th><th>Maps</th></tr>
+    <tr><td>Samsung SM-G990B2 <code>R5CT7263YJL</code></td><td>16 / API 36</td><td class="ok">5 points + fused mock</td><td>Tuiles + Fuel + Music OK ; pastille reste quartier réel</td></tr>
+    <tr><td>Blackview BV9700Pro <code>EEA9700PRO0014587</code></td><td>9 / API 28</td><td class="later">commande absente (attendu)</td><td>Smoke réel (tuiles + Fuel plus tôt)</td></tr>
+  </table>
+  <h2>Écart à traiter (pas ce soir en APK)</h2>
+  <div class="note">
+    Android a le mock. L’écran Maps Samsung reste sur La Croisette / C129 / Av. Gabriel Faure après « Ma position ».
+    Pas de trajet zombie. Diagnostic suivant : pont WebView / cache <code>last-me</code> / appli mock location développeur.
+    On ne bump pas Maps tant que ce fil n’est pas calé.
+  </div>
+  <h2>Fichiers</h2>
+  <ul>
+    <li><code>products/maps/scripts/qa/mock_gps_lib.py</code></li>
+    <li><code>products/maps/scripts/qa/mock-gps-trip.py</code></li>
+    <li><code>products/maps/scripts/qa/test_mock_gps_lib.py</code></li>
+  </ul>
+  <div class="footer"><span>Hubera Docs · cahier Paul</span><span>OTA jamais forcée · pas Nothing ADB</span></div>
+</section>
+</body>
+</html>

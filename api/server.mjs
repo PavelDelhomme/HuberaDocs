@@ -1,3 +1,4 @@
+import { isAllowedLaboFile } from './labo-files.mjs';
 import { createHash, randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, extname, join, resolve } from 'node:path';
@@ -217,6 +218,9 @@ function seed() {
     { title: 'Music 1.3.367 partage Hubera + YouTube', body: 'ACTION_SEND : lien Hubera /watch/{id} + YouTube. Dual APK vc 10667. Overlay Samsung -r. Pas Nothing.', project: 'music', category: 'feature', column_id: 'done', priority: 1 },
     { title: 'Maps 0.1.88 recherche sous barre d’état', body: 'Nothing : --safe-top 26–32 px (plus collé au glyph). Samsung inchangé. Dual APK vc 89. Overlay Samsung -r. OTA jamais forcée. Pas Nothing.', project: 'maps', category: 'bug', column_id: 'done', priority: 1 },
     { title: 'Docs 0.2.10 en-tête sous barre d’état', body: 'TopAppBar safeDrawing.Top comme Music. Dual APK vc 210. Overlay Samsung -r. Pas Nothing.', project: 'docs', category: 'bug', column_id: 'done', priority: 1 },
+    { title: 'Docs 0.2.12 labo DA HTML brut', body: 'GET /labo/labo-da-vague1.html et vague2 (whitelist, pas SPA). Accueil liens Labo DA. Tests isAllowedLaboFile. Pas de down -v.', project: 'docs', category: 'feature', column_id: 'done', priority: 1 },
+    { title: 'Photos web barre 4 onglets type Google', body: 'Photos / Collections / Créer / Recherche. Collections tuiles albums/archive. Créer local sans Veo. Recherche filtre nom. Vitest + contrat Flutter photos_nav. Pas d’APK ce lot.', project: 'photos', category: 'feature', column_id: 'done', priority: 1 },
+    { title: 'Maps mock GPS physique cmd location', body: 'Harnais Samsung API 36 : cmd location providers (plus emu geo). 5 points Rennes→St-Jacques, dumpsys last location mock. Blackview API 28 : mock indisponible, smoke Maps réel. Tests unitaires mock_gps_lib 4/4.', project: 'maps', category: 'test', column_id: 'done', priority: 1 },
   ];
   const existsTitle = db.prepare('SELECT id FROM tasks WHERE title = ?');
   const insExtra = db.prepare(
@@ -288,6 +292,18 @@ function seed() {
   db.prepare(`UPDATE tasks SET column_id='done', updated_at=? WHERE title=? AND column_id != 'done'`).run(
     now(),
     'Docs 0.2.10 en-tête sous barre d’état',
+  );
+  db.prepare(`UPDATE tasks SET column_id='done', updated_at=? WHERE title=? AND column_id != 'done'`).run(
+    now(),
+    'Docs 0.2.12 labo DA HTML brut',
+  );
+  db.prepare(`UPDATE tasks SET column_id='done', updated_at=? WHERE title=? AND column_id != 'done'`).run(
+    now(),
+    'Photos web barre 4 onglets type Google',
+  );
+  db.prepare(`UPDATE tasks SET column_id='done', updated_at=? WHERE title=? AND column_id != 'done'`).run(
+    now(),
+    'Maps mock GPS physique cmd location',
   );
   syncReportsFromDisk();
 }
@@ -917,7 +933,7 @@ app.patch('/api/remarks/:id', requireAuth, (req, res) => {
 
 app.get('/labo/:file', (req, res) => {
   const file = String(req.params.file || '');
-  if (!/^labo-da-vague[12]\.html$/.test(file) && file !== 'README.md') {
+  if (!isAllowedLaboFile(file)) {
     return res.status(404).type('text').send('introuvable');
   }
   const p = join(CONTENT_DIR, 'design', file);

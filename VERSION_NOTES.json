@@ -1,6 +1,14 @@
 {
   "versions": [
     {
+      "version": "0.2.12",
+      "date": "2026-10-12",
+      "title": "Labo DA HTML brut",
+      "notes": [
+        "Les maquettes vague 1 et 2 s’ouvrent en HTML (plus de page Docs vide). Mise à jour proposée, pas forcée."
+      ]
+    },
+    {
       "version": "0.2.10",
       "date": "2026-10-10",
       "title": "En-tête sous la barre d’état",

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>Hubera — lot Docs labo + Photos 4 onglets · 12 oct 2026</title>
+  <style>
+    @page { size: A4; margin: 0; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; font-family: "Liberation Sans", "Noto Sans", sans-serif; color: #1a2330; font-size: 9.5pt; line-height: 1.4; background: #fff; }
+    .page { width: 210mm; min-height: 297mm; padding: 13mm 14mm 17mm; page-break-after: always; position: relative; }
+    .page:last-child { page-break-after: auto; }
+    .topbar { display: flex; justify-content: space-between; border-bottom: 3px solid #0e4d5c; padding-bottom: 6px; margin-bottom: 9px; }
+    .brand { font-weight: 800; letter-spacing: 0.12em; font-size: 10.5pt; color: #0e4d5c; text-transform: uppercase; }
+    .meta { font-size: 8pt; color: #5a6878; }
+    h1 { font-size: 15.5pt; margin: 3px 0 7px; color: #0e4d5c; }
+    h2 { font-size: 11.2pt; color: #0e4d5c; margin: 10px 0 5px; border-left: 5px solid #c9782a; padding-left: 8px; }
+    p { margin: 0 0 5px; }
+    table { width: 100%; border-collapse: collapse; font-size: 8pt; margin: 3px 0 8px; }
+    th { background: #0e4d5c; color: #fff; text-align: left; padding: 3px 5px; }
+    td { border-bottom: 1px solid #dce6ea; padding: 3px 5px; vertical-align: top; }
+    tr:nth-child(even) td { background: #f6fafb; }
+    .ok { color: #1b7a4a; font-weight: 700; }
+    .okbox { background: #eef8f2; border-left: 4px solid #1b7a4a; padding: 6px 8px; margin: 5px 0; }
+    .note { background: #fff8ee; border-left: 4px solid #c9782a; padding: 6px 8px; margin: 5px 0; }
+    .footer { position: absolute; left: 14mm; right: 14mm; bottom: 8mm; font-size: 7.3pt; color: #6b7785; border-top: 1px solid #d5e3e6; padding-top: 4px; display: flex; justify-content: space-between; }
+    ul { margin: 2px 0 7px 17px; }
+    li { margin: 0 0 2px; }
+    code { font-family: "Liberation Mono", "Noto Sans Mono", monospace; font-size: 7.5pt; background: #eef3f5; padding: 1px 3px; }
+    .kicker { color: #c9782a; font-weight: 700; font-size: 8.2pt; letter-spacing: 0.12em; text-transform: uppercase; }
+  </style>
+</head>
+<body>
+<section class="page">
+  <div class="topbar">
+    <div class="brand">HUBERA · hubera.cloud</div>
+    <div class="meta">12 octobre 2026 · ~18h50 Europe/Paris</div>
+  </div>
+  <div class="kicker">Récapitulatif de lot · PDF · aucun secret</div>
+  <h1>Docs labo DA ouvrable + Photos 4 onglets — testé Samsung et Blackview</h1>
+  <p>Lot enchaîné après les lots 0–10 et la vague 2 DA. Objectif : les maquettes s’ouvrent vraiment, Photos web a la même barre que le mobile, les anciennes fonctions restent, et ça se voit sur les deux téléphones labo.</p>
+  <div class="okbox">
+    <strong>Prod</strong> : labo DA vague 1 (~89 k) et vague 2 (~68 k) en HTML brut sur <code>docs.hubera.cloud/labo/</code>.
+    Photos web live (<code>PhotosPage-B9zgS2Qj.js</code>) contient Collections / Créer / Recherche / Zéro Veo.
+    Drive <code>/health</code> JSON healthy. Music <strong>1.3.368</strong> <code>forceUpdate: false</code>. Maps <strong>0.1.89</strong>.
+    Watchtower off. Pas de <code>down -v</code>. Pas d’ADB Nothing.
+  </div>
+  <h2>Ce qui est livré</h2>
+  <ul>
+    <li><strong>Docs 0.2.12</strong> — route <code>/labo/:file</code> whitelist (vague 1, vague 2, README). Plus de page SPA vide. Liens Labo DA sur l’accueil.</li>
+    <li><strong>Photos web</strong> — barre Photos / Collections / Créer / Recherche. Collections : tuiles albums, partagés, appareil, lieux, archive, corbeille, verrouillé. Créer : import + album, paliers collage/GIF, <strong>sans</strong> Veo/Remix. Recherche : filtre local, pas Gemini.</li>
+    <li><strong>Contrat mobile</strong> — <code>photos_nav.dart</code> (4 labels + recherche nom/date/album). APK déjà <strong>1.0.12</strong> sur les deux téléphones : pas de nouvel overlay.</li>
+  </ul>
+  <h2>Tests automatiques (nouveaux + régression)</h2>
+  <table>
+    <tr><th>Suite</th><th>Résultat</th></tr>
+    <tr><td>Vitest PhotosPage + PhotosBottomNav (4 onglets, collections, créer, recherche, albums, archive, coffre…)</td><td class="ok">26/26</td></tr>
+    <tr><td>Node <code>labo-files</code> (autorise vague 1/2, refuse traversal)</td><td class="ok">2/2</td></tr>
+    <tr><td>Flutter <code>photos_nav_test.dart</code></td><td class="ok">2/2</td></tr>
+  </table>
+  <h2>Samsung SM-G990B2 + Blackview BV9700Pro</h2>
+  <table>
+    <tr><th>Surface</th><th>Samsung</th><th>Blackview</th></tr>
+    <tr><td>Photos 1.0.12 — Photos / Collections / Créer / Rechercher</td><td class="ok">PASS (galerie appareil)</td><td class="ok">PASS (timeline cloud, 4 onglets cliqués)</td></tr>
+    <tr><td>Maps 0.1.89 — tuiles, recherche, Fuel, pastille GPS</td><td class="ok">PASS</td><td class="ok">PASS</td></tr>
+    <tr><td>Music p+1.3.368 — accueil, mix, mini-lecteur</td><td class="ok">PASS</td><td class="ok">PASS</td></tr>
+  </table>
+  <div class="note">
+    Collections mobile : Albums, Sur cet appareil, Lieux, Utilitaires, Partagés. Créer : nouvel album, importer, collage, GIF (paliers, pas d’IA Google).
+    Ancienne timeline / badges cloud / sauvegarde : toujours là.
+  </div>
+  <h2>Ensuite (lot GPS physique)</h2>
+  <p><code>adb emu geo</code> ne bouge pas un téléphone réel. Prochain lot : <code>cmd location providers</code> (Android 12+, Samsung 16) pour injecter Rennes → Saint-Jacques pendant Maps/Fuel. Blackview Android 9 : pas cette commande — smoke Maps réel, mock noté.</p>
+  <div class="footer"><span>Hubera Docs · cahier Paul</span><span>Aucun mot de passe · OTA jamais forcée</span></div>
+</section>
+</body>
+</html>
