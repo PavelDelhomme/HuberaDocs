@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>Hubera — Maps 0.1.92 pastille mock GPS · 12 oct 2026</title>
+  <style>
+    @page { size: A4; margin: 0; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; font-family: "Liberation Sans", "Noto Sans", sans-serif; color: #1a2330; font-size: 9.5pt; line-height: 1.4; background: #fff; }
+    .page { width: 210mm; min-height: 297mm; padding: 13mm 14mm 17mm; page-break-after: always; position: relative; }
+    .page:last-child { page-break-after: auto; }
+    .topbar { display: flex; justify-content: space-between; border-bottom: 3px solid #0e4d5c; padding-bottom: 6px; margin-bottom: 9px; }
+    .brand { font-weight: 800; letter-spacing: 0.12em; font-size: 10.5pt; color: #0e4d5c; text-transform: uppercase; }
+    .meta { font-size: 8pt; color: #5a6878; }
+    h1 { font-size: 15.5pt; margin: 3px 0 7px; color: #0e4d5c; }
+    h2 { font-size: 11.2pt; color: #0e4d5c; margin: 10px 0 5px; border-left: 5px solid #c9782a; padding-left: 8px; }
+    p { margin: 0 0 5px; }
+    table { width: 100%; border-collapse: collapse; font-size: 8pt; margin: 3px 0 8px; }
+    th { background: #0e4d5c; color: #fff; text-align: left; padding: 3px 5px; }
+    td { border-bottom: 1px solid #dce6ea; padding: 3px 5px; vertical-align: top; }
+    tr:nth-child(even) td { background: #f6fafb; }
+    .ok { color: #1b7a4a; font-weight: 700; }
+    .okbox { background: #eef8f2; border-left: 4px solid #1b7a4a; padding: 6px 8px; margin: 5px 0; }
+    .note { background: #fff8ee; border-left: 4px solid #c9782a; padding: 6px 8px; margin: 5px 0; }
+    .footer { position: absolute; left: 14mm; right: 14mm; bottom: 8mm; font-size: 7.3pt; color: #6b7785; border-top: 1px solid #d5e3e6; padding-top: 4px; display: flex; justify-content: space-between; }
+    ul { margin: 2px 0 7px 17px; }
+    li { margin: 0 0 2px; }
+    code { font-family: "Liberation Mono", "Noto Sans Mono", monospace; font-size: 7.5pt; background: #eef3f5; padding: 1px 3px; }
+    .kicker { color: #c9782a; font-weight: 700; font-size: 8.2pt; letter-spacing: 0.12em; text-transform: uppercase; }
+  </style>
+</head>
+<body>
+<section class="page">
+  <div class="topbar">
+    <div class="brand">HUBERA · hubera.cloud</div>
+    <div class="meta">12 octobre 2026 · ~19h15 Europe/Paris</div>
+  </div>
+  <div class="kicker">Récapitulatif de lot · PDF · aucun secret</div>
+  <h1>Maps 0.1.92 — la pastille suit le mock GPS (Saint-Jacques)</h1>
+  <p>Le harnais <code>cmd location</code> injectait bien Rennes → Saint-Jacques, mais l’écran restait au quartier réel (Cesson / La Croisette). Ce lot ferme l’écart UI, sans casser tuiles, Fuel, dock Music, ni OTA.</p>
+  <div class="okbox">
+    <strong>Prod</strong> : Maps <strong>0.1.92</strong> vc 93 live sur <code>maps.hubera.cloud/updates.json</code>,
+    <code>forceUpdate: false</code> / <code>mandatory: false</code>. Dual APK overlay Samsung + Blackview <code>-r</code>.
+    Watchtower off. Pas de <code>down -v</code>. Pas d’ADB Nothing.
+  </div>
+  <h2>Ce qui est livré</h2>
+  <ul>
+    <li><strong>Pont natif</strong> <code>LocationBridge</code> → JS <code>__mapsNativeFix</code>. Le WebView ne filtre plus le mock.</li>
+    <li>Écoute <strong>tous</strong> les providers (<code>huberalab</code> inclus). Mock gagne ~120 s sur le GNSS réel.</li>
+    <li>Harnais : provider <code>huberalab</code> — plus le nom <code>gps</code> (interdit dès que le GPS matériel existe).</li>
+    <li>Carte : fly si mock et saut &gt; 25 m. <code>freshMs: 0</code> pour « Ma position ».</li>
+  </ul>
+  <h2>Tests automatiques (nouveaux + régression)</h2>
+  <table>
+    <tr><th>Suite</th><th>Résultat</th></tr>
+    <tr><td>Python <code>test_mock_gps_lib.py</code> (huberalab, SDK gate Blackview 28 / Samsung 36)</td><td class="ok">4/4</td></tr>
+    <tr><td>Node <code>test-maps-native-fix.mjs</code> (fly mock, drop accuracy, contrat JS+Kotlin)</td><td class="ok">3/3</td></tr>
+    <tr><td>Harnais <code>mock-gps-trip.py --mode free</code> 5 points Rennes → St-Jacques</td><td class="ok">5/5</td></tr>
+  </table>
+  <h2>Samsung SM-G990B2 + Blackview BV9700Pro</h2>
+  <table>
+    <tr><th>Surface</th><th>Samsung</th><th>Blackview</th></tr>
+    <tr><td>Overlay Maps 0.1.92 <code>-r</code></td><td class="ok">Success</td><td class="ok">Success</td></tr>
+    <tr><td>Mock GPS pastille / caméra</td><td class="ok">HuberaLoc mock=true p=huberalab · carte Arsenal-Redon / Mabilais</td><td class="ok">API 28 : mock indisponible (écart attendu)</td></tr>
+    <tr><td>Smoke réel (tuiles, recherche, Fuel, dock Music)</td><td class="ok">PASS</td><td class="ok">PASS (La Croisette / C129)</td></tr>
+  </table>
+  <div class="note">
+    SHA cloud <code>0458a9b02d0efe337a5937c2569701f51152926e174b79a6f3d6e711b6fb2615</code> ·
+    legacy <code>4c5acdc67ae520ed1cacffb6e224f3b6282ad4fe82c438f0c9d6c42d90ae0070</code>.
+    Ancien HUD, onglets Maps/Fuel/Enreg., chips Domicile/Bureau : toujours là.
+  </div>
+  <h2>Ensuite</h2>
+  <p>Fuel Expo : <code>watchPosition</code> + filtre <code>too_fast</code> peuvent encore ignorer le mock (pastille trajet coincée, km protégés). Même harnais <code>huberalab</code> sur Samsung. Blackview : smoke réel.</p>
+  <div class="footer"><span>Hubera Docs · cahier Paul</span><span>Aucun mot de passe · OTA jamais forcée</span></div>
+</section>
+</body>
+</html>

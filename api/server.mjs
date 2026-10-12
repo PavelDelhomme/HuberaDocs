@@ -221,6 +221,7 @@ function seed() {
     { title: 'Docs 0.2.12 labo DA HTML brut', body: 'GET /labo/labo-da-vague1.html et vague2 (whitelist, pas SPA). Accueil liens Labo DA. Tests isAllowedLaboFile. Pas de down -v.', project: 'docs', category: 'feature', column_id: 'done', priority: 1 },
     { title: 'Photos web barre 4 onglets type Google', body: 'Photos / Collections / Créer / Recherche. Collections tuiles albums/archive. Créer local sans Veo. Recherche filtre nom. Vitest + contrat Flutter photos_nav. Pas d’APK ce lot.', project: 'photos', category: 'feature', column_id: 'done', priority: 1 },
     { title: 'Maps mock GPS physique cmd location', body: 'Harnais Samsung API 36 : cmd location providers (plus emu geo). 5 points Rennes→St-Jacques, dumpsys last location mock. Blackview API 28 : mock indisponible, smoke Maps réel. Tests unitaires mock_gps_lib 4/4.', project: 'maps', category: 'test', column_id: 'done', priority: 1 },
+    { title: 'Maps 0.1.92 pastille suit le mock GPS', body: 'Pont LocationBridge tous providers + huberalab. Mock gagne 120 s. Overlay Samsung+Blackview -r. OTA 0.1.92 forceUpdate false. HuberaLoc mock=true p=huberalab, carte St-Jacques. Tests mock_gps_lib 4/4 + native-fix 3/3.', project: 'maps', category: 'bug', column_id: 'done', priority: 1 },
   ];
   const existsTitle = db.prepare('SELECT id FROM tasks WHERE title = ?');
   const insExtra = db.prepare(
@@ -304,6 +305,10 @@ function seed() {
   db.prepare(`UPDATE tasks SET column_id='done', updated_at=? WHERE title=? AND column_id != 'done'`).run(
     now(),
     'Maps mock GPS physique cmd location',
+  );
+  db.prepare(`UPDATE tasks SET column_id='done', updated_at=? WHERE title=? AND column_id != 'done'`).run(
+    now(),
+    'Maps 0.1.92 pastille suit le mock GPS',
   );
   syncReportsFromDisk();
 }
