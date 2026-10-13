@@ -2,7 +2,7 @@
 
 **DA vague 1 :** maquettes web/mobile (A/B/C, clair/sombre) → [`../design/labo-da-vague1.html`](../design/labo-da-vague1.html) · [`../design/README.md`](../design/README.md)
 
-Priorité 1. Live **p+1.3.367** vc 10667. Partager un titre = lien Hubera Music + lien YouTube. Rapport : `content/reports/2026-10-10-maps-0.1.87-music-367.md`. Overlay Samsung dual 10 oct. Nothing : pas d’ADB (vidéos). Blackview ADB down. Sweeper jouabilité : `content/reports/2026-10-08-music-playability-sweep.md`.
+Priorité 1. Live **p+1.3.369** vc 10669. Logo Accueil → menu apps Hubera. OTA avec icône qui tourne. Skip Maps via commande custom (plus de boucle DASH). Overlay Samsung + Blackview 13 oct. Nothing : pas d’ADB.
 
 - Domaine : https://music.hubera.cloud
 - Paquets : `cloud.hubera.music` + `ovh.delhomme.ytmusic`

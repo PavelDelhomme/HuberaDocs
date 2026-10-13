@@ -2,7 +2,7 @@
 
 **DA vague 1 :** [`../design/labo-da-vague1.html`](../design/labo-da-vague1.html) (section Fuel · trajet / compte).
 
-Priorité 3. Un budget global — **pas ce sprint**. Live **1.4.171** (vc 195) · overlay Samsung + Blackview `cloud.hubera.fuel` 12 oct · OTA `forceUpdate: false`. Pont GPS natif (mock `huberalab`).
+Priorité 3. Un budget global — **pas ce sprint**. Live **1.4.172** (vc 196) · overlay Samsung + Blackview `cloud.hubera.fuel` 13 oct · OTA `forceUpdate: false`. Popup MAJ avec icône qui tourne dès la vérification.
 
 - Chrome hamburger + compte Hubera ID. Jauge → modèle conso (EMA) de 1.4.168 **inchangée**.
 - Dual APK `cloud.hubera.fuel` (SHA `3a97447c…b46781`) + `com.gasoiltracking.app` (SHA `bb25fbbf…91570c`).

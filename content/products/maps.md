@@ -6,9 +6,9 @@ Priorité 2 après Music. Lieux, tuiles hors-ligne, garage Fuel dans Maps.
 
 - Domaine : https://maps.hubera.cloud
 - OTA : `updates.json` + `GET /api/version` (même JSON). `forceUpdate: false` / `mandatory: false`
-- Live **0.1.92** vc 93 (prod) : pont GPS natif → JS, provider labo `huberalab`, pastille recentrée Saint-Jacques. Overlay Samsung + Blackview `-r`. OTA jamais forcée.
-- SHA APK cloud `0458a9b02d0efe337a5937c2569701f51152926e174b79a6f3d6e711b6fb2615`
-- SHA APK legacy `4c5acdc67ae520ed1cacffb6e224f3b6282ad4fe82c438f0c9d6c42d90ae0070`
+- Live **0.1.93** vc 94 (prod) : popup Music (paroles, logo, plus de boucle), panneau vitesse bas-droite au-dessus du FAB, fiche OSM (horaires/tel), OTA avec icône qui tourne. Overlay Samsung + Blackview `-r`. OTA jamais forcée.
+- SHA APK cloud `4ab351aa3a839b3610af07d7ddd886b9dc8bfca9e6ade67d487e5917afb11223`
+- SHA APK legacy `7f7d245c3c53cd0efb4a47211b1ef72967439c2873895f90e79c9b12afd894e8`
 
 ## Nothing — installer **sans ouvrir** l’app (P0 crash 0.1.75)
 
