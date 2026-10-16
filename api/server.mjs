@@ -1,4 +1,5 @@
 import { isAllowedLaboFile } from './labo-files.mjs';
+import { betaChannelBlocked } from './betaChannel.mjs';
 import { createHash, randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, extname, join, resolve } from 'node:path';
@@ -514,6 +515,9 @@ function apkPublicInfo(pkg) {
 }
 
 app.get('/api/version', (req, res) => {
+  if (betaChannelBlocked(req.query.channel, readSession(req)?.email, process.env.HUBERA_BETA_EMAILS || '')) {
+    return res.status(404).json({ error: 'APK non publiée' });
+  }
   const clientVer = String(req.query.clientVersion || '')
     .replace(/^[pbd]\+/, '')
     .trim();
@@ -561,6 +565,9 @@ app.get('/api/version-notes', (_req, res) => {
 });
 
 app.get('/api/apk', requireAuth, (req, res) => {
+  if (betaChannelBlocked(req.query.channel, req.admin?.email, process.env.HUBERA_BETA_EMAILS || '')) {
+    return res.status(404).json({ error: 'APK non publiée' });
+  }
   const apk = apkPublicInfo(String(req.query.package || req.query.clientPackage || ''));
   if (!apk.ready || !apk.path) return res.status(404).json({ error: 'apk' });
   res.setHeader('Content-Type', 'application/vnd.android.package-archive');
