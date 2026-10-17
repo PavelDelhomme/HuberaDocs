@@ -316,14 +316,17 @@ function bindDevicePicker() {
       const email = btn.getAttribute('data-sso') || '';
       pendingEmail = email;
       if (nativeSso(email)) return;
+      document.querySelector('.cred')?.removeAttribute('hidden');
       const input = $('#docs-email');
       if (input) input.value = email;
       $('#docs-password')?.focus();
     };
   });
   $('#ssoOther')?.addEventListener('click', () => {
-    document.querySelector('.sso-picker')?.remove();
-    $('#docs-email')?.focus();
+    document.querySelector('.cred')?.removeAttribute('hidden');
+    const input = $('#docs-email');
+    if (input) input.value = '';
+    input?.focus();
   });
 }
 
@@ -374,6 +377,14 @@ function bindLoginForm(form, twofa) {
   };
 }
 
+function avatarColor(email) {
+  const palette = ['#1A73E8', '#188038', '#E37400', '#9334E6', '#007B83', '#C5221F', '#1967D2', '#0D7377'];
+  let hash = 0;
+  const key = String(email || '').toLowerCase();
+  for (let i = 0; i < key.length; i++) hash = (Math.imul(hash, 31) + key.charCodeAt(i)) >>> 0;
+  return palette[hash % palette.length];
+}
+
 function deviceAccounts() {
   const raw = window.__huberaDeviceAccounts;
   if (!Array.isArray(raw)) return [];
@@ -411,10 +422,14 @@ function loginView(err = '', twofa = false) {
   const accounts = deviceAccounts();
   const picker = !twofa && accounts.length
     ? `<div class="sso-picker">
-        <p class="lead">Continuer avec un compte déjà sur l’appareil</p>
-        ${accounts.map((e) => `<button type="button" class="sso-btn" data-sso="${esc(e)}">Continuer avec ${esc(e)}</button>`).join('')}
-        <button type="button" class="sso-other" id="ssoOther">Utiliser un autre compte</button>
-        <p class="lead">ou avec e-mail</p>
+        <p class="lead">Choisir un compte</p>
+        ${accounts.map((e) => {
+          const local = String(e).split('@')[0] || e;
+          const title = local ? local.charAt(0).toUpperCase() + local.slice(1) : e;
+          const initial = (title[0] || '?').toUpperCase();
+          return `<button type="button" class="sso-btn" data-sso="${esc(e)}"><span class="sso-avatar" style="background:${avatarColor(e)}">${esc(initial)}</span><span class="sso-meta"><b>${esc(title)}</b><small>${esc(e)}</small></span></button>`;
+        }).join('')}
+        <button type="button" class="sso-other" id="ssoOther"><span class="sso-avatar sso-avatar-add">+</span><span>Ajouter un compte</span></button>
       </div>`
     : '';
   app.innerHTML = twofa
@@ -422,7 +437,6 @@ function loginView(err = '', twofa = false) {
       <form class="login card" data-twofa="1" autocomplete="on">
         <img class="login-logo" src="/favicon.svg" width="56" height="56" alt="" />
         <h1>Code 2FA</h1>
-        <p class="lead">Hubera ID / Bitwarden Authenticator — le code à 6 chiffres, pas le mot de passe.</p>
         <label for="docs-code">Code</label>
         <input id="docs-code" name="code" inputmode="numeric" autocomplete="one-time-code" placeholder="123456" required autofocus />
         <button class="primary" type="submit">Valider</button>
@@ -432,13 +446,14 @@ function loginView(err = '', twofa = false) {
       <form class="login card" autocomplete="on">
         <img class="login-logo" src="/favicon.svg" width="56" height="56" alt="" />
         <h1>Hubera Docs</h1>
-        <p class="lead">Cahier unique — même compte Hubera ID que Music / Mail / Admin.</p>
         ${picker}
+        <div class="cred" ${accounts.length && !twofa ? 'hidden' : ''}>
         <label for="docs-email">E-mail</label>
-        <input id="docs-email" name="email" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" inputmode="email" placeholder="e-mail" required value="${keepEmail}" />
+        <input id="docs-email" name="email" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" inputmode="email" placeholder="e-mail" ${accounts.length ? '' : 'required'} value="${accounts.length ? '' : keepEmail}" />
         <label for="docs-password">Mot de passe Hubera ID</label>
-        <input id="docs-password" name="password" type="password" autocomplete="current-password" placeholder="mot de passe" required />
+        <input id="docs-password" name="password" type="password" autocomplete="current-password" placeholder="mot de passe" ${accounts.length ? '' : 'required'} />
         <button class="primary" type="submit">Entrer</button>
+        </div>
         ${err ? `<p class="err">${esc(err)}</p>` : ''}
       </form>`;
   bindLoginForm($('form.login'), twofa);

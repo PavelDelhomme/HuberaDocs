@@ -1,6 +1,30 @@
 {
   "versions": [
     {
+      "version": "0.2.20",
+      "date": "2026-10-16",
+      "title": "Tiroir et brouillon",
+      "notes": [
+        "Le bouton menu ouvre le tiroir. Le texte d’une tâche en cours de saisie reste jusqu’à l’enregistrement. Mise à jour proposée, pas forcée."
+      ]
+    },
+    {
+      "version": "0.2.14",
+      "date": "2026-10-16",
+      "title": "Mode sombre",
+      "notes": [
+        "L’app suit un thème sombre lisible (teal et orange inchangés). Compte permet Sombre, Clair ou Système. Mise à jour proposée, pas forcée."
+      ]
+    },
+    {
+      "version": "0.2.13",
+      "date": "2026-10-16",
+      "title": "Téléchargement OTA repris",
+      "notes": [
+        "Une mise à jour interrompue reprend au bon endroit. Un fichier qui n’est pas une APK est refusé. Jamais forcée."
+      ]
+    },
+    {
       "version": "0.2.12",
       "date": "2026-10-12",
       "title": "Labo DA HTML brut",

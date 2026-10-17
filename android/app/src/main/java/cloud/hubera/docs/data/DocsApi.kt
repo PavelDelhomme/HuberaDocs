@@ -7,6 +7,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.io.FileOutputStream
 import java.util.concurrent.TimeUnit
 
 data class Task(
@@ -348,23 +349,35 @@ class DocsApi(
         }
     }
 
+    /**
+     * Écrit l’APK. Si [dest] fait déjà au moins 100 Ko, envoie `Range` et
+     * n’ajoute que le complément (206). Un 200 ignore le Range : on réécrit.
+     */
     fun downloadApk(dest: File, pkg: String = "", onProgress: ((Float) -> Unit)? = null) {
         val q = if (pkg.isNotBlank()) {
             "/api/apk?package=" + java.net.URLEncoder.encode(pkg, "UTF-8")
         } else {
             "/api/apk"
         }
-        val request = req(q).get().build()
-        http.newCall(request).execute().use { resp ->
+        dest.parentFile?.mkdirs()
+        val existing = if (dest.isFile) dest.length() else 0L
+        val builder = req(q).get()
+        if (existing >= 100_000L) {
+            builder.header("Range", "bytes=$existing-")
+        }
+        http.newCall(builder.build()).execute().use { resp ->
             if (resp.code == 401) throw AuthException()
+            if (resp.code == 416) return
             if (!resp.isSuccessful) throw IllegalStateException("HTTP ${resp.code}")
-            dest.parentFile?.mkdirs()
+            val append = resp.code == 206 && existing > 0L
             val body = resp.body ?: throw IllegalStateException("empty")
-            val total = body.contentLength()
-            dest.outputStream().use { out ->
+            val bodyLen = body.contentLength()
+            val base = if (append) existing else 0L
+            val total = if (bodyLen > 0) base + bodyLen else -1L
+            FileOutputStream(dest, append).use { out ->
                 body.byteStream().use { input ->
                     val buf = ByteArray(64 * 1024)
-                    var read = 0L
+                    var read = base
                     while (true) {
                         val n = input.read(buf)
                         if (n < 0) break

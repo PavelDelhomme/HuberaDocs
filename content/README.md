@@ -2,6 +2,9 @@
 
 Canonique dans ce dépôt (`content/`). Chaque produit a un `DOCS.md` qui renvoie ici.
 
+- Pass 0.1.10 (17 oct) : mot de passe maître, PIN, empreinte, réglages coffre, mise à jour manuelle : `content/reports/2026-10-17-pass-0.1.10.md`
+- Pass 0.1.9 (17 oct) : compte Hubera ID déjà présent, empreinte, coffres : `content/reports/2026-10-17-pass-0.1.9.md`
+- Lot de nuit 16 oct (Mail 1.0.23, relais Music, cold start) : `content/reports/2026-10-16-nuit.md`
 - Maps 0.1.88 + Docs 0.2.10 (10 oct) : recherche / en-tête sous la barre d’état : `content/reports/2026-10-10-maps-0.1.88-chrome.md`
 - Maps 0.1.87 + Music 1.3.367 (10 oct) : trajets Fuel / tuiles suivi libre + partage Hubera+YouTube : `content/reports/2026-10-10-maps-0.1.87-music-367.md`
 

@@ -19,6 +19,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 
@@ -100,7 +101,7 @@ private fun parseMarkdownBlocks(source: String): List<MdBlock> {
     return out
 }
 
-private fun inlineMarkdown(text: String): AnnotatedString = buildAnnotatedString {
+private fun inlineMarkdown(text: String, codeBg: Color): AnnotatedString = buildAnnotatedString {
     val re = Regex("""(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|\[[^\]]+]\([^)]+\))""")
     var last = 0
     for (m in re.findAll(text)) {
@@ -113,7 +114,7 @@ private fun inlineMarkdown(text: String): AnnotatedString = buildAnnotatedString
             token.startsWith("`") -> withStyle(
                 SpanStyle(
                     fontFamily = FontFamily.Monospace,
-                    background = androidx.compose.ui.graphics.Color(0xFFE8EEF2),
+                    background = codeBg,
                 ),
             ) { append(token.removeSurrounding("`")) }
             token.startsWith("[") -> {
@@ -132,6 +133,7 @@ private fun inlineMarkdown(text: String): AnnotatedString = buildAnnotatedString
 @Composable
 fun MarkdownView(source: String, modifier: Modifier = Modifier) {
     val blocks = remember(source) { parseMarkdownBlocks(source) }
+    val codeBg = MaterialTheme.colorScheme.surfaceVariant
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         blocks.forEach { b ->
             when (b) {
@@ -145,16 +147,16 @@ fun MarkdownView(source: String, modifier: Modifier = Modifier) {
                     fontWeight = FontWeight.Bold,
                 )
                 is MdBlock.Paragraph -> Text(
-                    inlineMarkdown(b.text),
+                    inlineMarkdown(b.text, codeBg),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 is MdBlock.Bullet -> Row(Modifier.fillMaxWidth()) {
                     Text("•  ", fontWeight = FontWeight.Bold)
-                    Text(inlineMarkdown(b.text), modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+                    Text(inlineMarkdown(b.text, codeBg), modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
                 }
                 is MdBlock.Quote -> Text(
-                    inlineMarkdown(b.text),
+                    inlineMarkdown(b.text, codeBg),
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))

@@ -1,9 +1,13 @@
 package cloud.hubera.docs
 
+import android.app.Activity
+import android.content.res.Configuration
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.clickable
@@ -35,6 +39,7 @@ import cloud.hubera.chrome.HuberaScaffold
 import cloud.hubera.docs.data.TokenStore
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -43,7 +48,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cloud.hubera.docs.data.Dashboard
@@ -56,7 +63,10 @@ import cloud.hubera.docs.ui.docs.DocsScreen
 import cloud.hubera.docs.ui.inbox.InboxScreen
 import cloud.hubera.docs.ui.kanban.KanbanScreen
 import cloud.hubera.docs.ui.reports.ReportsScreen
+import cloud.hubera.docs.ui.theme.DocsThemeChoice
+import cloud.hubera.docs.ui.theme.DocsThemeStore
 import cloud.hubera.docs.ui.theme.HuberaDocsTheme
+import cloud.hubera.docs.ui.theme.isDark
 import cloud.hubera.docs.update.UpdateAvailableDialog
 import cloud.hubera.docs.update.UpdateChecker
 import kotlinx.coroutines.Dispatchers
@@ -66,16 +76,41 @@ import kotlinx.coroutines.withContext
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
-            navigationBarStyle = SystemBarStyle.light(Color.WHITE, Color.WHITE),
-        )
         val app = application as DocsApp
+        val themeStore = DocsThemeStore(app)
+        val systemDark = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+            Configuration.UI_MODE_NIGHT_YES
+        applySystemBars(themeStore.read().isDark(systemDark))
         setContent {
-            HuberaDocsTheme {
-                DocsRoot(app.api, app.tokens)
+            var themeChoice by remember { mutableStateOf(themeStore.read()) }
+            val dark = themeChoice.isDark(isSystemInDarkTheme())
+            val view = LocalView.current
+            SideEffect {
+                (view.context as? MainActivity)?.applySystemBars(dark)
+            }
+            HuberaDocsTheme(choice = themeChoice) {
+                DocsRoot(
+                    api = app.api,
+                    tokens = app.tokens,
+                    themeChoice = themeChoice,
+                    onThemeChoice = {
+                        themeChoice = it
+                        themeStore.write(it)
+                    },
+                )
             }
         }
+    }
+
+    private fun applySystemBars(dark: Boolean) {
+        val bg = if (dark) 0xFF0C1216.toInt() else 0xFFF4F7F8.toInt()
+        window.setBackgroundDrawable(ColorDrawable(bg))
+        val style = if (dark) {
+            SystemBarStyle.dark(Color.TRANSPARENT)
+        } else {
+            SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
+        }
+        enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
     }
 }
 
@@ -87,8 +122,14 @@ private val docsTabs = listOf(
 )
 
 @Composable
-private fun DocsRoot(api: DocsApi, tokens: TokenStore) {
+private fun DocsRoot(
+    api: DocsApi,
+    tokens: TokenStore,
+    themeChoice: DocsThemeChoice,
+    onThemeChoice: (DocsThemeChoice) -> Unit,
+) {
     val ctx = LocalContext.current
+    val activity = ctx as? Activity
     var ready by remember { mutableStateOf(false) }
     var logged by remember { mutableStateOf(false) }
     var email by remember { mutableStateOf(tokens.email().orEmpty()) }
@@ -105,8 +146,12 @@ private fun DocsRoot(api: DocsApi, tokens: TokenStore) {
         }
         ready = true
     }
-    if (!ready) return
+    if (!ready) {
+        BackHandler { activity?.moveTaskToBack(true) }
+        return
+    }
     if (!logged) {
+        BackHandler { activity?.moveTaskToBack(true) }
         LoginScreen(api) {
             logged = true
             email = tokens.email().orEmpty()
@@ -123,6 +168,7 @@ private fun DocsRoot(api: DocsApi, tokens: TokenStore) {
     var pendingUpdate by remember { mutableStateOf<UpdateChecker.CheckResult?>(null) }
     var dlBusy by remember { mutableStateOf(false) }
     var dlProgress by remember { mutableFloatStateOf(0f) }
+    var dlNote by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val titles = mapOf(
         "home" to "Docs",
@@ -145,13 +191,20 @@ private fun DocsRoot(api: DocsApi, tokens: TokenStore) {
             versionName = upd.info?.apkVersion ?: upd.info?.version,
             busy = dlBusy,
             progress = dlProgress,
-            message = upd.message,
-            releaseNotes = upd.message,
+            message = dlNote ?: upd.message,
+            releaseNotes = dlNote ?: upd.message,
             onInstall = {
                 dlBusy = true
                 dlProgress = 0f
+                dlNote = null
                 scope.launch {
-                    runCatching { checker.install { dlProgress = it } }
+                    val msg = runCatching {
+                        checker.install(
+                            onProgress = { dlProgress = it },
+                            onStatus = { dlNote = it },
+                        )
+                    }.getOrElse { it.message ?: "Échec" }
+                    if (!msg.startsWith("Installation")) dlNote = msg
                     dlBusy = false
                 }
             },
@@ -175,6 +228,15 @@ private fun DocsRoot(api: DocsApi, tokens: TokenStore) {
         nestedBack = back
     }
 
+    BackHandler {
+        val back = nestedBack
+        when {
+            back != null -> back()
+            showAccount -> showAccount = false
+            else -> activity?.moveTaskToBack(true)
+        }
+    }
+
     HuberaScaffold(
         title = nestedTitle ?: titles[if (showAccount) "account" else tab] ?: "Docs",
         current = HuberaProduct.DOCS,
@@ -189,11 +251,6 @@ private fun DocsRoot(api: DocsApi, tokens: TokenStore) {
         onNavSelect = { go(it) },
         userEmail = email,
         hideBottomNav = showAccount || nestedBack != null,
-        onUpClick = when {
-            nestedBack != null -> nestedBack
-            showAccount -> ({ showAccount = false })
-            else -> null
-        },
         extraDrawer = {
             Text(
                 "Dans Docs",
@@ -253,6 +310,8 @@ private fun DocsRoot(api: DocsApi, tokens: TokenStore) {
                     email = email,
                     api = api,
                     checker = checker,
+                    themeChoice = themeChoice,
+                    onThemeChoice = onThemeChoice,
                     onBack = { showAccount = false },
                     onLogout = {
                         showAccount = false

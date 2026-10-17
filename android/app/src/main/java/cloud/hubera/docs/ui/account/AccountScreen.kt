@@ -11,7 +11,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.SystemUpdate
+import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -33,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import cloud.hubera.docs.BuildConfig
 import cloud.hubera.docs.data.DocsApi
 import cloud.hubera.docs.data.VersionNote
+import cloud.hubera.docs.ui.theme.DocsThemeChoice
 import cloud.hubera.docs.update.UpdateChecker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -43,6 +46,8 @@ fun DocsAccountScreen(
     email: String,
     api: DocsApi,
     checker: UpdateChecker,
+    themeChoice: DocsThemeChoice,
+    onThemeChoice: (DocsThemeChoice) -> Unit,
     onBack: () -> Unit,
     onLogout: () -> Unit,
 ) {
@@ -76,6 +81,12 @@ fun DocsAccountScreen(
             "Installée ${BuildConfig.VERSION_NAME} · mise à jour jamais forcée.",
             style = MaterialTheme.typography.bodySmall,
         )
+        Text("Thème", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ThemeChip("Sombre", themeChoice == DocsThemeChoice.Dark) { onThemeChoice(DocsThemeChoice.Dark) }
+            ThemeChip("Clair", themeChoice == DocsThemeChoice.Light) { onThemeChoice(DocsThemeChoice.Light) }
+            ThemeChip("Système", themeChoice == DocsThemeChoice.System) { onThemeChoice(DocsThemeChoice.System) }
+        }
         HorizontalDivider(Modifier.padding(vertical = 4.dp))
         ListItem(
             headlineContent = {
@@ -87,21 +98,7 @@ fun DocsAccountScreen(
                     },
                 )
             },
-            supportingContent = {
-                val incoming = notes.firstOrNull { n ->
-                    remoteName != null && n.version == remoteName
-                } ?: notes.firstOrNull()
-                Text(
-                    if (busy && incoming != null) {
-                        buildString {
-                            append(incoming.title)
-                            incoming.notes.forEach { append("\n• ").append(it) }
-                        }
-                    } else {
-                        updateMsg
-                    },
-                )
-            },
+            supportingContent = { Text(updateMsg) },
             leadingContent = {
                 Icon(Icons.Default.SystemUpdate, contentDescription = null)
             },
@@ -112,25 +109,49 @@ fun DocsAccountScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
         }
-        if (available || busy) {
-            Button(
-                onClick = {
-                    if (busy) return@Button
+        Button(
+            onClick = {
+                if (busy) return@Button
+                scope.launch {
                     busy = true
                     progress = 0f
-                    scope.launch {
-                        val msg = runCatching {
-                            checker.install { progress = it }
-                        }.getOrElse { it.message ?: "Échec" }
-                        updateMsg = msg
+                    updateMsg = "Vérification…"
+                    val check = withContext(Dispatchers.IO) { checker.check(respectSnooze = false) }
+                    available = check.available
+                    remoteName = check.info?.apkVersion
+                    updateMsg = check.message ?: "Installée ${BuildConfig.VERSION_NAME}"
+                    if (!check.available) {
                         busy = false
+                        return@launch
                     }
+                    val msg = runCatching {
+                        checker.install(
+                            onProgress = { progress = it },
+                            onStatus = { updateMsg = it },
+                        )
+                    }.getOrElse { it.message ?: "Échec" }
+                    updateMsg = msg
+                    busy = false
+                }
+            },
+            enabled = !busy,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(
+                when {
+                    busy && available -> "Téléchargement…"
+                    busy -> "Vérification…"
+                    available -> "Télécharger / installer ${remoteName ?: ""}".trim()
+                    else -> "Chercher une mise à jour"
                 },
-                enabled = !busy,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(if (busy) "En cours…" else "Télécharger / installer ${remoteName ?: ""}".trim())
-            }
+            )
+        }
+        if (!available && !busy) {
+            Text(
+                "S’il n’y a rien de plus récent, le message ci-dessus le dit. La mise à jour n’est jamais forcée.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
         Text("Notes de version", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         if (notes.isEmpty()) {
@@ -158,4 +179,9 @@ fun DocsAccountScreen(
             Text("Quitter")
         }
     }
+}
+
+@Composable
+private fun ThemeChip(label: String, selected: Boolean, onClick: () -> Unit) {
+    FilterChip(selected = selected, onClick = onClick, label = { Text(label) })
 }

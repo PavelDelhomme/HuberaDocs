@@ -2,7 +2,7 @@
 <resources>
     <style name="Theme.HuberaDocs" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">#FFFFFF</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowBackground">#F4F7F8</item>
     </style>

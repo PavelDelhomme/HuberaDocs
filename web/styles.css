@@ -268,11 +268,22 @@ nav.bottom button.on { color: var(--ink); font-weight: 700; }
 form.login { max-width: 360px; width: min(360px, calc(100% - 32px)); margin: 16px auto; padding: 20px; }
 .sso-picker { margin: 0 0 12px; }
 .sso-btn, .sso-other {
-  width: 100%; padding: 12px; margin: 0 0 8px; border-radius: 10px;
-  border: 1px solid var(--ink); background: var(--card); color: var(--ink);
-  font: inherit; font-weight: 700; cursor: pointer;
+  width: 100%; min-height: 64px; margin: 0; padding: 8px 4px;
+  border: 0; border-radius: 0; background: transparent; color: var(--text);
+  font: inherit; cursor: pointer; text-align: left;
+  display: flex; align-items: center; gap: 16px;
 }
-.sso-other { border-style: dashed; font-weight: 500; color: var(--muted); }
+.sso-other { color: var(--text); }
+.sso-avatar {
+  width: 40px; height: 40px; border-radius: 50%; flex: 0 0 40px;
+  display: grid; place-items: center; color: #fff; font-weight: 600;
+}
+.sso-avatar-add {
+  background: transparent; color: var(--text); border: 1px solid var(--muted); font-weight: 400;
+}
+.sso-meta { display: flex; flex-direction: column; min-width: 0; }
+.sso-meta b { font-weight: 500; font-size: 16px; }
+.sso-meta small { color: var(--muted); font-size: 14px; }
 @media (min-width: 720px) {
   .modal-back { align-items: center; padding: 24px; }
   .modal-card { border-radius: 16px; padding: 20px; }

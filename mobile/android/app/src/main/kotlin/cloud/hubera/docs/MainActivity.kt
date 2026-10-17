@@ -1,5 +1,7 @@
 package cloud.hubera.docs
 
+import android.content.Intent
+import android.net.Uri
 import android.webkit.CookieManager
 import cloud.hubera.id.sso.HuberaIdAccounts
 import io.flutter.embedding.android.FlutterActivity
@@ -33,9 +35,77 @@ class MainActivity : FlutterActivity() {
                             runOnUiThread { result.success(out) }
                         }
                     }
+                    "idInstalled" -> result.success(isHuberaIdInstalled())
+                    "openIdInstall" -> {
+                        openHuberaIdInstall()
+                        result.success(null)
+                    }
+                    "login" -> {
+                        val email = call.argument<String>("email").orEmpty()
+                        val password = call.argument<String>("password").orEmpty()
+                        io.execute {
+                            val out = runCatching { loginAndPublish(email, password) }
+                                .getOrElse { mapOf("ok" to false, "error" to it.message) }
+                            runOnUiThread { result.success(out) }
+                        }
+                    }
                     else -> result.notImplemented()
                 }
             }
+    }
+
+    private fun isHuberaIdInstalled(): Boolean =
+        runCatching {
+            packageManager.getPackageInfo(HUBERA_ID_PACKAGE, 0)
+            true
+        }.getOrDefault(false)
+
+    private fun openHuberaIdInstall() {
+        val launch = packageManager.getLaunchIntentForPackage(HUBERA_ID_PACKAGE)
+        val intent = launch ?: Intent(Intent.ACTION_VIEW, Uri.parse(HUBERA_ID_INSTALL))
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        runCatching { startActivity(intent) }
+    }
+
+    private fun loginAndPublish(email: String, password: String): Map<String, Any?> {
+        val clean = email.trim().lowercase()
+        if (clean.isEmpty() || password.isEmpty()) {
+            return mapOf("ok" to false, "error" to "E-mail et mot de passe requis")
+        }
+        val body = JSONObject()
+            .put("email", clean)
+            .put("password", password)
+            .put("tenant_id", "1")
+            .toString()
+        val conn = (URL("https://id.hubera.cloud/auth/login").openConnection() as HttpURLConnection).apply {
+            requestMethod = "POST"
+            setRequestProperty("Content-Type", "application/json")
+            setRequestProperty("Accept", "application/json")
+            doOutput = true
+            connectTimeout = 12_000
+            readTimeout = 12_000
+        }
+        conn.outputStream.use { it.write(body.toByteArray()) }
+        val text = (if (conn.responseCode in 200..299) conn.inputStream else conn.errorStream)
+            ?.bufferedReader()?.readText().orEmpty()
+        val json = JSONObject(text.ifBlank { "{}" })
+        if (json.optBoolean("requires_2fa")) {
+            return mapOf("ok" to false, "error" to "Validation en deux étapes : ouvre Hubera ID")
+        }
+        val access = json.optString("access_token")
+        if (access.isBlank()) {
+            return mapOf("ok" to false, "error" to json.optString("error").ifBlank { "Identifiants invalides" })
+        }
+        val refresh = json.optString("refresh_token")
+        HuberaIdAccounts.saveSession(
+            this,
+            clean,
+            access,
+            refresh,
+            issuer = "docs",
+            gatewayUrl = "https://id.hubera.cloud",
+        )
+        return sso(clean)
     }
 
     private fun autoSso(): Map<String, Any?> {
@@ -88,5 +158,7 @@ class MainActivity : FlutterActivity() {
     companion object {
         private const val CHANNEL = "hubera_id_sso"
         private const val DOCS = "https://docs.hubera.cloud"
+        private const val HUBERA_ID_PACKAGE = "cloud.hubera.id"
+        private const val HUBERA_ID_INSTALL = "https://id.hubera.cloud/"
     }
 }

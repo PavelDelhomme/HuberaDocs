@@ -14,7 +14,9 @@ Incréments **réels** (pas un clone) :
 - **Liste dossiers** : `starred` + `share_token` renvoyés (le menu savait déjà partager, mais ne voyait pas l’état).
 - **Hubera ID** : le picker Cloudity lit aussi `*.hubera.id` ; permission `READ_ID_ACCOUNT` sur l’APK. JWT Music ≠ JWT Drive : si la session ID n’est pas Cloudity, le login redemande le mot de passe / passkey.
 
-OTA **1.0.6** vc 7 · `mandatory: false` / `forceUpdate: false`. Overlay Samsung `-r` dual (`cloud.hubera.drive` SHA `84e20786…13747652` + `fr.cloudity.cloudity_drive` SHA `d3b0c586…921bfa2d`). **Pas Nothing** (OTA uniquement). Debug disparu sur Samsung (`DEBUGGABLE` retiré).
+OTA **1.0.7** vc 8 (lot E, accueil sans vider la liste) · `mandatory: false` / `forceUpdate: false`. Overlay E6 Samsung/BV. **Pas Nothing** (OTA uniquement).
+
+Précédent live **1.0.6** vc 7 overlay Samsung `-r` dual (`cloud.hubera.drive` + `fr.cloudity.cloudity_drive`). Debug disparu sur Samsung (`DEBUGGABLE` retiré).
 
 ## 8 oct 2026 — chrome Google Drive + APK release
 

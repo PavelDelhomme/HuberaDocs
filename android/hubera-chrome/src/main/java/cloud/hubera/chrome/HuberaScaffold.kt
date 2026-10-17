@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.WindowInsets
@@ -135,7 +134,7 @@ fun HuberaDrawerContent(
 ) {
     Column(
         Modifier
-            .fillMaxHeight()
+            .fillMaxWidth()
             .verticalScroll(rememberScrollState()),
     ) {
         Box(
@@ -288,6 +287,9 @@ fun HuberaScaffold(
     }
     ModalNavigationDrawer(
         drawerState = drawerState,
+        // Le geste horizontal du tiroir couvre tout l’écran et avale le clic du hamburger.
+        // On ne l’active qu’une fois le tiroir ouvert (pour le refermer). L’ouverture passe par le bouton.
+        gesturesEnabled = drawerState.isOpen,
         drawerContent = {
             ModalDrawerSheet(
                 windowInsets = WindowInsets.safeDrawing,
@@ -310,7 +312,11 @@ fun HuberaScaffold(
                 if (!hideTopBar) {
                     HuberaTopBar(
                         title = title,
-                        onMenuClick = { scope.launch { drawerState.open() } },
+                        onMenuClick = {
+                            scope.launch {
+                                if (drawerState.isOpen) drawerState.close() else drawerState.open()
+                            }
+                        },
                         onAccountClick = onAccountClick,
                         extraActions = {
                             extraActions()

@@ -1,5 +1,6 @@
 package cloud.hubera.docs.ui.kanban
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -17,19 +19,21 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -40,6 +44,17 @@ import cloud.hubera.docs.data.Task
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
+private val TaskDraftSaver = Saver<TaskDraft?, List<String>>(
+    save = { value ->
+        val d = value ?: return@Saver emptyList()
+        listOf(d.taskId, d.title, d.body, d.columnId, d.project)
+    },
+    restore = { saved ->
+        if (saved.size < 5) null
+        else TaskDraft(saved[0], saved[1], saved[2], saved[3], saved[4])
+    },
+)
 
 private val projects = listOf(
     "music", "maps", "fuel", "docs", "pass", "drive", "mail", "ops", "platform", "admin",
@@ -54,12 +69,15 @@ fun KanbanScreen(
 ) {
     var tasks by remember { mutableStateOf<List<Task>>(emptyList()) }
     var columns by remember { mutableStateOf<List<Column>>(emptyList()) }
-    var selected by remember { mutableStateOf<Task?>(null) }
-    var editing by remember { mutableStateOf(false) }
+    var panelId by rememberSaveable { mutableStateOf<String?>(null) }
+    var editing by rememberSaveable { mutableStateOf(false) }
+    var draft by rememberSaveable(stateSaver = TaskDraftSaver) { mutableStateOf<TaskDraft?>(null) }
     var showNew by remember { mutableStateOf(false) }
     var showCol by remember { mutableStateOf(false) }
+    var colLabel by rememberSaveable { mutableStateOf("") }
+    var newTitle by rememberSaveable { mutableStateOf("") }
+    var newBody by rememberSaveable { mutableStateOf("") }
     val scope = rememberCoroutineScope()
-    val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     fun reload() {
         scope.launch {
@@ -83,7 +101,7 @@ fun KanbanScreen(
                 .padding(horizontal = 12.dp, vertical = 8.dp),
         ) {
             Text(
-                "Tape une carte pour la fiche — l’édition se fait depuis la popup.",
+                "Tape une carte pour la fiche. Le texte saisi reste jusqu’à l’enregistrement.",
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall,
             )
@@ -107,7 +125,15 @@ fun KanbanScreen(
                                     .fillMaxWidth()
                                     .padding(top = 8.dp)
                                     .clickable {
-                                        selected = task
+                                        draft = keepTaskDraft(
+                                            draft,
+                                            task.id,
+                                            task.title,
+                                            task.body,
+                                            task.columnId,
+                                            task.project,
+                                        )
+                                        panelId = task.id
                                         editing = false
                                     },
                             ) {
@@ -122,34 +148,58 @@ fun KanbanScreen(
                 OutlinedButton(onClick = { showCol = true }) { Text("+ Colonne") }
             }
         }
-    }
-
-    selected?.let { task ->
-        ModalBottomSheet(onDismissRequest = { selected = null; editing = false }, sheetState = sheet) {
-            if (!editing) {
-                Column(Modifier.padding(20.dp)) {
-                    Text(task.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Text("${task.project} · ${task.category} · prio ${task.priority}", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(task.body.ifBlank { "Pas encore de détail." }, Modifier.padding(top = 12.dp))
-                    Row(Modifier.padding(top = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        androidx.compose.material3.Button(onClick = { editing = true }) { Text("Modifier") }
-                        TextButton(onClick = { selected = null }) { Text("Fermer") }
-                    }
-                }
-            } else {
-                TaskEditForm(
-                    task = task,
-                    columns = columns,
-                    onCancel = { editing = false },
-                    onSave = { title, body, col, proj ->
-                        scope.launch {
-                            withContext(Dispatchers.IO) { api.patchTask(task.id, title, body, col, proj) }
-                            selected = null
-                            editing = false
-                            reload()
+        val open = tasks.firstOrNull { it.id == panelId }
+        if (open != null) {
+            val current = draft?.takeIf { it.taskId == open.id }
+                ?: keepTaskDraft(null, open.id, open.title, open.body, open.columnId, open.project)
+            BackHandler {
+                panelId = null
+                editing = false
+            }
+            Surface(
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .imePadding(),
+                tonalElevation = 6.dp,
+                shadowElevation = 8.dp,
+            ) {
+                if (!editing) {
+                    Column(Modifier.padding(20.dp).verticalScroll(rememberScrollState())) {
+                        Text(open.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text("${open.project} · ${open.category} · prio ${open.priority}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            current.body.ifBlank { open.body }.ifBlank { "Pas encore de détail." },
+                            Modifier.padding(top = 12.dp),
+                        )
+                        Row(Modifier.padding(top = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            androidx.compose.material3.Button(onClick = {
+                                draft = current
+                                editing = true
+                            }) { Text("Modifier") }
+                            TextButton(onClick = {
+                                panelId = null
+                                editing = false
+                            }) { Text("Fermer") }
                         }
-                    },
-                )
+                    }
+                } else {
+                    TaskEditForm(
+                        draft = current,
+                        columns = columns,
+                        onChange = { draft = it },
+                        onCancel = { editing = false },
+                        onSave = { title, body, col, proj ->
+                            scope.launch {
+                                withContext(Dispatchers.IO) { api.patchTask(open.id, title, body, col, proj) }
+                                draft = null
+                                panelId = null
+                                editing = false
+                                reload()
+                            }
+                        },
+                    )
+                }
             }
         }
     }
@@ -157,10 +207,16 @@ fun KanbanScreen(
     if (showNew) {
         NewTaskDialog(
             columns = columns,
+            title = newTitle,
+            body = newBody,
+            onTitle = { newTitle = it },
+            onBody = { newBody = it },
             onDismiss = { showNew = false },
             onCreate = { title, body, proj, cat, col ->
                 scope.launch {
                     withContext(Dispatchers.IO) { api.createTask(title, body, proj, cat, col) }
+                    newTitle = ""
+                    newBody = ""
                     showNew = false
                     reload()
                 }
@@ -168,17 +224,17 @@ fun KanbanScreen(
         )
     }
     if (showCol) {
-        var label by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showCol = false },
             title = { Text("Nouvelle colonne") },
-            text = { OutlinedTextField(value = label, onValueChange = { label = it }, label = { Text("Nom") }) },
+            text = { OutlinedTextField(value = colLabel, onValueChange = { colLabel = it }, label = { Text("Nom") }) },
             confirmButton = {
                 TextButton(onClick = {
-                    val l = label.trim()
+                    val l = colLabel.trim()
                     if (l.isEmpty()) return@TextButton
                     scope.launch {
                         withContext(Dispatchers.IO) { api.createColumn(l) }
+                        colLabel = ""
                         showCol = false
                         reload()
                     }
@@ -191,33 +247,52 @@ fun KanbanScreen(
 
 @Composable
 private fun TaskEditForm(
-    task: Task,
+    draft: TaskDraft,
     columns: List<Column>,
+    onChange: (TaskDraft) -> Unit,
     onCancel: () -> Unit,
     onSave: (String, String, String, String) -> Unit,
 ) {
-    var title by remember { mutableStateOf(task.title) }
-    var body by remember { mutableStateOf(task.body) }
-    var col by remember { mutableStateOf(task.columnId) }
-    var proj by remember { mutableStateOf(task.project) }
-    Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(
+        Modifier
+            .padding(20.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         Text("Modifier la carte", style = MaterialTheme.typography.titleMedium)
-        OutlinedTextField(title, { title = it }, label = { Text("Titre") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(body, { body = it }, label = { Text("Détail") }, minLines = 4, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(
+            draft.title,
+            { onChange(draft.copy(title = it)) },
+            label = { Text("Titre") },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        OutlinedTextField(
+            draft.body,
+            { onChange(draft.copy(body = it)) },
+            label = { Text("Détail") },
+            minLines = 4,
+            modifier = Modifier.fillMaxWidth(),
+        )
         Text("Colonne", style = MaterialTheme.typography.labelMedium)
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             columns.forEach { c ->
-                OutlinedButton(onClick = { col = c.id }) { Text(if (c.id == col) "✓ ${c.label}" else c.label) }
+                OutlinedButton(onClick = { onChange(draft.copy(columnId = c.id)) }) {
+                    Text(if (c.id == draft.columnId) "✓ ${c.label}" else c.label)
+                }
             }
         }
         Text("Projet", style = MaterialTheme.typography.labelMedium)
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             projects.forEach { p ->
-                OutlinedButton(onClick = { proj = p }) { Text(if (p == proj) "✓ $p" else p) }
+                OutlinedButton(onClick = { onChange(draft.copy(project = p)) }) {
+                    Text(if (p == draft.project) "✓ $p" else p)
+                }
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            androidx.compose.material3.Button(onClick = { onSave(title, body, col, proj) }) { Text("Enregistrer") }
+            androidx.compose.material3.Button(onClick = {
+                onSave(draft.title, draft.body, draft.columnId, draft.project)
+            }) { Text("Enregistrer") }
             TextButton(onClick = onCancel) { Text("Annuler") }
         }
     }
@@ -226,23 +301,25 @@ private fun TaskEditForm(
 @Composable
 private fun NewTaskDialog(
     columns: List<Column>,
+    title: String,
+    body: String,
+    onTitle: (String) -> Unit,
+    onBody: (String) -> Unit,
     onDismiss: () -> Unit,
     onCreate: (String, String, String, String, String) -> Unit,
 ) {
     val ctx = LocalContext.current
     val prefs = ctx.getSharedPreferences("hubera_docs_inbox", android.content.Context.MODE_PRIVATE)
-    var title by remember { mutableStateOf("") }
-    var body by remember { mutableStateOf("") }
-    var proj by remember { mutableStateOf(prefs.getString("last_app", "docs") ?: "docs") }
-    var cat by remember { mutableStateOf("feature") }
-    var col by remember { mutableStateOf(columns.firstOrNull()?.id ?: "todo") }
+    var proj by rememberSaveable { mutableStateOf(prefs.getString("last_app", "docs") ?: "docs") }
+    var cat by rememberSaveable { mutableStateOf("feature") }
+    var col by rememberSaveable { mutableStateOf(columns.firstOrNull()?.id ?: "todo") }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Nouvelle tâche") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(title, { title = it }, label = { Text("Titre") })
-                OutlinedTextField(body, { body = it }, label = { Text("Détail") })
+                OutlinedTextField(title, onTitle, label = { Text("Titre") })
+                OutlinedTextField(body, onBody, label = { Text("Détail") })
             }
         },
         confirmButton = {

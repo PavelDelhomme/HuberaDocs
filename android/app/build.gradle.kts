@@ -87,4 +87,5 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
     implementation(project(":hubera-id-sso"))
     implementation(project(":hubera-chrome"))
+    testImplementation("junit:junit:4.13.2")
 }

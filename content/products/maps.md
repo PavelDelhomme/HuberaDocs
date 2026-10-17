@@ -6,9 +6,9 @@ Priorité 2 après Music. Lieux, tuiles hors-ligne, garage Fuel dans Maps.
 
 - Domaine : https://maps.hubera.cloud
 - OTA : `updates.json` + `GET /api/version` (même JSON). `forceUpdate: false` / `mandatory: false`
-- Live **0.1.93** vc 94 (prod) : popup Music (paroles, logo, plus de boucle), panneau vitesse bas-droite au-dessus du FAB, fiche OSM (horaires/tel), OTA avec icône qui tourne. Overlay Samsung + Blackview `-r`. OTA jamais forcée.
-- SHA APK cloud `4ab351aa3a839b3610af07d7ddd886b9dc8bfca9e6ade67d487e5917afb11223`
-- SHA APK legacy `7f7d245c3c53cd0efb4a47211b1ef72967439c2873895f90e79c9b12afd894e8`
+- Live **0.1.106** vc 107 (17 oct. 2026) : popup de mise à jour comme Hubera Fuel (proposée, jamais forcée, téléchargement puis installateur). Thème du téléphone. OTA `forceUpdate: false` / `mandatory: false`. Pas d’overlay Nothing.
+- SHA APK cloud `9995c74ef11217feaaf8b6d3c82c0b9ce8c29f8e4398cdf210d5c1d392520a38`
+- SHA APK legacy `9f77360d04f2b7fd287569ce93ee34c9d874beef3f643aa90c48da8c2a031c21`
 
 ## Nothing — installer **sans ouvrir** l’app (P0 crash 0.1.75)
 

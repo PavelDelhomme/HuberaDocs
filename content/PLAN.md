@@ -1,12 +1,22 @@
 # Plan unique Hubera — 13 oct 2026
 
-**Ce fichier est la seule source.** Lots 0–10 du 12 oct : **clos** (livrés). Les anciens plans Cursor / `docs/PLAN.md` méta : **remplacés**. On n’en crée plus d’autres.
+**Ce fichier est la seule source produit.** Lots 0–10 du 12 oct : **clos** (livrés). Le plan Cursor à exécuter ensuite est `plan_unique_exécution_acbc65e7.plan.md`. On n’en crée plus d’autres.
 
 Test réel Paul (13 oct, 206 grise essence, labo + compte). Rien n’est « déjà bon » sans re-test.
 
 Contraintes inchangées : pas de `docker compose down -v`, OTA `forceUpdate: false` / `mandatory: false`, overlay Samsung + Blackview `-r`, **pas d’ADB Nothing**, Watchtower OFF, dual APK. Secrets jamais dans git/Docs/mail.
 
 Modèle UX : **Google** (Gmail / Maps / Calendar / Keep / Drive) + chrome **Hubera Music** (OTA, compte, retour). Palette par app, même mécanique.
+
+**Suite (lot G, 15 oct)** : landings `hubera.cloud` et des apps (Music, Drive, Calendar, …) dans **Hubera CMS**, compte Paul, éditeur = tronc commun **VTCBuilder** (pas une copie de l’éditeur). L’app web métier de chaque produit reste dans son dépôt.
+
+Bugs relevés Paul, à traiter avant de cocher F :
+
+- Music : swipe suivant / précédent relance le titre courant.
+- Maps : bouton Music et bouton position se chevauchent. Music trop petit. L’overlay Music cache la jauge et les contrôles qui doivent rester au-dessus sur l’axe vertical.
+- Maps : sélecteur de véhicule pas ergonomique. Le suivi démarre seul au bout de 3 s sans validation (à retirer). Jauge = compteur Maps, pas le slider actuel. Petit bouton tableau de bord : afficher / masquer la jauge, clim, chauffage et degré, pour la conso.
+- Docs mobile : bandes noires haut et bas, l’écran n’est pas rempli.
+- Admin : catalogue des erreurs Music (mails) groupées par app, puis tâches.
 
 Ordre : A–C **code/overlay Maps Fuel**. **Lot E (13 oct soir)** : Mail/Photos/Notes/Drive trop lents, IMAP OVH, DA type Music — **pas clos**. DA Contacts/Cook/Drive **dans E**, pas de redraw Music/Maps/Fuel.
 
@@ -410,13 +420,41 @@ Référence OTA et chrome. Lecture déjà chaude + file.
 
 Hubera Hub produit « compte Google », Contacts type Google Contacts **en produit neuf**, Calendar invitations riches : **après A+B**. Mesh ADB 3 téléphones : quand ADB Nothing est de retour.
 
+### Plus tard — Mail rédaction (16 oct, Nothing)
+
+Ne pas corriger dans le lot courant. À reprendre quand la synchro Mail est stable.
+
+Le menu des trois points et la barre du bouton **Envoyer** dépassent la zone sûre. L’écran de rédaction (nouveau message, réponse, réponse à tous, transfert, brouillon) devient inutilisable : on n’arrive plus à envoyer ni à garder le brouillon. Revoir toute cette barre (menu, pièces jointes, envoi) pour qu’elle reste dans la zone sûre, au-dessus du clavier, comme Gmail.
+
+Grille à rejouer : `tests_suite_et_perf_verif.plan.md`.
+
+## Canal bêta, puis prod (16 oct)
+
+Les tests partent du **Samsung**. La version y est une **bêta**, jouée complètement dans les conditions de la prod.
+
+- Canal **bêta** sur le serveur : proposé seulement aux comptes bêta.
+- Canal **prod** : la mise à jour habituelle pour les autres utilisateurs. Jamais forcée (`forceUpdate: false`, `mandatory: false`).
+- Ordre : bêta Samsung, contrôle Nothing, puis la même version en prod.
+- Le Blackview reçoit le canal de son compte. Un compte non bêta ne voit pas la bêta.
+
+### Music — réglage (live dans `ytmusic` le 16 oct)
+
+Le verrou est le code de `GET /api/version` et `GET /api/deploy/apk?channel=beta`. Un compte n’est bêta que si son e-mail est dans la variable d’environnement **`HUBERA_BETA_EMAILS`** (liste séparée par des virgules, sur le conteneur, pas dans git). Sans cette variable, personne n’est bêta.
+
+L’APK bêta n’existe que si ces deux fichiers sont dans le volume, sous `data/public/android/` :
+
+- `hubera-music-beta.apk`
+- `hubera-beta-manifest.json` (`versionName`, `versionCode`)
+
+S’il manque l’un des deux, ou si le code bêta n’est pas plus récent que le téléphone et au moins égal à la prod, tout le monde reste sur la prod. Un compte qui n’est pas dans `HUBERA_BETA_EMAILS` et qui demande `channel=beta` reçoit **404**. Les adresses ne sont pas écrites dans le dépôt.
+
 ---
 
 ## Live de référence (13 oct soir)
 
 | App | Version | Note |
 |-----|---------|------|
-| Maps | 0.1.94 vc 95 | Overlay Samsung+BV. A1 A2 livrés. |
+| Maps | 0.1.98 vc 99 | Overlay Samsung+BV. Tableau de bord jauge / clim / chauffage. |
 | Music | 1.3.369 vc 10669 | OTA référence. Logo → apps. |
 | Fuel | 1.4.173 vc 197 | Overlay Samsung+BV. A3–A6 livrés. |
 | Mail | 1.0.6 vc 7 | Code E1–E3. Overlay E6. IMAP paul@ : mdp **boîte** OVH, pas NIC. |
@@ -426,3 +464,40 @@ Hubera Hub produit « compte Google », Contacts type Google Contacts **en produ
 | Calendar | 0.1.8 vc 9 | Chrome drawer. Overlay E6. |
 
 OTA jamais forcée. Catalogue `hubera.cloud/updates.json` aligné.
+
+---
+
+## Demandes du 17 oct
+
+Quatre sujets posés dans la journée. Ce qui est en ligne est dans la section suivante. Le détail d’exécution reste dans le plan Cursor unique.
+
+- **Music** : ne pas reprendre la lecture tout seul au retour dans l’app si l’utilisateur avait mis pause, y compris pendant un lag ou un chargement qui n’avait pas repris.
+- **Fuel** : la Peugeot 206 grise est la voiture utilisée. Trajets, kilomètres et réservoir qui ont été mis sur la Peugeot 206 2003 alors qu’ils sont à la grise reviennent à la grise. Paul indique 275,1 km et 18 500 km avant la révision : à recouper avec la base, pas à figer ces chiffres en dur.
+- **Admin** : un clic sur un rapport de l’accueil ouvre le rapport lui-même, lisible, y compris en mode sombre (le texte actuel est trop petit).
+- **Maps** : circulation et bouchons temps réel sur le trajet voiture. Si ça bouchonne trop, proposer des alternatives, sans les imposer.
+
+## 17 oct livré
+
+Versions lues en production. `forceUpdate` false, `mandatory` false. APK `504b0304`. Rien n’a été installé sur le Nothing.
+
+| App | Version | Code |
+|-----|---------|------|
+| Mail | 1.0.25 (legacy 1.0.11, code 12) | 26 |
+| Contacts | 0.1.12 | 13 |
+| Notes | 0.1.16 | 17 |
+| Cook | 0.1.11 | 12 |
+| Drive | 1.0.14 | 15 |
+| ID | 0.1.12 | 112 |
+| Tasks | 0.1.8 | 9 |
+| Admin | 0.1.10 sur cloudity.delhomme.ovh | 11 |
+| Docs | 0.2.21 | 221 |
+| Calendar | 0.1.18 | 19 |
+| Photos | 1.0.19 | 20 |
+| Pass | 0.1.10 | 11 |
+| Fuel | 1.4.180, `updates.json` en JSON | 204 |
+| Maps | 0.1.106 | 107 |
+| Music | 1.3.373, canal prod | 10673 |
+
+Mail web `mail.hubera.cloud` répond. Music : `GET /api/version` calcule `apkAvailable` (vrai pour 1.3.372, faux pour 1.3.373). `/updates.json` renvoyait le HTML du site ; un fichier JSON a été déposé dans le conteneur, sans le recréer. Fuel : un client déjà en 1.4.180 / 204 voit encore `apkAvailable` true sur `/api/version`. La 206 grise est inchangée (6,3 L, 744,1 km).
+
+Encore ouvert : Bitwarden (coffre verrouillé), Jobs non republié, grille métier longue, APK bêta absente, Nothing à mettre à jour par Paul.

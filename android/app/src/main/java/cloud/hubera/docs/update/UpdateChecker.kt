@@ -2,6 +2,7 @@ package cloud.hubera.docs.update
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageInfo
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
@@ -97,7 +98,10 @@ class UpdateChecker(
 
     suspend fun checkOnStartup(): CheckResult = check(respectSnooze = true)
 
-    suspend fun install(onProgress: ((Float) -> Unit)? = null): String = withContext(Dispatchers.IO) {
+    suspend fun install(
+        onProgress: ((Float) -> Unit)? = null,
+        onStatus: ((String) -> Unit)? = null,
+    ): String = withContext(Dispatchers.IO) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
             !context.packageManager.canRequestPackageInstalls()
         ) {
@@ -116,12 +120,68 @@ class UpdateChecker(
         }
         val dest = File(File(context.cacheDir, "apk-updates"), "hubera-docs.apk")
         dest.parentFile?.mkdirs()
-        if (dest.exists()) dest.delete()
-        api.downloadApk(dest, context.packageName, onProgress)
-        if (dest.length() < 100_000L) {
-            dest.delete()
-            return@withContext "APK trop petite"
+        val first = classify(dest)
+        ApkCachePolicy.progressMessage(first.action, dest.exists() && dest.length() > 0L, first.older)?.let { note ->
+            withContext(Dispatchers.Main) { onStatus?.invoke(note) }
         }
+        if (first.action == ApkCacheAction.REUSE) {
+            onProgress?.invoke(1f)
+            return@withContext launchInstall(dest)
+        }
+        if (first.action == ApkCacheAction.DISCARD && dest.exists()) dest.delete()
+        api.downloadApk(dest, context.packageName, onProgress)
+        if (classify(dest).action != ApkCacheAction.REUSE) {
+            if (dest.exists()) dest.delete()
+            withContext(Dispatchers.Main) { onStatus?.invoke(ApkCachePolicy.DISCARD_MESSAGE) }
+            api.downloadApk(dest, context.packageName, onProgress)
+        }
+        if (classify(dest).action != ApkCacheAction.REUSE) {
+            dest.delete()
+            return@withContext ApkCachePolicy.REJECT_MESSAGE
+        }
+        launchInstall(dest)
+    }
+
+    private data class Classified(val action: ApkCacheAction, val older: Boolean)
+
+    private fun classify(dest: File): Classified {
+        val existed = dest.isFile && dest.length() > 0L
+        val zip = looksLikeZip(dest)
+        val info = if (zip) archiveInfo(dest) else null
+        val pkg = info?.packageName
+        val code = info?.let { apkVersionCode(it) } ?: 0
+        val older = !pkg.isNullOrBlank() && code in 1..BuildConfig.VERSION_CODE
+        val action = ApkCachePolicy.decide(
+            exists = existed,
+            size = if (existed) dest.length() else 0L,
+            zipMagic = zip,
+            packageName = pkg,
+            apkVersionCode = code,
+            localVersionCode = BuildConfig.VERSION_CODE,
+        )
+        return Classified(action, older)
+    }
+
+    private fun looksLikeZip(file: File): Boolean {
+        if (!file.isFile || file.length() < 4L) return false
+        return runCatching {
+            file.inputStream().use { input ->
+                val b = ByteArray(2)
+                val n = input.read(b)
+                ApkCachePolicy.looksLikeZip(b[0].toInt() and 0xff, b[1].toInt() and 0xff, n)
+            }
+        }.getOrDefault(false)
+    }
+
+    private fun archiveInfo(file: File): PackageInfo? =
+        runCatching { context.packageManager.getPackageArchiveInfo(file.absolutePath, 0) }.getOrNull()
+
+    @Suppress("DEPRECATION")
+    private fun apkVersionCode(info: PackageInfo): Int =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) info.longVersionCode.toInt()
+        else info.versionCode
+
+    private suspend fun launchInstall(dest: File): String {
         val uri = FileProvider.getUriForFile(context, context.packageName + ".fileprovider", dest)
         withContext(Dispatchers.Main) {
             context.startActivity(
@@ -133,7 +193,7 @@ class UpdateChecker(
                 },
             )
         }
-        "Installation lancée"
+        return "Installation lancée"
     }
 
     companion object {
