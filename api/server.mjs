@@ -482,7 +482,14 @@ function isAdminEmail(email) {
 }
 
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, app: 'hubera-docs', version: APP_VERSION });
+  let version = APP_VERSION;
+  try {
+    const served = apkPublicInfo(PKG_HUBERA);
+    if (served.ready && served.versionName) version = served.versionName;
+  } catch {
+    /* le fichier VERSION reste le repli */
+  }
+  res.json({ ok: true, app: 'hubera-docs', version });
 });
 
 function apkPublicInfo(pkg) {
