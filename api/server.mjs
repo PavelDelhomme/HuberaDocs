@@ -237,6 +237,9 @@ function seed() {
     { title: 'Valider Taskflow vc 5', body: 'Les deux en cloud.hubera.tasks vc 5. Créer, cocher, échéance, rappel 1 minute, hors-ligne sans doublon, filtre faites.', project: 'tasks', category: 'test', column_id: 'todo', priority: 1 },
     { title: 'Valider Contacts Calendar Cook Jobs Budget ID Docs', body: 'Écarts Blackview : Calendar 5 vs 8, Cook 4 vs 5, Docs 209 vs 210, Jobs 58 vs 60, ID absent. Contacts vc 5 des deux côtés. Cocher chaque app dans le corps du rapport 13 oct. ID et Office : installer sur Blackview d’abord.', project: 'platform', category: 'test', column_id: 'todo', priority: 1 },
     { title: 'Aligner le Blackview sur les APK Samsung', body: 'Mail 5→6, Drive 5→7, Pass 3→5, Calendar 5→8, Cook 4→5, Docs 209→210, Jobs 58→60. Installer ID et Office. Overlay -r, OTA jamais forcée. Pas d’ADB Nothing.', project: 'ops', category: 'test', column_id: 'todo', priority: 1 },
+    { title: 'Music : chargement plus court en aléatoire', body: '18 oct. À chaud, un seul prochain titre, préfixe, pas une rafale de fichiers entiers. Le temps jusqu’au premier son sur une longue file aléatoire reste à mesurer sur téléphone. Ne pas remettre 4 à 8 téléchargements pendant l’écoute.', project: 'music', category: 'bug', column_id: 'todo', priority: 1 },
+    { title: 'Garde des anciens bugs', body: 'Lancer : python3 scripts/guard-known-bugs.py depuis Hubera Docs. Échoue si un flux n’est plus du JSON, si cloud.hubera n’est plus en premier, si forceUpdate ou mandatory, si l’APK n’est pas un ZIP, ou si health Docs redescend sous la version OTA.', project: 'docs', category: 'test', column_id: 'todo', priority: 2 },
+    { title: 'Jobs : le flux updates.json répond encore 404', body: '18 oct. https://jobs.hubera.cloud/updates.json est un 404. La page d’accueil ne contient pas 127.0.0.1. Le flux appelé par l’app doit être du JSON, paquet cloud.hubera.jobs en premier, mise à jour jamais forcée. Ne pas merger dev dans le checkout prod.', project: 'jobs', category: 'bug', column_id: 'todo', priority: 1 },
   ];
   const existsTitle = db.prepare('SELECT id FROM tasks WHERE title = ?');
   const insExtra = db.prepare(
@@ -485,9 +488,13 @@ app.get('/api/health', (_req, res) => {
   let version = APP_VERSION;
   try {
     const served = apkPublicInfo(PKG_HUBERA);
-    if (served.ready && served.versionName) version = served.versionName;
+    const apkName = String(served.versionName || '')
+      .replace(/^[pbd]\+/, '')
+      .trim();
+    const cmp = (a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+    if (served.ready && apkName && cmp(apkName, version) > 0) version = apkName;
   } catch {
-    /* le fichier VERSION reste le repli */
+    /* le fichier VERSION reste le plancher affiché */
   }
   res.json({ ok: true, app: 'hubera-docs', version });
 });
