@@ -9,6 +9,11 @@ export function clampPriority(value, fallback = 2) {
   return i;
 }
 
+/** Tag libre, à côté de la priorité. Vide si rien n’est saisi. */
+export function cleanTag(value) {
+  return String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, 40);
+}
+
 /**
  * parent_id vide = tâche racine.
  * exists(id) et parentOf(id) viennent de la base. Un parent absent ou une boucle est refusé.
@@ -67,6 +72,7 @@ export function nextTaskCreate(body, at, resolveParent) {
       category: String(body?.category || parent?.category || 'feature'),
       column_id: String(body?.column_id || parent?.column_id || 'todo'),
       priority: clampPriority(body?.priority, 2),
+      tag: cleanTag(body?.tag),
       targets,
       parent_id: parent?.parent_id || null,
       created_at: when,
@@ -106,6 +112,7 @@ export function nextTaskPatch(cur, body, at, resolveParent) {
       category: body?.category ?? cur.category,
       column_id: body?.column_id ?? cur.column_id,
       priority: body?.priority != null ? clampPriority(body.priority, cur.priority) : clampPriority(cur.priority, 2),
+      tag: body?.tag != null ? cleanTag(body.tag) : cleanTag(cur.tag),
       targets,
       parent_id,
       created_at: cur.created_at,

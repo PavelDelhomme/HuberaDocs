@@ -1,6 +1,14 @@
 {
   "versions": [
     {
+      "version": "0.2.34",
+      "date": "2026-10-19",
+      "title": "Tag à côté de la priorité",
+      "notes": [
+        "Une tâche créée à la main peut porter un tag, par exemple urgent, sans changer sa priorité. Mise à jour proposée, pas forcée."
+      ]
+    },
+    {
       "version": "0.2.33",
       "date": "2026-10-19",
       "title": "Tiroir depuis le bord",

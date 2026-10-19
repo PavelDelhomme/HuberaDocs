@@ -18,6 +18,7 @@ data class Task(
     val category: String,
     val columnId: String,
     val priority: Int,
+    val tag: String = "",
     val targets: List<String> = emptyList(),
     val createdAt: Long = 0,
     val updatedAt: Long = 0,
@@ -260,6 +261,7 @@ class DocsApi(
         priority: Int = 2,
         parentId: String? = null,
         targets: List<String>? = null,
+        tag: String = "",
     ) {
         val payload = JSONObject()
             .put("title", title)
@@ -268,6 +270,7 @@ class DocsApi(
             .put("category", category)
             .put("column_id", columnId)
             .put("priority", priority.coerceIn(1, 5))
+            .put("tag", tag.trim())
         if (!parentId.isNullOrBlank()) payload.put("parent_id", parentId)
         if (targets != null) payload.put("targets", JSONArray(normalizeTargets(targets)))
         send("POST", "/api/tasks", payload)
@@ -466,6 +469,7 @@ class DocsApi(
                 category = t.optString("category"),
                 columnId = t.optString("column_id"),
                 priority = t.optInt("priority", 2),
+                tag = t.optString("tag"),
                 targets = jsonTargets(t),
                 createdAt = t.optLong("created_at"),
                 updatedAt = t.optLong("updated_at"),

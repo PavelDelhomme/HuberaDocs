@@ -149,6 +149,9 @@ fun KanbanScreen(
                             ) {
                                 Column(Modifier.padding(10.dp)) {
                                     Text("${task.priority.coerceIn(1, 5)}  ${task.title}", fontWeight = FontWeight.SemiBold)
+                                    if (task.tag.isNotBlank()) {
+                                        Text("Tag ${task.tag}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                                    }
                                     Text("${task.project} · ${task.category}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     val parent = tasks.firstOrNull { it.id == task.parentId }
                                     if (parent != null && parent.columnId != task.columnId) {
@@ -284,9 +287,9 @@ fun KanbanScreen(
             onTitle = { newTitle = it },
             onBody = { newBody = it },
             onDismiss = { showNew = false },
-            onCreate = { title, body, proj, cat, col, prio ->
+            onCreate = { title, body, proj, cat, col, prio, tag ->
                 scope.launch {
-                    withContext(Dispatchers.IO) { api.createTask(title, body, proj, cat, col, prio) }
+                    withContext(Dispatchers.IO) { api.createTask(title, body, proj, cat, col, prio, tag = tag) }
                     newTitle = ""
                     newBody = ""
                     showNew = false
@@ -421,7 +424,7 @@ private fun NewTaskDialog(
     onTitle: (String) -> Unit,
     onBody: (String) -> Unit,
     onDismiss: () -> Unit,
-    onCreate: (String, String, String, String, String, Int) -> Unit,
+    onCreate: (String, String, String, String, String, Int, String) -> Unit,
 ) {
     val ctx = LocalContext.current
     val prefs = ctx.getSharedPreferences("hubera_docs_inbox", android.content.Context.MODE_PRIVATE)
@@ -429,6 +432,7 @@ private fun NewTaskDialog(
     var cat by rememberSaveable { mutableStateOf("feature") }
     var col by rememberSaveable { mutableStateOf(columns.firstOrNull()?.id ?: "todo") }
     var priority by rememberSaveable { mutableStateOf(2) }
+    var tag by rememberSaveable { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Nouvelle tâche") },
@@ -436,6 +440,7 @@ private fun NewTaskDialog(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(title, onTitle, label = { Text("Titre") })
                 OutlinedTextField(body, onBody, label = { Text("Détail") })
+                OutlinedTextField(tag, { tag = it }, label = { Text("Tag") }, placeholder = { Text("urgent") })
                 PriorityPicker(priority) { priority = it }
             }
         },
@@ -443,7 +448,7 @@ private fun NewTaskDialog(
             TextButton(onClick = {
                 if (title.isBlank()) return@TextButton
                 prefs.edit().putString("last_app", proj).apply()
-                onCreate(title.trim(), body, proj, cat, col, priority)
+                onCreate(title.trim(), body, proj, cat, col, priority, tag.trim())
             }) { Text("Créer") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Annuler") } },

@@ -91,6 +91,27 @@ describe('sous-tâche', () => {
     assert.equal(deeper.parent_id, 'grand');
   });
 
+  it('un tag urgent ne change pas la priorité', () => {
+    const out = nextTaskCreate(
+      { title: 'Email à faire', tag: '  urgent  ', priority: 2 },
+      10,
+      () => ({ parent_id: null }),
+    );
+    assert.equal(out.task.tag, 'urgent');
+    assert.equal(out.task.priority, 2);
+    const kept = nextTaskPatch(
+      { ...out.task, id: 't', created_at: 10, updated_at: 10 },
+      { title: 'Email à faire encore' },
+      20,
+      () => ({ parent_id: null }),
+    );
+    assert.equal(kept.task.tag, 'urgent');
+    assert.equal(kept.task.priority, 2);
+    const cleared = nextTaskPatch(kept.task, { tag: '   ' }, 30, () => ({ parent_id: null }));
+    assert.equal(cleared.task.tag, '');
+    assert.equal(cleared.task.priority, 2);
+  });
+
   it('une cible vide est refusée quand elle est envoyée', () => {
     const out = nextTaskCreate({ title: 'x', targets: [] }, 10, () => ({ parent_id: null }));
     assert.equal(out.error, 'targets');

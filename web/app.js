@@ -699,6 +699,7 @@ async function viewKanban() {
         const kids = (node.children || []).map(nestedHtml).join('');
         return `<div class="task p${clampPrio(t.priority)}" data-id="${t.id}">
             <b class="prio">${clampPrio(t.priority)}</b>${esc(t.title)}<small>${esc(t.project)} · ${esc(t.category)}</small>
+            ${t.tag ? `<small>Tag ${esc(t.tag)}</small>` : ''}
             ${parentElsewhere(t)}
             <small class="when">${esc(stampLine(t.created_at, t.updated_at))}${cible ? ` · ${esc(cible)}` : ''}</small>
             ${kids}
@@ -902,6 +903,7 @@ function openNewTask() {
     <select id="nproj">${projects.map((p) => `<option ${p === lastApp ? 'selected' : ''}>${p}</option>`).join('')}</select>
     <select id="ncat">${['test','feature','bug','infra','docs','ops'].map((p) => `<option>${p}</option>`).join('')}</select>
     <select id="ncol">${colOptions(first)}</select>
+    <input id="ntag" placeholder="Tag (ex. urgent)" maxlength="40" />
     <label>Priorité</label>
     ${priorityPicker(2)}
     <div class="modal-actions">
@@ -924,6 +926,7 @@ function openNewTask() {
         project: $('#nproj').value,
         category: $('#ncat').value,
         column_id: $('#ncol').value,
+        tag: ($('#ntag').value || '').trim(),
         priority: readPriority(2),
       }),
     });

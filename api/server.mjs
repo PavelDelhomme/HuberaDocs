@@ -100,6 +100,9 @@ if (!hasColumn('tasks', 'targets')) {
 if (!hasColumn('tasks', 'parent_id')) {
   db.exec('ALTER TABLE tasks ADD COLUMN parent_id TEXT');
 }
+if (!hasColumn('tasks', 'tag')) {
+  db.exec("ALTER TABLE tasks ADD COLUMN tag TEXT NOT NULL DEFAULT ''");
+}
 db.prepare('UPDATE remarks SET updated_at = created_at WHERE updated_at IS NULL').run();
 const WORKSPACE_EMAIL = ADMINS[0] || '';
 if (WORKSPACE_EMAIL) {
@@ -841,8 +844,8 @@ app.post('/api/tasks', requireAuth, (req, res) => {
   if (built.error) return res.status(400).json({ error: built.error });
   const row = { id: nid(), ...built.task };
   db.prepare(
-    `INSERT INTO tasks (id,title,body,project,category,column_id,priority,targets,parent_id,created_at,updated_at)
-     VALUES (@id,@title,@body,@project,@category,@column_id,@priority,@targets,@parent_id,@created_at,@updated_at)`,
+    `INSERT INTO tasks (id,title,body,project,category,column_id,priority,tag,targets,parent_id,created_at,updated_at)
+     VALUES (@id,@title,@body,@project,@category,@column_id,@priority,@tag,@targets,@parent_id,@created_at,@updated_at)`,
   ).run(row);
   res.json(expose(row));
 });
@@ -855,7 +858,7 @@ app.patch('/api/tasks/:id', requireAuth, (req, res) => {
   const next = built.task;
   db.prepare(
     `UPDATE tasks SET title=@title, body=@body, project=@project, category=@category,
-     column_id=@column_id, priority=@priority, targets=@targets, parent_id=@parent_id,
+     column_id=@column_id, priority=@priority, tag=@tag, targets=@targets, parent_id=@parent_id,
      updated_at=@updated_at WHERE id=@id`,
   ).run(next);
   res.json(expose(next));
