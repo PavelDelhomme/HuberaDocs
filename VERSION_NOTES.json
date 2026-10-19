@@ -1,6 +1,15 @@
 {
   "versions": [
     {
+      "version": "0.2.23",
+      "date": "2026-10-19",
+      "title": "Priorité 1 à 5",
+      "notes": [
+        "Chaque tâche a une priorité de 1 (la plus importante) à 5. On la choisit à la création et on peut la changer ensuite. Mise à jour proposée, pas forcée.",
+        "L’application s’appelle Hubera Docs dans le lanceur."
+      ]
+    },
+    {
       "version": "0.2.20",
       "date": "2026-10-16",
       "title": "Tiroir et brouillon",

@@ -484,7 +484,7 @@ async function viewDash() {
     <h2>Tes derniers rapports / mails</h2>
     <ul class="list">${d.recentReports.map((r) => `<li class="tap" data-go="reports" data-f="${esc(r.filename || '')}"><strong>${esc(r.title)}</strong><br><small>${(r.sent_at || '').slice(0, 16)} · ${esc(r.kind)}</small><div class="lead">${esc(r.summary || '')}</div></li>`).join('') || '<li>Pas encore de PDF</li>'}</ul>
     <h2>Tâches récentes</h2>
-    <ul class="list">${d.recentTasks.map((t) => `<li class="tap" data-go="kanban">${esc(t.title)}<small> ${esc(t.project)} · ${esc(t.column_id)}</small></li>`).join('')}</ul>
+    <ul class="list">${d.recentTasks.map((t) => `<li class="tap" data-go="kanban"><b class="prio">${clampPrio(t.priority)}</b>${esc(t.title)}<small> ${esc(t.project)} · ${esc(t.column_id)}</small></li>`).join('')}</ul>
   `);
   app.querySelectorAll('[data-go]').forEach((el) => {
     el.onclick = () => {
@@ -499,6 +499,46 @@ function colOptions(selected) {
   return kanbanCols
     .map((c) => `<option value="${esc(c.id)}" ${c.id === selected ? 'selected' : ''}>${esc(c.label)}</option>`)
     .join('');
+}
+
+function clampPrio(value, fallback = 2) {
+  const n = Math.round(Number(value));
+  if (!Number.isFinite(n)) return fallback;
+  if (n < 1) return 1;
+  if (n > 5) return 5;
+  return n;
+}
+
+function priorityPicker(selected) {
+  const n = clampPrio(selected);
+  const chips = [1, 2, 3, 4, 5]
+    .map(
+      (i) =>
+        `<button type="button" class="chip${i === n ? ' on' : ''}" data-prio="${i}" aria-pressed="${i === n ? 'true' : 'false'}">${i}</button>`,
+    )
+    .join('');
+  return `<div class="prio-row" data-value="${n}">${chips}<span class="meta">1 la plus importante</span></div>`;
+}
+
+function bindPriority(root) {
+  const row = root.querySelector('.prio-row');
+  if (!row) return;
+  row.querySelectorAll('[data-prio]').forEach((btn) => {
+    btn.onclick = () => {
+      const v = clampPrio(btn.dataset.prio);
+      row.dataset.value = String(v);
+      row.querySelectorAll('[data-prio]').forEach((b) => {
+        const on = Number(b.dataset.prio) === v;
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    };
+  });
+}
+
+function readPriority(fallback = 2) {
+  const row = document.querySelector('#modal .prio-row');
+  return clampPrio(row?.dataset.value, fallback);
 }
 
 function closeModal() {
@@ -532,8 +572,8 @@ async function viewKanban() {
       .filter((t) => t.column_id === id)
       .map(
         (t) =>
-          `<div class="task p${t.priority}" data-id="${t.id}">
-            ${esc(t.title)}<small>${esc(t.project)} · ${esc(t.category)}</small></div>`,
+          `<div class="task p${clampPrio(t.priority)}" data-id="${t.id}">
+            <b class="prio">${clampPrio(t.priority)}</b>${esc(t.title)}<small>${esc(t.project)} · ${esc(t.category)}</small></div>`,
       )
       .join('');
   app.innerHTML = shell(`
@@ -558,14 +598,36 @@ async function viewKanban() {
 function openTaskCard(t) {
   openModal(`
     <h2>${esc(t.title)}</h2>
-    <p class="meta">${esc(t.project)} · ${esc(t.category)} · priorité ${t.priority}</p>
+    <p class="meta">${esc(t.project)} · ${esc(t.category)}</p>
+    <label>Priorité</label>
+    ${priorityPicker(t.priority)}
     <div class="lead" id="tbody-ro">${esc(t.body || 'Pas encore de détail.')}</div>
     <div class="modal-actions">
       <button class="primary" type="button" id="tedit">Modifier</button>
       <button class="ghost" type="button" id="tclose">Fermer</button>
     </div>
   `);
-  $('#tclose').onclick = closeModal;
+  bindPriority($('#modal'));
+  const row = $('#modal .prio-row');
+  if (row) {
+    row.querySelectorAll('[data-prio]').forEach((btn) => {
+      const pick = btn.onclick;
+      btn.onclick = async () => {
+        pick();
+        const priority = readPriority(t.priority);
+        if (priority === clampPrio(t.priority)) return;
+        await api('/api/tasks/' + t.id, {
+          method: 'PATCH',
+          body: JSON.stringify({ priority }),
+        });
+        t.priority = priority;
+      };
+    });
+  }
+  $('#tclose').onclick = () => {
+    closeModal();
+    viewKanban();
+  };
   $('#tedit').onclick = () => openTaskEdit(t);
 }
 
@@ -576,6 +638,8 @@ function openTaskEdit(t) {
     <input id="ttitle" value="${esc(t.title)}" />
     <label>Détail</label>
     <textarea id="tbody" rows="6">${esc(t.body || '')}</textarea>
+    <label>Priorité</label>
+    ${priorityPicker(t.priority)}
     <label>Colonne</label>
     <select id="tcol">${colOptions(t.column_id)}</select>
     <label>Projet</label>
@@ -585,6 +649,7 @@ function openTaskEdit(t) {
       <button class="ghost" type="button" id="tclose">Annuler</button>
     </div>
   `);
+  bindPriority($('#modal'));
   $('#tclose').onclick = () => openTaskCard(t);
   $('#tsave').onclick = async () => {
     await api('/api/tasks/' + t.id, {
@@ -594,6 +659,7 @@ function openTaskEdit(t) {
         body: $('#tbody').value,
         column_id: $('#tcol').value,
         project: $('#tproj').value,
+        priority: readPriority(t.priority),
       }),
     });
     closeModal();
@@ -611,12 +677,15 @@ function openNewTask() {
     <select id="nproj">${projects.map((p) => `<option ${p === lastApp ? 'selected' : ''}>${p}</option>`).join('')}</select>
     <select id="ncat">${['test','feature','bug','infra','docs','ops'].map((p) => `<option>${p}</option>`).join('')}</select>
     <select id="ncol">${colOptions(first)}</select>
+    <label>Priorité</label>
+    ${priorityPicker(2)}
     <div class="modal-actions">
       <button class="primary" type="button" id="nsave">Créer</button>
       <button class="ghost" type="button" id="nclose">Annuler</button>
     </div>
   `);
   $('#nclose').onclick = closeModal;
+  bindPriority($('#modal'));
   queueMicrotask(() => $('#ntitle')?.focus());
   $('#nsave').onclick = async () => {
     const title = ($('#ntitle').value || '').trim();
@@ -630,6 +699,7 @@ function openNewTask() {
         project: $('#nproj').value,
         category: $('#ncat').value,
         column_id: $('#ncol').value,
+        priority: readPriority(2),
       }),
     });
     closeModal();

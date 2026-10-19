@@ -149,6 +149,15 @@ function seedColumns() {
 }
 seedColumns();
 
+function clampPriority(value, fallback = 2) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  const i = Math.round(n);
+  if (i < 1) return 1;
+  if (i > 5) return 5;
+  return i;
+}
+
 function nid() {
   return randomBytes(8).toString('hex');
 }
@@ -795,7 +804,7 @@ app.post('/api/tasks', requireAuth, (req, res) => {
     project: String(req.body?.project || 'platform'),
     category: String(req.body?.category || 'feature'),
     column_id: String(req.body?.column_id || 'todo'),
-    priority: Number(req.body?.priority || 2),
+    priority: clampPriority(req.body?.priority, 2),
     created_at: t,
     updated_at: t,
   };
@@ -816,7 +825,7 @@ app.patch('/api/tasks/:id', requireAuth, (req, res) => {
     project: req.body?.project ?? cur.project,
     category: req.body?.category ?? cur.category,
     column_id: req.body?.column_id ?? cur.column_id,
-    priority: req.body?.priority ?? cur.priority,
+    priority: req.body?.priority != null ? clampPriority(req.body.priority, cur.priority) : clampPriority(cur.priority, 2),
     updated_at: now(),
   };
   db.prepare(

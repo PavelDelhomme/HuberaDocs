@@ -26,4 +26,17 @@ class TaskDraftTest {
         assertEquals("Autre", next.title)
         assertEquals("", next.body)
     }
+
+    @Test
+    fun memeCarte_gardeLaPrioriteNonEnregistree() {
+        val typed = TaskDraft("t1", "Brouillon", "x", "todo", "docs", 1)
+        val again = keepTaskDraft(typed, "t1", "Serveur", "s", "todo", "docs", 4)
+        assertEquals(1, again.priority)
+    }
+
+    @Test
+    fun nouvelleCarte_prendLaPrioriteServeur() {
+        val draft = keepTaskDraft(null, "t9", "Titre", "", "todo", "fuel", 2)
+        assertEquals(2, draft.priority)
+    }
 }

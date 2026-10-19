@@ -213,7 +213,7 @@ class DocsApi(
         return Column(o.optString("id"), o.optString("label"), o.optInt("position"))
     }
 
-    fun createTask(title: String, body: String, project: String, category: String, columnId: String) {
+    fun createTask(title: String, body: String, project: String, category: String, columnId: String, priority: Int = 2) {
         send(
             "POST",
             "/api/tasks",
@@ -222,11 +222,12 @@ class DocsApi(
                 .put("body", body)
                 .put("project", project)
                 .put("category", category)
-                .put("column_id", columnId),
+                .put("column_id", columnId)
+                .put("priority", priority.coerceIn(1, 5)),
         )
     }
 
-    fun patchTask(id: String, title: String, body: String, columnId: String, project: String) {
+    fun patchTask(id: String, title: String, body: String, columnId: String, project: String, priority: Int) {
         send(
             "PATCH",
             "/api/tasks/$id",
@@ -234,8 +235,13 @@ class DocsApi(
                 .put("title", title)
                 .put("body", body)
                 .put("column_id", columnId)
-                .put("project", project),
+                .put("project", project)
+                .put("priority", priority.coerceIn(1, 5)),
         )
+    }
+
+    fun patchPriority(id: String, priority: Int) {
+        send("PATCH", "/api/tasks/$id", JSONObject().put("priority", priority.coerceIn(1, 5)))
     }
 
     fun docs(): List<DocFile> {

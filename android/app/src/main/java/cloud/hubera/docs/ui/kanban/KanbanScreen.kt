@@ -48,11 +48,18 @@ import kotlinx.coroutines.withContext
 private val TaskDraftSaver = Saver<TaskDraft?, List<String>>(
     save = { value ->
         val d = value ?: return@Saver emptyList()
-        listOf(d.taskId, d.title, d.body, d.columnId, d.project)
+        listOf(d.taskId, d.title, d.body, d.columnId, d.project, d.priority.toString())
     },
     restore = { saved ->
         if (saved.size < 5) null
-        else TaskDraft(saved[0], saved[1], saved[2], saved[3], saved[4])
+        else TaskDraft(
+            saved[0],
+            saved[1],
+            saved[2],
+            saved[3],
+            saved[4],
+            saved.getOrNull(5)?.toIntOrNull()?.coerceIn(1, 5) ?: 2,
+        )
     },
 )
 
@@ -132,13 +139,14 @@ fun KanbanScreen(
                                             task.body,
                                             task.columnId,
                                             task.project,
+                                            task.priority,
                                         )
                                         panelId = task.id
                                         editing = false
                                     },
                             ) {
                                 Column(Modifier.padding(10.dp)) {
-                                    Text(task.title, fontWeight = FontWeight.SemiBold)
+                                    Text("${task.priority.coerceIn(1, 5)}  ${task.title}", fontWeight = FontWeight.SemiBold)
                                     Text("${task.project} · ${task.category}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
@@ -151,7 +159,7 @@ fun KanbanScreen(
         val open = tasks.firstOrNull { it.id == panelId }
         if (open != null) {
             val current = draft?.takeIf { it.taskId == open.id }
-                ?: keepTaskDraft(null, open.id, open.title, open.body, open.columnId, open.project)
+                ?: keepTaskDraft(null, open.id, open.title, open.body, open.columnId, open.project, open.priority)
             BackHandler {
                 panelId = null
                 editing = false
@@ -167,7 +175,13 @@ fun KanbanScreen(
                 if (!editing) {
                     Column(Modifier.padding(20.dp).verticalScroll(rememberScrollState())) {
                         Text(open.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                        Text("${open.project} · ${open.category} · prio ${open.priority}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("${open.project} · ${open.category}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        PriorityPicker(open.priority.coerceIn(1, 5)) { p ->
+                            scope.launch {
+                                withContext(Dispatchers.IO) { api.patchPriority(open.id, p) }
+                                reload()
+                            }
+                        }
                         Text(
                             current.body.ifBlank { open.body }.ifBlank { "Pas encore de détail." },
                             Modifier.padding(top = 12.dp),
@@ -189,9 +203,9 @@ fun KanbanScreen(
                         columns = columns,
                         onChange = { draft = it },
                         onCancel = { editing = false },
-                        onSave = { title, body, col, proj ->
+                        onSave = { title, body, col, proj, prio ->
                             scope.launch {
-                                withContext(Dispatchers.IO) { api.patchTask(open.id, title, body, col, proj) }
+                                withContext(Dispatchers.IO) { api.patchTask(open.id, title, body, col, proj, prio) }
                                 draft = null
                                 panelId = null
                                 editing = false
@@ -212,9 +226,9 @@ fun KanbanScreen(
             onTitle = { newTitle = it },
             onBody = { newBody = it },
             onDismiss = { showNew = false },
-            onCreate = { title, body, proj, cat, col ->
+            onCreate = { title, body, proj, cat, col, prio ->
                 scope.launch {
-                    withContext(Dispatchers.IO) { api.createTask(title, body, proj, cat, col) }
+                    withContext(Dispatchers.IO) { api.createTask(title, body, proj, cat, col, prio) }
                     newTitle = ""
                     newBody = ""
                     showNew = false
@@ -251,7 +265,7 @@ private fun TaskEditForm(
     columns: List<Column>,
     onChange: (TaskDraft) -> Unit,
     onCancel: () -> Unit,
-    onSave: (String, String, String, String) -> Unit,
+    onSave: (String, String, String, String, Int) -> Unit,
 ) {
     Column(
         Modifier
@@ -289,9 +303,10 @@ private fun TaskEditForm(
                 }
             }
         }
+        PriorityPicker(draft.priority.coerceIn(1, 5)) { onChange(draft.copy(priority = it)) }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             androidx.compose.material3.Button(onClick = {
-                onSave(draft.title, draft.body, draft.columnId, draft.project)
+                onSave(draft.title, draft.body, draft.columnId, draft.project, draft.priority.coerceIn(1, 5))
             }) { Text("Enregistrer") }
             TextButton(onClick = onCancel) { Text("Annuler") }
         }
@@ -306,13 +321,14 @@ private fun NewTaskDialog(
     onTitle: (String) -> Unit,
     onBody: (String) -> Unit,
     onDismiss: () -> Unit,
-    onCreate: (String, String, String, String, String) -> Unit,
+    onCreate: (String, String, String, String, String, Int) -> Unit,
 ) {
     val ctx = LocalContext.current
     val prefs = ctx.getSharedPreferences("hubera_docs_inbox", android.content.Context.MODE_PRIVATE)
     var proj by rememberSaveable { mutableStateOf(prefs.getString("last_app", "docs") ?: "docs") }
     var cat by rememberSaveable { mutableStateOf("feature") }
     var col by rememberSaveable { mutableStateOf(columns.firstOrNull()?.id ?: "todo") }
+    var priority by rememberSaveable { mutableStateOf(2) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Nouvelle tâche") },
@@ -320,15 +336,33 @@ private fun NewTaskDialog(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(title, onTitle, label = { Text("Titre") })
                 OutlinedTextField(body, onBody, label = { Text("Détail") })
+                PriorityPicker(priority) { priority = it }
             }
         },
         confirmButton = {
             TextButton(onClick = {
                 if (title.isBlank()) return@TextButton
                 prefs.edit().putString("last_app", proj).apply()
-                onCreate(title.trim(), body, proj, cat, col)
+                onCreate(title.trim(), body, proj, cat, col, priority)
             }) { Text("Créer") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Annuler") } },
     )
+}
+
+@Composable
+private fun PriorityPicker(value: Int, onChange: (Int) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text("Priorité · 1 la plus importante", style = MaterialTheme.typography.labelMedium)
+        Row(
+            Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            (1..5).forEach { n ->
+                OutlinedButton(onClick = { onChange(n) }) {
+                    Text(if (n == value) "✓ $n" else "$n")
+                }
+            }
+        }
+    }
 }

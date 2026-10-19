@@ -153,6 +153,12 @@ h2 { font-size: 15px; color: var(--ink); margin: 16px 0 8px; }
   color: var(--text);
 }
 .task small { display: block; color: var(--muted); margin-top: 4px; }
+.task .prio {
+  display: inline-block; min-width: 1.1em; margin-right: 6px;
+  font-weight: 700; color: var(--ink);
+}
+.prio-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+.prio-row .meta { margin: 0; }
 .task.p1 { border-left-color: var(--bad); }
 nav.bottom {
   position: fixed; left: 0; right: 0; bottom: 0;
