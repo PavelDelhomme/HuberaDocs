@@ -234,6 +234,25 @@ object HuberaIdAccounts {
         }
     }
 
+    /**
+     * Access du compte [email] servi par Hubera ID.
+     * La requête sur le compte déclenche le renouvellement silencieux chez ID.
+     * Le jeton d’un autre compte est ignoré.
+     */
+    fun freshFromId(ctx: Context, email: String): HuberaIdAccount? {
+        val clean = email.trim().lowercase()
+        if (clean.isEmpty()) return null
+        val uri = Uri.parse(
+            "content://${HuberaIdPeers.huberaAuthority("cloud.hubera.id")}/accounts/${Uri.encode(clean)}",
+        )
+        val rows = queryProvider(ctx, uri, hubera = true, fallbackPkg = "cloud.hubera.id") ?: return null
+        val row = rows.firstOrNull { it.email.equals(clean, ignoreCase = true) } ?: return null
+        val tokenEmail = jwtEmail(row.accessToken)
+        if (tokenEmail.isNotBlank() && !tokenEmail.equals(clean, ignoreCase = true)) return null
+        if (row.accessToken.isBlank()) return null
+        return row
+    }
+
     fun jwtExpMillis(token: String): Long {
         val seconds = jwtExpSeconds(token)
         return if (seconds > 0) seconds * 1000L else 0L

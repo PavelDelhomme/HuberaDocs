@@ -55,6 +55,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cloud.hubera.docs.data.Dashboard
 import cloud.hubera.docs.data.DocsApi
+import cloud.hubera.docs.data.DocsIdSession
 import cloud.hubera.docs.data.GanttBar
 import cloud.hubera.docs.ui.DocsSpeedDial
 import cloud.hubera.docs.ui.account.DocsAccountScreen
@@ -136,12 +137,22 @@ private fun DocsRoot(
     val checker = remember { UpdateChecker(api, ctx.applicationContext) }
     LaunchedEffect(Unit) {
         logged = withContext(Dispatchers.IO) {
-            try {
-                val me = api.me()
-                if (me.isNotBlank()) email = me
-                me.isNotBlank()
+            val local = try {
+                api.me()
             } catch (_: Exception) {
-                false
+                ""
+            }
+            if (local.isNotBlank()) {
+                email = local
+                true
+            } else {
+                val mail = DocsIdSession.trySilent(ctx, api, tokens.email())
+                if (!mail.isNullOrBlank()) {
+                    email = mail
+                    true
+                } else {
+                    false
+                }
             }
         }
         ready = true

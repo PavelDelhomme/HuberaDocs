@@ -81,6 +81,11 @@ data class VersionNote(
 
 class AuthException : Exception("auth")
 
+private val HUBERA_AUTH = listOf(
+    "https://id.hubera.cloud",
+    "https://api.cloudity.delhomme.ovh",
+)
+
 class DocsApi(
     private val base: String,
     private val tokens: TokenStore,
@@ -162,6 +167,26 @@ class DocsApi(
         }
         tokens.save(token, mail)
         return mail
+    }
+
+    /** Échange un refresh Hubera du même compte. N’écrit rien tant que Docs n’a pas accepté l’access. */
+    fun renewHuberaAccess(refreshToken: String): Pair<String, String>? {
+        val token = refreshToken.trim()
+        if (token.isEmpty()) return null
+        for (hub in HUBERA_AUTH) {
+            val renewed = runCatching {
+                val payload = JSONObject().put("refresh_token", token).toString().toRequestBody(jsonType)
+                val request = Request.Builder().url("$hub/auth/refresh").post(payload).build()
+                http.newCall(request).execute().use { resp ->
+                    if (!resp.isSuccessful) return@use null
+                    val body = JSONObject(resp.body?.string().orEmpty())
+                    val access = body.optString("access_token")
+                    if (access.isBlank()) null else access to body.optString("refresh_token")
+                }
+            }.getOrNull()
+            if (renewed != null) return renewed
+        }
+        return null
     }
 
     fun login2fa(email: String, code: String): String {

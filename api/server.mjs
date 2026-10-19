@@ -3,6 +3,12 @@ import { betaChannelBlocked } from './betaChannel.mjs';
 import { parseTargets } from './targets.mjs';
 import { buildRemarkCreate, buildRemarkPatch } from './remarksLogic.mjs';
 import { nextTaskCreate, nextTaskPatch, resolveParentId } from './tasksLogic.mjs';
+import {
+  allowlistFromEnv,
+  emailFromValidatedProbe,
+  isAllowlisted,
+  sessionEmailForLogin,
+} from './allowlist.mjs';
 import { createHash, randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, extname, join, resolve } from 'node:path';
@@ -18,10 +24,7 @@ const REPORTS_DIR = process.env.REPORTS_DIR || join(CONTENT_DIR, 'reports');
 const WEB_DIR = join(ROOT, 'web');
 const PORT = Number(process.env.PORT || 8780);
 const ID_URL = (process.env.ID_URL || 'https://id.hubera.cloud').replace(/\/$/, '');
-const ADMINS = (process.env.DOCS_ADMIN_EMAILS || 'paul@delhomme.ovh')
-  .split(',')
-  .map((s) => s.trim().toLowerCase())
-  .filter(Boolean);
+const ADMINS = allowlistFromEnv(process.env.DOCS_ADMIN_EMAILS);
 const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-only-change-me';
 
 mkdirSync(DATA_DIR, { recursive: true });
@@ -98,8 +101,10 @@ if (!hasColumn('tasks', 'parent_id')) {
   db.exec('ALTER TABLE tasks ADD COLUMN parent_id TEXT');
 }
 db.prepare('UPDATE remarks SET updated_at = created_at WHERE updated_at IS NULL').run();
-const WORKSPACE_EMAIL = ADMINS[0] || 'paul@delhomme.ovh';
-db.prepare(`UPDATE reports SET owner_email = ? WHERE owner_email IS NULL OR owner_email = ''`).run(WORKSPACE_EMAIL);
+const WORKSPACE_EMAIL = ADMINS[0] || '';
+if (WORKSPACE_EMAIL) {
+  db.prepare(`UPDATE reports SET owner_email = ? WHERE owner_email IS NULL OR owner_email = ''`).run(WORKSPACE_EMAIL);
+}
 
 function versionCodeFromSemver(semver) {
   const parts = String(semver || '0.0.0').split('.').map((n) => parseInt(n, 10) || 0);
@@ -517,13 +522,13 @@ function issueSession(res, email) {
 
 function requireAuth(req, res, next) {
   const s = readSession(req);
-  if (!s) return res.status(401).json({ error: 'auth' });
+  if (!s || !isAdminEmail(s.email)) return res.status(401).json({ error: 'auth' });
   req.admin = s;
   next();
 }
 
 function isAdminEmail(email) {
-  return ADMINS.includes(String(email || '').trim().toLowerCase());
+  return isAllowlisted(email, ADMINS);
 }
 
 app.get('/api/health', (_req, res) => {
@@ -643,11 +648,7 @@ app.get('/api/auth/me', (req, res) => {
 });
 
 function emailFromProbe(data) {
-  if (!data || typeof data !== 'object') return '';
-  const direct = String(data.email || '').trim().toLowerCase();
-  if (direct) return direct;
-  const user = data.user && typeof data.user === 'object' ? data.user : null;
-  return String(user?.email || '').trim().toLowerCase();
+  return emailFromValidatedProbe(data);
 }
 
 async function emailFromHuberaToken(accessToken) {
@@ -681,12 +682,14 @@ app.post('/api/auth/login/sso', async (req, res) => {
   if (tooMany(ip)) return res.status(429).json({ error: 'rate' });
   const token = String(req.body?.access_token || req.body?.accessToken || '').trim();
   if (!token) return res.status(400).json({ error: 'champs' });
+  const announced = String(req.body?.email || '').trim().toLowerCase();
   try {
     const email = await emailFromHuberaToken(token);
     if (!email) return res.status(401).json({ error: 'invalid' });
-    if (!isAdminEmail(email)) return res.status(403).json({ error: 'allowlist' });
-    const session = issueSession(res, email);
-    res.json({ ok: true, email, token: session });
+    const decision = sessionEmailForLogin({ bodyEmail: announced, tokenEmail: email, allow: ADMINS });
+    if (decision.error) return res.status(403).json({ error: 'allowlist' });
+    const session = issueSession(res, decision.email);
+    res.json({ ok: true, email: decision.email, token: session });
   } catch {
     res.status(502).json({ error: 'id' });
   }
@@ -708,8 +711,11 @@ app.post('/api/auth/login', async (req, res) => {
     const data = await r.json().catch(() => ({}));
     if (data.requires_2fa) return res.status(200).json({ requires_2fa: true });
     if (!r.ok || !data.access_token) return res.status(401).json({ error: 'invalid' });
-    const token = issueSession(res, email);
-    res.json({ ok: true, email, token });
+    const tokenEmail = await emailFromHuberaToken(data.access_token);
+    const decision = sessionEmailForLogin({ bodyEmail: email, tokenEmail, allow: ADMINS });
+    if (decision.error) return res.status(403).json({ error: 'allowlist' });
+    const token = issueSession(res, decision.email);
+    res.json({ ok: true, email: decision.email, token });
   } catch {
     res.status(502).json({ error: 'id' });
   }
@@ -728,8 +734,11 @@ app.post('/api/auth/login/2fa', async (req, res) => {
     });
     const data = await r.json().catch(() => ({}));
     if (!r.ok || !data.access_token) return res.status(401).json({ error: 'invalid' });
-    const token = issueSession(res, email);
-    res.json({ ok: true, email, token });
+    const tokenEmail = await emailFromHuberaToken(data.access_token);
+    const decision = sessionEmailForLogin({ bodyEmail: email, tokenEmail, allow: ADMINS });
+    if (decision.error) return res.status(403).json({ error: 'allowlist' });
+    const token = issueSession(res, decision.email);
+    res.json({ ok: true, email: decision.email, token });
   } catch {
     res.status(502).json({ error: 'id' });
   }
@@ -742,6 +751,7 @@ app.get('/go', (req, res) => {
   if (!row || row.used || row.expires_at < Date.now()) {
     return res.status(410).send('Lien expiré. Rouvre Hubera Docs.');
   }
+  if (!isAdminEmail(row.email)) return res.status(403).send('Lien refusé.');
   db.prepare('UPDATE claims SET used = 1 WHERE token = ?').run(hashSession(raw));
   issueSession(res, row.email);
   res.redirect(302, '/#dash');

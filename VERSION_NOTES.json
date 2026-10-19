@@ -1,6 +1,38 @@
 {
   "versions": [
     {
+      "version": "0.2.30",
+      "date": "2026-10-19",
+      "title": "Session Hubera ID",
+      "notes": [
+        "Si le jeton du compte déjà dans Hubera ID est périmé, Docs le renouvelle puis ouvre ce compte. Un autre compte reste refusé par le serveur. Le sélecteur reste lisible sur fond foncé. Lanceur Hubera Docs. Mise à jour proposée, pas forcée."
+      ]
+    },
+    {
+      "version": "0.2.29",
+      "date": "2026-10-19",
+      "title": "Sélecteur lisible",
+      "notes": [
+        "Le sélecteur de compte suit le thème de l’app : fond foncé, texte clair. Hubera Docs n’ouvre que le compte autorisé par le serveur. Un autre compte est refusé, sans mot de passe à retaper pour le compte déjà connu. Lanceur Hubera Docs. Mise à jour proposée, pas forcée."
+      ]
+    },
+    {
+      "version": "0.2.28",
+      "date": "2026-10-19",
+      "title": "Session Hubera ID",
+      "notes": [
+        "Docs ouvre le compte déjà connu dans Hubera ID, sans mot de passe et sans l’erreur rouge d’auth. Un autre compte ne reçoit pas ce jeton. Le formulaire n’apparaît qu’après la lecture des comptes. Mise à jour proposée, pas forcée."
+      ]
+    },
+    {
+      "version": "0.2.27",
+      "date": "2026-10-19",
+      "title": "Session Hubera ID",
+      "notes": [
+        "Après une mise à jour, Docs redemande le jeton du compte déjà ouvert dans Hubera ID. Pas de mot de passe à chaque ouverture. Un autre compte ne reçoit pas ce jeton. Mise à jour proposée, pas forcée."
+      ]
+    },
+    {
       "version": "0.2.26",
       "date": "2026-10-19",
       "title": "Sous-tâches",

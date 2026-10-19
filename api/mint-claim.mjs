@@ -6,7 +6,11 @@ import Database from 'better-sqlite3';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DATA_DIR = process.env.DATA_DIR || join(ROOT, 'data');
 const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-only-change-me';
-const EMAIL = (process.env.DOCS_CLAIM_EMAIL || 'paul@delhomme.ovh').toLowerCase();
+const EMAIL = String(process.env.DOCS_CLAIM_EMAIL || '').trim().toLowerCase();
+if (!EMAIL.includes('@')) {
+  console.error('DOCS_CLAIM_EMAIL manquant');
+  process.exit(1);
+}
 const BASE = (process.env.DOCS_PUBLIC_URL || 'https://docs.hubera.cloud').replace(/\/$/, '');
 
 const db = new Database(join(DATA_DIR, 'docs.sqlite'));

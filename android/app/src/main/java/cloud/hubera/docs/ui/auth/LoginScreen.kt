@@ -48,6 +48,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import cloud.hubera.docs.R
 import cloud.hubera.docs.data.DocsApi
+import cloud.hubera.docs.data.DocsIdSession
 import cloud.hubera.id.sso.HuberaIdAccount
 import cloud.hubera.id.sso.HuberaIdAccounts
 import kotlinx.coroutines.Dispatchers
@@ -67,11 +68,13 @@ fun LoginScreen(api: DocsApi, onLoggedIn: () -> Unit) {
     var otherAccount by remember { mutableStateOf(false) }
     var showChooser by remember { mutableStateOf(false) }
     var idInstalled by remember { mutableStateOf(true) }
+    var accountsReady by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         val found = withContext(Dispatchers.IO) { HuberaIdAccounts.listAccounts(ctx) }
         accounts = found
+        accountsReady = true
         idInstalled = withContext(Dispatchers.IO) {
             runCatching {
                 ctx.packageManager.getPackageInfo("cloud.hubera.id", 0)
@@ -86,11 +89,18 @@ fun LoginScreen(api: DocsApi, onLoggedIn: () -> Unit) {
         error = null
         scope.launch {
             try {
-                withContext(Dispatchers.IO) { api.loginSso(acc.accessToken, acc.refreshToken) }
-                onLoggedIn()
+                val mail = withContext(Dispatchers.IO) {
+                    DocsIdSession.signInFresh(ctx, api, acc.email)
+                }
+                if (mail.isNullOrBlank()) {
+                    error = "Session Hubera ID indisponible pour ce compte."
+                } else {
+                    onLoggedIn()
+                }
             } catch (e: Exception) {
                 error = when (e.message) {
                     "allowlist" -> "Cet e-mail n’est pas sur la liste Docs (Paul)."
+                    "auth", "invalid" -> "Session Hubera ID indisponible pour ce compte."
                     else -> e.message ?: "SSO Hubera ID refusé."
                 }
             } finally {
@@ -118,17 +128,16 @@ fun LoginScreen(api: DocsApi, onLoggedIn: () -> Unit) {
         Spacer(Modifier.height(20.dp))
 
         if (showChooser && !twoFa) {
-            val dark = androidx.compose.foundation.isSystemInDarkTheme()
             androidx.compose.ui.window.Dialog(onDismissRequest = {}) {
                 androidx.compose.material3.Surface(
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
-                    color = if (dark) Color(0xFF2D2E30) else Color.White,
+                    color = MaterialTheme.colorScheme.surface,
                 ) {
                     Column(Modifier.padding(top = 16.dp, bottom = 8.dp)) {
                         Text(
                             "Choisir un compte",
                             modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-                            color = if (dark) Color(0xFFE8EAED) else Color(0xFF202124),
+                            color = MaterialTheme.colorScheme.onSurface,
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Normal,
                         )
@@ -138,11 +147,7 @@ fun LoginScreen(api: DocsApi, onLoggedIn: () -> Unit) {
                                 subtitle = acc.email,
                                 onClick = {
                                     showChooser = false
-                                    if (acc.accessToken.isBlank() && acc.refreshToken.isBlank()) {
-                                        error = "Session absente"
-                                    } else {
-                                        runSso(acc)
-                                    }
+                                    runSso(acc)
                                 },
                             )
                         }
@@ -173,6 +178,7 @@ fun LoginScreen(api: DocsApi, onLoggedIn: () -> Unit) {
                 "Choisir un compte",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Normal,
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Spacer(Modifier.height(8.dp))
             accounts.forEach { acc ->
@@ -196,7 +202,9 @@ fun LoginScreen(api: DocsApi, onLoggedIn: () -> Unit) {
             Spacer(Modifier.height(12.dp))
         }
 
-        if (accounts.isEmpty() || otherAccount || twoFa) {
+        if (!accountsReady) {
+            CircularProgressIndicator()
+        } else if (accounts.isEmpty() || otherAccount || twoFa) {
         if (!twoFa) {
             OutlinedTextField(
                 value = email,
@@ -281,9 +289,8 @@ private fun openHuberaIdInstall(ctx: android.content.Context) {
 
 @Composable
 private fun AccountLine(title: String, onClick: () -> Unit, subtitle: String? = null, add: Boolean = false) {
-    val dark = androidx.compose.foundation.isSystemInDarkTheme()
-    val ink = if (dark) androidx.compose.ui.graphics.Color(0xFFE8EAED) else androidx.compose.ui.graphics.Color(0xFF202124)
-    val muted = if (dark) androidx.compose.ui.graphics.Color(0xFF9AA0A6) else androidx.compose.ui.graphics.Color(0xFF5F6368)
+    val ink = MaterialTheme.colorScheme.onSurface
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
     val showSub = !subtitle.isNullOrBlank() && !subtitle.equals(title, ignoreCase = true)
     androidx.compose.material3.Surface(
         onClick = onClick,

@@ -1,7 +1,6 @@
 package cloud.hubera.docs.data
 
 import android.content.Context
-import cloud.hubera.id.sso.HuberaIdAccounts
 
 class TokenStore(context: Context) {
     private val app = context.applicationContext
@@ -11,8 +10,8 @@ class TokenStore(context: Context) {
     fun email(): String? = prefs.getString("email", null)
 
     fun save(token: String, email: String) {
+        // La session Docs ne remplace pas le jeton Hubera ID.
         prefs.edit().putString("token", token).putString("email", email).apply()
-        HuberaIdAccounts.saveSession(app, email, token, "", issuer = "docs")
     }
 
     fun clear() {
