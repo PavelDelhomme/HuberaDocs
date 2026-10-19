@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.AlertDialog
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,9 +38,13 @@ import cloud.hubera.docs.data.DocsApi
 import cloud.hubera.docs.data.Remark
 import cloud.hubera.docs.data.SURFACE_LABEL
 import cloud.hubera.docs.data.SURFACE_ORDER
+import cloud.hubera.docs.data.Task
+import cloud.hubera.docs.data.directSubtasks
 import cloud.hubera.docs.data.normalizeTargets
 import cloud.hubera.docs.data.stampLine
 import cloud.hubera.docs.data.targetsLabel
+import cloud.hubera.docs.ui.kanban.PriorityPicker
+import cloud.hubera.docs.ui.kanban.SubtaskDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -59,6 +64,9 @@ fun InboxScreen(
     val ctx = LocalContext.current
     val prefs = remember { ctx.getSharedPreferences("hubera_docs_inbox", Context.MODE_PRIVATE) }
     var remarks by remember { mutableStateOf<List<Remark>>(emptyList()) }
+    var tasks by remember { mutableStateOf<List<Task>>(emptyList()) }
+    var subParentId by remember { mutableStateOf<String?>(null) }
+    var editTask by remember { mutableStateOf<Task?>(null) }
     var appName by remember { mutableStateOf(prefs.getString("last_app", "docs") ?: "docs") }
     var body by remember { mutableStateOf(prefs.getString("draft", "") ?: "") }
     var kind by remember { mutableStateOf(prefs.getString("kind", "retour") ?: "retour") }
@@ -81,7 +89,12 @@ fun InboxScreen(
     }
 
     suspend fun reload() {
-        remarks = withContext(Dispatchers.IO) { runCatching { api.remarks() }.getOrDefault(emptyList()) }
+        val loaded = withContext(Dispatchers.IO) {
+            runCatching { api.remarks() }.getOrDefault(emptyList()) to
+                runCatching { api.tasks() }.getOrDefault(emptyList())
+        }
+        remarks = loaded.first
+        tasks = loaded.second
     }
 
     LaunchedEffect(kindIntent) {
@@ -169,6 +182,9 @@ fun InboxScreen(
         ModalBottomSheet(onDismissRequest = { editing = null }, sheetState = sheet) {
             RemarkEditSheet(
                 remark = r,
+                children = directSubtasks(tasks, r.taskId),
+                onOpenChild = { editTask = it },
+                onAddSubtask = { subParentId = r.taskId },
                 onCancel = { editing = null },
                 onSave = { app, k, text, picked ->
                     scope.launch {
@@ -179,6 +195,52 @@ fun InboxScreen(
                 },
             )
         }
+    }
+
+    val subParent = tasks.firstOrNull { it.id == subParentId }
+    if (subParent != null) {
+        SubtaskDialog(
+            parentTitle = subParent.title,
+            initialTargets = subParent.targets.ifEmpty { editing?.targets.orEmpty() },
+            onDismiss = { subParentId = null },
+            onCreate = { title, body, prio, picked ->
+                scope.launch {
+                    withContext(Dispatchers.IO) {
+                        api.createTask(
+                            title,
+                            body,
+                            subParent.project,
+                            subParent.category,
+                            subParent.columnId,
+                            prio,
+                            subParent.id,
+                            picked,
+                        )
+                    }
+                    subParentId = null
+                    reload()
+                }
+            },
+        )
+    }
+    editTask?.let { task ->
+        TaskQuickEdit(
+            task = task,
+            onDismiss = { editTask = null },
+            onAddChild = {
+                editTask = null
+                subParentId = task.id
+            },
+            onSave = { title, body, prio ->
+                scope.launch {
+                    withContext(Dispatchers.IO) {
+                        api.patchTask(task.id, title, body, task.columnId, task.project, prio)
+                    }
+                    editTask = null
+                    reload()
+                }
+            },
+        )
     }
 }
 
@@ -230,6 +292,9 @@ fun AppKindFields(
 @Composable
 private fun RemarkEditSheet(
     remark: Remark,
+    children: List<Task>,
+    onOpenChild: (Task) -> Unit,
+    onAddSubtask: () -> Unit,
     onCancel: () -> Unit,
     onSave: (String, String, String, List<String>) -> Unit,
 ) {
@@ -254,7 +319,29 @@ private fun RemarkEditSheet(
             minLines = 4,
             modifier = Modifier.fillMaxWidth(),
         )
+        if (remark.taskId.isNotBlank()) {
+            Text("Sous-tâches", fontWeight = FontWeight.SemiBold)
+            if (children.isEmpty()) {
+                Text("Aucune sous-tâche pour l’instant.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            children.forEach { child ->
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable { onOpenChild(child) },
+                ) {
+                    Text("${child.priority.coerceIn(1, 5)}  ${child.title}")
+                    val line = stampLine(child.createdAt, child.updatedAt)
+                    if (line.isNotEmpty()) {
+                        Text(line, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+        }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (remark.taskId.isNotBlank()) {
+                Button(onClick = onAddSubtask) { Text("Sous-tâche") }
+            }
             Button(
                 enabled = body.isNotBlank() && targets.isNotEmpty(),
                 onClick = {
@@ -265,4 +352,43 @@ private fun RemarkEditSheet(
             TextButton(onClick = onCancel) { Text("Annuler") }
         }
     }
+}
+
+@Composable
+private fun TaskQuickEdit(
+    task: Task,
+    onDismiss: () -> Unit,
+    onAddChild: () -> Unit,
+    onSave: (String, String, Int) -> Unit,
+) {
+    var title by remember { mutableStateOf(task.title) }
+    var body by remember { mutableStateOf(task.body) }
+    var priority by remember { mutableStateOf(task.priority.coerceIn(1, 5)) }
+    val whenLine = stampLine(task.createdAt, task.updatedAt)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Modifier la sous-tâche") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (whenLine.isNotEmpty()) {
+                    Text(whenLine, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                OutlinedTextField(title, { title = it }, label = { Text("Titre") })
+                OutlinedTextField(body, { body = it }, label = { Text("Détail") })
+                PriorityPicker(priority) { priority = it }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                if (title.isBlank()) return@TextButton
+                onSave(title.trim(), body, priority.coerceIn(1, 5))
+            }) { Text("Enregistrer") }
+        },
+        dismissButton = {
+            Row {
+                TextButton(onClick = onAddChild) { Text("Sous-tâche") }
+                TextButton(onClick = onDismiss) { Text("Annuler") }
+            }
+        },
+    )
 }

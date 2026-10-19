@@ -2,6 +2,7 @@ import { isAllowedLaboFile } from './labo-files.mjs';
 import { betaChannelBlocked } from './betaChannel.mjs';
 import { parseTargets } from './targets.mjs';
 import { buildRemarkCreate, buildRemarkPatch } from './remarksLogic.mjs';
+import { nextTaskCreate, nextTaskPatch, resolveParentId } from './tasksLogic.mjs';
 import { createHash, randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, extname, join, resolve } from 'node:path';
@@ -93,6 +94,9 @@ if (!hasColumn('remarks', 'targets')) {
 if (!hasColumn('tasks', 'targets')) {
   db.exec("ALTER TABLE tasks ADD COLUMN targets TEXT NOT NULL DEFAULT '[]'");
 }
+if (!hasColumn('tasks', 'parent_id')) {
+  db.exec('ALTER TABLE tasks ADD COLUMN parent_id TEXT');
+}
 db.prepare('UPDATE remarks SET updated_at = created_at WHERE updated_at IS NULL').run();
 const WORKSPACE_EMAIL = ADMINS[0] || 'paul@delhomme.ovh';
 db.prepare(`UPDATE reports SET owner_email = ? WHERE owner_email IS NULL OR owner_email = ''`).run(WORKSPACE_EMAIL);
@@ -161,13 +165,25 @@ function seedColumns() {
 }
 seedColumns();
 
-function clampPriority(value, fallback = 2) {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return fallback;
-  const i = Math.round(n);
-  if (i < 1) return 1;
-  if (i > 5) return 5;
-  return i;
+function taskParentLookup(selfId = '') {
+  return {
+    selfId,
+    exists: (id) => Boolean(db.prepare('SELECT id FROM tasks WHERE id = ?').get(id)),
+    parentOf: (id) => db.prepare('SELECT parent_id FROM tasks WHERE id = ?').get(id)?.parent_id || null,
+  };
+}
+
+function resolveTaskParent(raw, selfId = '') {
+  const resolved = resolveParentId(raw, taskParentLookup(selfId));
+  if (resolved.error || !resolved.parent_id) return resolved;
+  const row = db.prepare('SELECT project, category, column_id, targets FROM tasks WHERE id = ?').get(resolved.parent_id);
+  return {
+    parent_id: resolved.parent_id,
+    project: row?.project,
+    category: row?.category,
+    column_id: row?.column_id,
+    targets: row?.targets,
+  };
 }
 
 function nid() {
@@ -811,23 +827,12 @@ app.get('/api/tasks', requireAuth, (req, res) => {
 });
 
 app.post('/api/tasks', requireAuth, (req, res) => {
-  const title = String(req.body?.title || '').trim();
-  if (!title) return res.status(400).json({ error: 'title' });
-  const t = now();
-  const row = {
-    id: nid(),
-    title,
-    body: String(req.body?.body || ''),
-    project: String(req.body?.project || 'platform'),
-    category: String(req.body?.category || 'feature'),
-    column_id: String(req.body?.column_id || 'todo'),
-    priority: clampPriority(req.body?.priority, 2),
-    created_at: t,
-    updated_at: t,
-  };
+  const built = nextTaskCreate(req.body || {}, now(), (parentId) => resolveTaskParent(parentId));
+  if (built.error) return res.status(400).json({ error: built.error });
+  const row = { id: nid(), ...built.task };
   db.prepare(
-    `INSERT INTO tasks (id,title,body,project,category,column_id,priority,created_at,updated_at)
-     VALUES (@id,@title,@body,@project,@category,@column_id,@priority,@created_at,@updated_at)`,
+    `INSERT INTO tasks (id,title,body,project,category,column_id,priority,targets,parent_id,created_at,updated_at)
+     VALUES (@id,@title,@body,@project,@category,@column_id,@priority,@targets,@parent_id,@created_at,@updated_at)`,
   ).run(row);
   res.json(expose(row));
 });
@@ -835,19 +840,13 @@ app.post('/api/tasks', requireAuth, (req, res) => {
 app.patch('/api/tasks/:id', requireAuth, (req, res) => {
   const cur = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
   if (!cur) return res.status(404).json({ error: 'missing' });
-  const next = {
-    ...cur,
-    title: req.body?.title ?? cur.title,
-    body: req.body?.body ?? cur.body,
-    project: req.body?.project ?? cur.project,
-    category: req.body?.category ?? cur.category,
-    column_id: req.body?.column_id ?? cur.column_id,
-    priority: req.body?.priority != null ? clampPriority(req.body.priority, cur.priority) : clampPriority(cur.priority, 2),
-    updated_at: now(),
-  };
+  const built = nextTaskPatch(cur, req.body || {}, now(), (parentId) => resolveTaskParent(parentId, cur.id));
+  if (built.error) return res.status(built.error === 'missing' ? 404 : 400).json({ error: built.error });
+  const next = built.task;
   db.prepare(
     `UPDATE tasks SET title=@title, body=@body, project=@project, category=@category,
-     column_id=@column_id, priority=@priority, updated_at=@updated_at WHERE id=@id`,
+     column_id=@column_id, priority=@priority, targets=@targets, parent_id=@parent_id,
+     updated_at=@updated_at WHERE id=@id`,
   ).run(next);
   res.json(expose(next));
 });

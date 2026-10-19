@@ -1,6 +1,14 @@
 {
   "versions": [
     {
+      "version": "0.2.26",
+      "date": "2026-10-19",
+      "title": "Sous-tâches",
+      "notes": [
+        "Depuis une tâche ou un retour, on ajoute une sous-tâche, puis d’autres, y compris sous une sous-tâche. On peut les modifier. Créé le et modifié le restent. La priorité 1 à 5 et la cible API, web ou mobile restent. Le lanceur reste Hubera Docs. Mise à jour proposée, pas forcée."
+      ]
+    },
+    {
       "version": "0.2.25",
       "date": "2026-10-19",
       "title": "Retour : cible et dates",

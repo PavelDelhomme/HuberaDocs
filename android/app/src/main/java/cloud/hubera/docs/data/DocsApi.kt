@@ -21,6 +21,7 @@ data class Task(
     val targets: List<String> = emptyList(),
     val createdAt: Long = 0,
     val updatedAt: Long = 0,
+    val parentId: String = "",
 )
 
 data class Column(val id: String, val label: String, val position: Int)
@@ -46,6 +47,7 @@ data class Remark(
     val targets: List<String> = emptyList(),
     val createdAt: Long = 0,
     val updatedAt: Long = 0,
+    val taskId: String = "",
 )
 
 data class Dashboard(
@@ -224,18 +226,26 @@ class DocsApi(
         return Column(o.optString("id"), o.optString("label"), o.optInt("position"))
     }
 
-    fun createTask(title: String, body: String, project: String, category: String, columnId: String, priority: Int = 2) {
-        send(
-            "POST",
-            "/api/tasks",
-            JSONObject()
-                .put("title", title)
-                .put("body", body)
-                .put("project", project)
-                .put("category", category)
-                .put("column_id", columnId)
-                .put("priority", priority.coerceIn(1, 5)),
-        )
+    fun createTask(
+        title: String,
+        body: String,
+        project: String,
+        category: String,
+        columnId: String,
+        priority: Int = 2,
+        parentId: String? = null,
+        targets: List<String>? = null,
+    ) {
+        val payload = JSONObject()
+            .put("title", title)
+            .put("body", body)
+            .put("project", project)
+            .put("category", category)
+            .put("column_id", columnId)
+            .put("priority", priority.coerceIn(1, 5))
+        if (!parentId.isNullOrBlank()) payload.put("parent_id", parentId)
+        if (targets != null) payload.put("targets", JSONArray(normalizeTargets(targets)))
+        send("POST", "/api/tasks", payload)
     }
 
     fun patchTask(id: String, title: String, body: String, columnId: String, project: String, priority: Int) {
@@ -317,6 +327,7 @@ class DocsApi(
                 jsonTargets(r),
                 r.optLong("created_at"),
                 r.optLong("updated_at").takeIf { it > 0L } ?: r.optLong("created_at"),
+                r.optString("task_id"),
             )
         }
     }
@@ -433,6 +444,7 @@ class DocsApi(
                 targets = jsonTargets(t),
                 createdAt = t.optLong("created_at"),
                 updatedAt = t.optLong("updated_at"),
+                parentId = t.optString("parent_id"),
             )
         }
     }

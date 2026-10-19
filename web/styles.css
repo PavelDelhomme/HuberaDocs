@@ -153,6 +153,17 @@ h2 { font-size: 15px; color: var(--ink); margin: 16px 0 8px; }
   color: var(--text);
 }
 .task small { display: block; color: var(--muted); margin-top: 4px; }
+.subtasks { list-style: none; margin: 8px 0 0; padding: 0; }
+.subtask {
+  margin: 6px 0 0 10px; padding: 6px 8px; border-left: 3px solid var(--line);
+  border-radius: 8px; cursor: pointer; background: var(--col);
+}
+.subtask small { display: block; color: var(--muted); margin-top: 2px; }
+button.linkish {
+  width: auto; margin: 0; padding: 0; border: 0; background: none;
+  color: var(--ink); font: inherit; font-weight: 700; cursor: pointer;
+  text-decoration: underline;
+}
 form.card label, .modal-card label { display: block; margin: 8px 0 4px; font-size: 13px; font-weight: 700; color: var(--muted); }
 .task .prio {
   display: inline-block; min-width: 1.1em; margin-right: 6px;
@@ -229,6 +240,7 @@ nav.bottom button.on { color: var(--ink); font-weight: 700; }
   color: var(--text);
 }
 .modal-card h2 { margin: 0 0 6px; font-size: 18px; color: var(--ink); }
+.modal-card h3 { margin: 14px 0 4px; font-size: 14px; color: var(--ink); }
 .modal-card .meta { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
 .modal-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 .modal-actions button { width: auto; margin: 0; }

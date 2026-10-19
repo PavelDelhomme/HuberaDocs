@@ -557,6 +557,49 @@ async function viewDash() {
 }
 
 let kanbanCols = [];
+let kanbanTasks = [];
+
+function taskById(id) {
+  return kanbanTasks.find((t) => t.id === id) || null;
+}
+
+function childTasks(parentId) {
+  if (!parentId) return [];
+  return kanbanTasks
+    .filter((t) => t.parent_id === parentId)
+    .sort((a, b) => (a.created_at || 0) - (b.created_at || 0));
+}
+
+function subtaskListHtml(parentId) {
+  const kids = childTasks(parentId);
+  if (!kids.length) return '<p class="meta">Aucune sous-tâche pour l’instant.</p>';
+  return `<ul class="subtasks">${kids
+    .map((t) => {
+      const cible = targetLine(t.targets);
+      return `<li class="subtask" data-sub="${esc(t.id)}">
+        <b class="prio">${clampPrio(t.priority)}</b>${esc(t.title)}
+        <small>${esc(stampLine(t.created_at, t.updated_at))}${cible ? ` · ${esc(cible)}` : ''}</small>
+      </li>`;
+    })
+    .join('')}</ul>`;
+}
+
+function bindSubtaskOpens(root, onMissing) {
+  root.querySelectorAll('[data-sub]').forEach((el) => {
+    el.onclick = (e) => {
+      e.stopPropagation();
+      const child = taskById(el.dataset.sub);
+      if (child) openTaskCard(child);
+      else if (onMissing) onMissing();
+    };
+  });
+}
+
+async function refreshTasks() {
+  const { tasks } = await api('/api/tasks');
+  kanbanTasks = tasks || [];
+  return kanbanTasks;
+}
 
 function colOptions(selected) {
   return kanbanCols
@@ -622,6 +665,7 @@ function openModal(html) {
 
 async function viewKanban() {
   const [{ tasks }, colsRes] = await Promise.all([api('/api/tasks'), api('/api/columns')]);
+  kanbanTasks = tasks || [];
   kanbanCols = colsRes.columns?.length
     ? colsRes.columns
     : [
@@ -631,26 +675,44 @@ async function viewKanban() {
         { id: 'later', label: 'Plus tard' },
       ];
   const cell = (id) =>
-    tasks
-      .filter((t) => t.column_id === id)
-      .map(
-        (t) =>
-          `<div class="task p${clampPrio(t.priority)}" data-id="${t.id}">
+    kanbanTasks
+      .filter((t) => t.column_id === id && !t.parent_id)
+      .map((t) => {
+        const kids = childTasks(t.id)
+          .map((k) => {
+            const cible = targetLine(k.targets);
+            return `<div class="subtask" data-id="${esc(k.id)}">
+              <b class="prio">${clampPrio(k.priority)}</b>${esc(k.title)}
+              <small>${esc(stampLine(k.created_at, k.updated_at))}${cible ? ` · ${esc(cible)}` : ''}</small>
+            </div>`;
+          })
+          .join('');
+        const cible = targetLine(t.targets);
+        return `<div class="task p${clampPrio(t.priority)}" data-id="${t.id}">
             <b class="prio">${clampPrio(t.priority)}</b>${esc(t.title)}<small>${esc(t.project)} · ${esc(t.category)}</small>
-            <small class="when">${esc(stampLine(t.created_at, t.updated_at))}${targetLine(t.targets) ? ` · ${esc(targetLine(t.targets))}` : ''}</small></div>`,
-      )
+            <small class="when">${esc(stampLine(t.created_at, t.updated_at))}${cible ? ` · ${esc(cible)}` : ''}</small>
+            ${kids}
+          </div>`;
+      })
       .join('');
   app.innerHTML = shell(`
-    <p class="lead">Une carte = une tâche. Tape pour ouvrir la fiche — l’édition se fait depuis la popup.</p>
+    <p class="lead">Une carte = une tâche. La fiche et un retour permettent d’ajouter une sous-tâche, puis de la modifier.</p>
     <div class="kanban">${kanbanCols
       .map((c) => `<div class="col" data-col="${esc(c.id)}"><h3>${esc(c.label)}</h3>${cell(c.id)}</div>`)
       .join('')}
       <button type="button" class="col col-add" id="addCol">+ Colonne</button>
     </div>
   `);
-  const byId = Object.fromEntries(tasks.map((t) => [t.id, t]));
+  const byId = Object.fromEntries(kanbanTasks.map((t) => [t.id, t]));
   app.querySelectorAll('.task').forEach((el) => {
     el.onclick = () => openTaskCard(byId[el.dataset.id]);
+  });
+  app.querySelectorAll('.task .subtask').forEach((el) => {
+    el.onclick = (e) => {
+      e.stopPropagation();
+      const child = byId[el.dataset.id];
+      if (child) openTaskCard(child);
+    };
   });
   $('#addCol').onclick = () => openNewColumn();
   if (pendingNewTask) {
@@ -660,19 +722,26 @@ async function viewKanban() {
 }
 
 function openTaskCard(t) {
+  const parent = t.parent_id ? taskById(t.parent_id) : null;
+  const cible = targetLine(t.targets);
   openModal(`
     <h2>${esc(t.title)}</h2>
+    ${parent ? `<p class="meta">Sous-tâche de <button type="button" class="linkish" id="tparent">${esc(parent.title)}</button></p>` : ''}
     <p class="meta">${esc(t.project)} · ${esc(t.category)}</p>
-    <p class="meta">${esc(stampLine(t.created_at, t.updated_at))}${targetLine(t.targets) ? ` · ${esc(targetLine(t.targets))}` : ''}</p>
+    <p class="meta">${esc(stampLine(t.created_at, t.updated_at))}${cible ? ` · ${esc(cible)}` : ''}</p>
     <label>Priorité</label>
     ${priorityPicker(t.priority)}
     <div class="lead" id="tbody-ro">${esc(t.body || 'Pas encore de détail.')}</div>
+    <h3>Sous-tâches</h3>
+    ${subtaskListHtml(t.id)}
     <div class="modal-actions">
+      <button class="primary" type="button" id="tsub">Sous-tâche</button>
       <button class="primary" type="button" id="tedit">Modifier</button>
       <button class="ghost" type="button" id="tclose">Fermer</button>
     </div>
   `);
   bindPriority($('#modal'));
+  bindSubtaskOpens($('#modal'));
   const row = $('#modal .prio-row');
   if (row) {
     row.querySelectorAll('[data-prio]').forEach((btn) => {
@@ -685,15 +754,21 @@ function openTaskCard(t) {
           method: 'PATCH',
           body: JSON.stringify({ priority }),
         });
-        t.priority = priority;
+        await refreshTasks();
+        const fresh = taskById(t.id);
+        if (fresh) openTaskCard(fresh);
       };
     });
+  }
+  if (parent) {
+    $('#tparent').onclick = () => openTaskCard(parent);
   }
   $('#tclose').onclick = () => {
     closeModal();
     viewKanban();
   };
   $('#tedit').onclick = () => openTaskEdit(t);
+  $('#tsub').onclick = () => openSubtaskForm(t);
 }
 
 function openTaskEdit(t) {
@@ -717,18 +792,93 @@ function openTaskEdit(t) {
   bindPriority($('#modal'));
   $('#tclose').onclick = () => openTaskCard(t);
   $('#tsave').onclick = async () => {
+    const title = ($('#ttitle').value || '').trim();
+    if (!title) return;
     await api('/api/tasks/' + t.id, {
       method: 'PATCH',
       body: JSON.stringify({
-        title: $('#ttitle').value,
+        title,
         body: $('#tbody').value,
         column_id: $('#tcol').value,
         project: $('#tproj').value,
         priority: readPriority(t.priority),
       }),
     });
-    closeModal();
-    viewKanban();
+    await refreshTasks();
+    const fresh = taskById(t.id);
+    if (fresh) openTaskCard(fresh);
+    else viewKanban();
+  };
+}
+
+function openSubtaskForm(parent, onDone) {
+  const back = async () => {
+    await refreshTasks();
+    if (onDone) onDone();
+    else {
+      const fresh = taskById(parent.id);
+      if (fresh) openTaskCard(fresh);
+      else closeModal();
+    }
+  };
+  openModal(`
+    <h2>Sous-tâche</h2>
+    <p class="meta">De ${esc(parent.title)}</p>
+    <label>Titre</label>
+    <input id="stitle" placeholder="Titre" />
+    <label>Détail</label>
+    <textarea id="sbody" rows="4" placeholder="Détail (optionnel)"></textarea>
+    <label>Priorité</label>
+    ${priorityPicker(2)}
+    <label>Colonne</label>
+    <select id="scol">${colOptions(parent.column_id || kanbanCols[0]?.id || 'todo')}</select>
+    <label>Cible</label>
+    ${targetChips(parent.targets)}
+    <p class="lead">API, web, mobile, ou une combinaison.</p>
+    <p class="err" id="serr" hidden></p>
+    <div class="modal-actions">
+      <button class="primary" type="button" id="ssave">Créer</button>
+      <button class="ghost" type="button" id="sclose">Annuler</button>
+    </div>
+  `);
+  bindPriority($('#modal'));
+  bindTargets($('#modal'));
+  queueMicrotask(() => $('#stitle')?.focus());
+  $('#sclose').onclick = () => back();
+  $('#ssave').onclick = async () => {
+    const title = ($('#stitle').value || '').trim();
+    const targets = readTargets($('#modal'));
+    const err = $('#serr');
+    if (!title) return;
+    if (!targets.length) {
+      if (err) {
+        err.hidden = false;
+        err.textContent = 'Choisis au moins une cible : API, web ou mobile.';
+      }
+      return;
+    }
+    if (err) err.hidden = true;
+    const created = await api('/api/tasks', {
+      method: 'POST',
+      body: JSON.stringify({
+        title,
+        body: $('#sbody').value,
+        project: parent.project || 'docs',
+        category: parent.category || 'feature',
+        column_id: $('#scol').value,
+        priority: readPriority(2),
+        targets,
+        parent_id: parent.id,
+      }),
+    });
+    if (created?.error) {
+      if (err) {
+        err.hidden = false;
+        err.textContent = 'La sous-tâche n’a pas été créée.';
+      }
+      return;
+    }
+    await back();
   };
 }
 
@@ -992,7 +1142,13 @@ async function viewInbox() {
   pendingInboxKind = '';
   writeLs(KIND_KEY, kind);
   const filter = readLs(FILTER_KEY, 'all');
-  const { remarks } = await api('/api/remarks');
+  const [{ remarks }, taskRes, colsRes] = await Promise.all([
+    api('/api/remarks'),
+    api('/api/tasks'),
+    api('/api/columns'),
+  ]);
+  kanbanTasks = taskRes.tasks || [];
+  if (colsRes.columns?.length) kanbanCols = colsRes.columns;
   const shown = remarks.filter((r) => {
     if (filter === 'note' || filter === 'retour') return (r.kind || 'retour') === filter;
     return true;
@@ -1037,56 +1193,75 @@ async function viewInbox() {
       viewInbox();
     };
   });
+  function openRemarkEditor(r) {
+    const linked = r.task_id ? taskById(r.task_id) : null;
+    openModal(`
+      <h2>Modifier</h2>
+      <p class="meta">${esc(stampLine(r.created_at, r.updated_at))}</p>
+      <label>Application</label>
+      <select id="eapp">${projects.map((p) => `<option ${p === r.app ? 'selected' : ''}>${p}</option>`).join('')}</select>
+      <label>Cible</label>
+      ${targetChips(r.targets)}
+      <label>Type</label>
+      <select id="ekind">
+        <option value="retour" ${r.kind === 'note' ? '' : 'selected'}>Retour</option>
+        <option value="note" ${r.kind === 'note' ? 'selected' : ''}>Note</option>
+      </select>
+      <label>Texte</label>
+      <textarea id="ebody" rows="5">${esc(r.body)}</textarea>
+      <p class="err" id="eerr" hidden></p>
+      ${r.task_id ? `<h3>Sous-tâches</h3>${subtaskListHtml(r.task_id)}` : ''}
+      <div class="modal-actions">
+        ${r.task_id ? '<button class="primary" type="button" id="rsub">Sous-tâche</button>' : ''}
+        <button class="primary" type="button" id="esave">Enregistrer</button>
+        <button class="ghost" type="button" id="eclose">Annuler</button>
+      </div>
+    `);
+    bindTargets($('#modal'));
+    bindSubtaskOpens($('#modal'));
+    $('#eclose').onclick = closeModal;
+    if (r.task_id) {
+      $('#rsub').onclick = () => {
+        const parent = linked || taskById(r.task_id) || {
+          id: r.task_id,
+          title: r.app,
+          project: r.app,
+          category: r.kind === 'note' ? 'docs' : 'bug',
+          column_id: 'todo',
+          targets: r.targets,
+        };
+        openSubtaskForm(parent, () => openRemarkEditor(r));
+      };
+    }
+    $('#esave').onclick = async () => {
+      const body = ($('#ebody').value || '').trim();
+      const targets = readTargets($('#modal'));
+      const err = $('#eerr');
+      if (!body) return;
+      if (!targets.length) {
+        if (err) {
+          err.hidden = false;
+          err.textContent = 'Choisis au moins une cible : API, web ou mobile.';
+        }
+        return;
+      }
+      await api('/api/remarks/' + encodeURIComponent(r.id), {
+        method: 'PATCH',
+        body: JSON.stringify({
+          app: $('#eapp').value,
+          kind: $('#ekind').value === 'note' ? 'note' : 'retour',
+          body,
+          targets,
+        }),
+      });
+      closeModal();
+      viewInbox();
+    };
+  }
   document.querySelectorAll('[data-edit]').forEach((li) => {
     li.onclick = () => {
       const r = remarks.find((x) => x.id === li.dataset.edit);
-      if (!r) return;
-      openModal(`
-        <h2>Modifier</h2>
-        <p class="meta">${esc(stampLine(r.created_at, r.updated_at))}</p>
-        <label>Application</label>
-        <select id="eapp">${projects.map((p) => `<option ${p === r.app ? 'selected' : ''}>${p}</option>`).join('')}</select>
-        <label>Cible</label>
-        ${targetChips(r.targets)}
-        <label>Type</label>
-        <select id="ekind">
-          <option value="retour" ${r.kind === 'note' ? '' : 'selected'}>Retour</option>
-          <option value="note" ${r.kind === 'note' ? 'selected' : ''}>Note</option>
-        </select>
-        <label>Texte</label>
-        <textarea id="ebody" rows="5">${esc(r.body)}</textarea>
-        <p class="err" id="eerr" hidden></p>
-        <div class="modal-actions">
-          <button class="primary" type="button" id="esave">Enregistrer</button>
-          <button class="ghost" type="button" id="eclose">Annuler</button>
-        </div>
-      `);
-      bindTargets($('#modal'));
-      $('#eclose').onclick = closeModal;
-      $('#esave').onclick = async () => {
-        const body = ($('#ebody').value || '').trim();
-        const targets = readTargets($('#modal'));
-        const err = $('#eerr');
-        if (!body) return;
-        if (!targets.length) {
-          if (err) {
-            err.hidden = false;
-            err.textContent = 'Choisis au moins une cible : API, web ou mobile.';
-          }
-          return;
-        }
-        await api('/api/remarks/' + encodeURIComponent(r.id), {
-          method: 'PATCH',
-          body: JSON.stringify({
-            app: $('#eapp').value,
-            kind: $('#ekind').value === 'note' ? 'note' : 'retour',
-            body,
-            targets,
-          }),
-        });
-        closeModal();
-        viewInbox();
-      };
+      if (r) openRemarkEditor(r);
     };
   });
   $('#fb').onsubmit = async (e) => {

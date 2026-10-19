@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import cloud.hubera.docs.data.Column
 import cloud.hubera.docs.data.DocsApi
 import cloud.hubera.docs.data.Task
+import cloud.hubera.docs.data.directSubtasks
 import cloud.hubera.docs.data.stampLine
 import cloud.hubera.docs.data.targetsLabel
 import kotlinx.coroutines.Dispatchers
@@ -86,6 +87,7 @@ fun KanbanScreen(
     var colLabel by rememberSaveable { mutableStateOf("") }
     var newTitle by rememberSaveable { mutableStateOf("") }
     var newBody by rememberSaveable { mutableStateOf("") }
+    var subParentId by rememberSaveable { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
     fun reload() {
@@ -110,7 +112,7 @@ fun KanbanScreen(
                 .padding(horizontal = 12.dp, vertical = 8.dp),
         ) {
             Text(
-                "Tape une carte pour la fiche. Le texte saisi reste jusqu’à l’enregistrement.",
+                "Tape une carte pour la fiche. Sous-tâche depuis la fiche ou un retour.",
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall,
             )
@@ -128,7 +130,7 @@ fun KanbanScreen(
                             .verticalScroll(rememberScrollState()),
                     ) {
                         Text(col.label.uppercase(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-                        tasks.filter { it.columnId == col.id }.forEach { task ->
+                        tasks.filter { it.columnId == col.id && it.parentId.isBlank() }.forEach { task ->
                             Card(
                                 Modifier
                                     .fillMaxWidth()
@@ -151,6 +153,21 @@ fun KanbanScreen(
                                     Text("${task.priority.coerceIn(1, 5)}  ${task.title}", fontWeight = FontWeight.SemiBold)
                                     Text("${task.project} · ${task.category}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     TaskWhen(task)
+                                    directSubtasks(tasks, task.id).forEach { child ->
+                                        Column(
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .padding(top = 6.dp)
+                                                .clickable {
+                                                    draft = keepTaskDraft(draft, child.id, child.title, child.body, child.columnId, child.project, child.priority)
+                                                    panelId = child.id
+                                                    editing = false
+                                                },
+                                        ) {
+                                            Text("${child.priority.coerceIn(1, 5)}  ${child.title}", style = MaterialTheme.typography.bodyMedium)
+                                            TaskWhen(child)
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -178,6 +195,18 @@ fun KanbanScreen(
                 if (!editing) {
                     Column(Modifier.padding(20.dp).verticalScroll(rememberScrollState())) {
                         Text(open.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        val parent = tasks.firstOrNull { it.id == open.parentId }
+                        if (parent != null) {
+                            Text(
+                                "Sous-tâche de ${parent.title}",
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.clickable {
+                                    draft = keepTaskDraft(draft, parent.id, parent.title, parent.body, parent.columnId, parent.project, parent.priority)
+                                    panelId = parent.id
+                                    editing = false
+                                },
+                            )
+                        }
                         Text("${open.project} · ${open.category}", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         TaskWhen(open)
                         PriorityPicker(open.priority.coerceIn(1, 5)) { p ->
@@ -190,7 +219,28 @@ fun KanbanScreen(
                             current.body.ifBlank { open.body }.ifBlank { "Pas encore de détail." },
                             Modifier.padding(top = 12.dp),
                         )
+                        Text("Sous-tâches", Modifier.padding(top = 16.dp), fontWeight = FontWeight.SemiBold)
+                        val kids = directSubtasks(tasks, open.id)
+                        if (kids.isEmpty()) {
+                            Text("Aucune sous-tâche pour l’instant.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        kids.forEach { child ->
+                            Column(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 6.dp)
+                                    .clickable {
+                                        draft = keepTaskDraft(draft, child.id, child.title, child.body, child.columnId, child.project, child.priority)
+                                        panelId = child.id
+                                        editing = false
+                                    },
+                            ) {
+                                Text("${child.priority.coerceIn(1, 5)}  ${child.title}")
+                                TaskWhen(child)
+                            }
+                        }
                         Row(Modifier.padding(top = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            androidx.compose.material3.Button(onClick = { subParentId = open.id }) { Text("Sous-tâche") }
                             androidx.compose.material3.Button(onClick = {
                                 draft = current
                                 editing = true
@@ -236,6 +286,34 @@ fun KanbanScreen(
                     newTitle = ""
                     newBody = ""
                     showNew = false
+                    reload()
+                }
+            },
+        )
+    }
+    val subParent = tasks.firstOrNull { it.id == subParentId }
+    if (subParent != null) {
+        SubtaskDialog(
+            parentTitle = subParent.title,
+            initialTargets = subParent.targets,
+            onDismiss = { subParentId = null },
+            onCreate = { title, body, prio, picked ->
+                scope.launch {
+                    withContext(Dispatchers.IO) {
+                        api.createTask(
+                            title,
+                            body,
+                            subParent.project,
+                            subParent.category,
+                            subParent.columnId,
+                            prio,
+                            subParent.id,
+                            picked,
+                        )
+                    }
+                    panelId = subParent.id
+                    editing = false
+                    subParentId = null
                     reload()
                 }
             },
@@ -367,7 +445,7 @@ private fun TaskWhen(task: Task) {
 }
 
 @Composable
-private fun PriorityPicker(value: Int, onChange: (Int) -> Unit) {
+internal fun PriorityPicker(value: Int, onChange: (Int) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text("Priorité · 1 la plus importante", style = MaterialTheme.typography.labelMedium)
         Row(
