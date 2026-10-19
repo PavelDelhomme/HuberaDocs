@@ -1,6 +1,14 @@
 {
   "versions": [
     {
+      "version": "0.2.32",
+      "date": "2026-10-19",
+      "title": "Retours traités",
+      "notes": [
+        "La page Retours sépare À traiter et Traités. Une tâche en Fait fait passer son retour dans Traités. Le champ n’affiche plus de phrase d’exemple. Les sous-tâches restent. Mise à jour proposée, pas forcée."
+      ]
+    },
+    {
       "version": "0.2.31",
       "date": "2026-10-19",
       "title": "Tableau des tâches",

@@ -1,5 +1,6 @@
 import { renderPdfBytes, renderHtmlBlob, clearPdfStage } from './pdf-view.js';
 import { columnBoard } from './boardLogic.mjs';
+import { INBOX_GROUPS, inboxTextareaAttrs, splitRemarks, taskStateLabel } from './inboxLogic.mjs';
 
 const $ = (sel, el = document) => el.querySelector(sel);
 const app = $('#app');
@@ -1162,19 +1163,30 @@ async function viewInbox() {
     if (filter === 'note' || filter === 'retour') return (r.kind || 'retour') === filter;
     return true;
   });
+  const sections = splitRemarks(shown, kanbanTasks, kanbanCols);
+  const remarkItems = (rows) =>
+    rows
+      .map((row) => {
+        const r = row.remark;
+        const cible = targetLine(r.targets);
+        const when = stampLine(r.created_at, r.updated_at);
+        return `<li class="tap" data-edit="${esc(r.id)}"><strong>${esc(r.app)}</strong> · ${esc(r.kind || 'retour')}${cible ? ` · ${esc(cible)}` : ''}<div class="lead">${esc(when)}</div><div class="task-state">${esc(taskStateLabel(row))}</div>${esc(r.body)}</li>`;
+      })
+      .join('') || '<li>Aucun élément</li>';
   app.innerHTML = shell(`
-    <p class="lead">Choisis d’abord l’application, puis la cible. Un tap modifie le retour et la tâche liée.</p>
     <form id="fb" class="card">
       <label>Application</label>
       <select name="app">${projects.map((p) => `<option ${p === lastApp ? 'selected' : ''}>${p}</option>`).join('')}</select>
       <label>Cible</label>
       ${targetChips(savedTargets)}
       <p class="lead">API, web, mobile, ou une combinaison.</p>
+      <label>Type</label>
       <select name="kind">
         <option value="retour" ${kind === 'note' ? '' : 'selected'}>Retour</option>
         <option value="note" ${kind === 'note' ? 'selected' : ''}>Note</option>
       </select>
-      <textarea name="body" rows="5" placeholder="Ex. Nothing : Flowers spinner 20 s. Ou : ajouter le budget unique Fuel dans Docs." required></textarea>
+      <label>Texte</label>
+      <textarea name="body" rows="5"${inboxTextareaAttrs()} required></textarea>
       <p class="err" id="fbErr" hidden></p>
       <button class="primary" type="submit">Enregistrer → tâche</button>
     </form>
@@ -1183,11 +1195,14 @@ async function viewInbox() {
       <button type="button" class="chip ${filter === 'retour' ? 'on' : ''}" data-filter="retour">Retours</button>
       <button type="button" class="chip ${filter === 'note' ? 'on' : ''}" data-filter="note">Notes</button>
     </div>
-    <ul class="list">${shown.map((r) => {
-      const cible = targetLine(r.targets);
-      const when = stampLine(r.created_at, r.updated_at);
-      return `<li class="tap" data-edit="${esc(r.id)}"><strong>${esc(r.app)}</strong> · ${esc(r.kind || 'retour')}${cible ? ` · ${esc(cible)}` : ''}<div class="lead">${esc(when)}</div>${esc(r.body)}</li>`;
-    }).join('') || '<li>Aucun élément</li>'}</ul>
+    <h2>${esc(INBOX_GROUPS.openTitle)}</h2>
+    <p class="lead">${esc(INBOX_GROUPS.openSubtitle)}</p>
+    <ul class="list">${remarkItems(sections.open)}</ul>
+    <div class="inbox-split">
+      <h2>${esc(INBOX_GROUPS.doneTitle)}</h2>
+      <p>${esc(INBOX_GROUPS.doneSubtitle)}</p>
+    </div>
+    <ul class="list">${remarkItems(sections.done)}</ul>
   `);
   bindTargets($('#fb'));
   const bodyEl = document.querySelector('#fb [name="body"]');

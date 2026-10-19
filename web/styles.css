@@ -244,7 +244,26 @@ nav.bottom button.on { color: var(--ink); font-weight: 700; }
 .modal-card h3 { margin: 14px 0 4px; font-size: 14px; color: var(--ink); }
 .modal-card .meta { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
 .modal-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-.modal-actions button { width: auto; margin: 0; }
+.modal-card .modal-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  background: var(--card);
+  padding-top: 8px;
+}
+.modal-card .modal-actions button,
+.modal-card .modal-actions button.primary {
+  width: auto;
+  margin: 0;
+}
+.inbox-split {
+  margin: 8px 0 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.inbox-split h2 { margin: 0 0 4px; }
+.inbox-split p { margin: 0; color: var(--muted); font-size: 13px; }
+.task-state { color: var(--ink); font-size: 13px; font-weight: 700; margin: 4px 0; }
 .ghost {
   background: transparent; border: 1px solid var(--line); color: var(--text);
   border-radius: 10px; padding: 10px 14px; font: inherit; cursor: pointer;

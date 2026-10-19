@@ -74,6 +74,19 @@ class TaskTreeTest {
     }
 
     @Test
+    fun uneSousSousTacheResteDansSaColonne() {
+        val tasks = listOf(
+            task("p"),
+            task("c", "p"),
+            task("g", "c", columnId = "doing"),
+        )
+        assertEquals(listOf("p", "c"), boardTaskIds(columnBoard(tasks, "todo")))
+        assertEquals(listOf("g"), boardTaskIds(columnBoard(tasks, "doing")))
+        assertEquals("todo", tasks[0].columnId)
+        assertEquals("doing", tasks[2].columnId)
+    }
+
+    @Test
     fun creerUneSousTacheLaMontre() {
         val before = listOf(task("p"))
         assertEquals(listOf("p"), boardTaskIds(columnBoard(before, "todo")))

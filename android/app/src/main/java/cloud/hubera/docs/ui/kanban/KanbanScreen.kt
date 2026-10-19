@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -184,7 +185,13 @@ fun KanbanScreen(
                 shadowElevation = 8.dp,
             ) {
                 if (!editing) {
-                    Column(Modifier.padding(20.dp).verticalScroll(rememberScrollState())) {
+                    Column(Modifier.fillMaxWidth()) {
+                    Column(
+                        Modifier
+                            .heightIn(max = 420.dp)
+                            .verticalScroll(rememberScrollState())
+                            .padding(start = 20.dp, end = 20.dp, top = 20.dp),
+                    ) {
                         Text(open.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                         val parent = tasks.firstOrNull { it.id == open.parentId }
                         if (parent != null) {
@@ -230,7 +237,13 @@ fun KanbanScreen(
                                 TaskWhen(child)
                             }
                         }
-                        Row(Modifier.padding(top = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    }
+                        Row(
+                            Modifier
+                                .horizontalScroll(rememberScrollState())
+                                .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 20.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
                             androidx.compose.material3.Button(onClick = { subParentId = open.id }) { Text("Sous-tâche") }
                             androidx.compose.material3.Button(onClick = {
                                 draft = current

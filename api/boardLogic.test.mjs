@@ -54,6 +54,18 @@ describe('tableau', () => {
     assert.equal(tree[0].children[0].task.id, 'n');
   });
 
+  it('une sous-sous-tâche reste dans sa colonne, le parent dans la sienne', () => {
+    const tasks = [
+      { id: 'p', title: 'Carte', column_id: 'todo', parent_id: null },
+      { id: 'c', title: 'Sous-tâche', column_id: 'todo', parent_id: 'p' },
+      { id: 'g', title: 'Sous-sous-tâche', column_id: 'doing', parent_id: 'c' },
+    ];
+    assert.deepEqual(boardTaskIds(columnBoard(tasks, 'todo')), ['p', 'c']);
+    assert.deepEqual(boardTaskIds(columnBoard(tasks, 'doing')), ['g']);
+    assert.equal(tasks[0].column_id, 'todo');
+    assert.equal(tasks[2].column_id, 'doing');
+  });
+
   it('une sous-tâche en cours reste dans En cours si le parent est à faire', () => {
     const tasks = [
       { id: 'p', title: 'Parent', column_id: 'todo', parent_id: '' },

@@ -16,6 +16,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
@@ -34,8 +35,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import cloud.hubera.docs.data.Column
 import cloud.hubera.docs.data.DocsApi
+import cloud.hubera.docs.data.InboxCopy
 import cloud.hubera.docs.data.Remark
+import cloud.hubera.docs.data.RemarkRow
+import cloud.hubera.docs.data.remarkSections
+import cloud.hubera.docs.data.taskStateLabel
 import cloud.hubera.docs.data.SURFACE_LABEL
 import cloud.hubera.docs.data.SURFACE_ORDER
 import cloud.hubera.docs.data.Task
@@ -65,6 +71,7 @@ fun InboxScreen(
     val prefs = remember { ctx.getSharedPreferences("hubera_docs_inbox", Context.MODE_PRIVATE) }
     var remarks by remember { mutableStateOf<List<Remark>>(emptyList()) }
     var tasks by remember { mutableStateOf<List<Task>>(emptyList()) }
+    var columns by remember { mutableStateOf<List<Column>>(emptyList()) }
     var subParentId by remember { mutableStateOf<String?>(null) }
     var editTask by remember { mutableStateOf<Task?>(null) }
     var appName by remember { mutableStateOf(prefs.getString("last_app", "docs") ?: "docs") }
@@ -90,11 +97,15 @@ fun InboxScreen(
 
     suspend fun reload() {
         val loaded = withContext(Dispatchers.IO) {
-            runCatching { api.remarks() }.getOrDefault(emptyList()) to
-                runCatching { api.tasks() }.getOrDefault(emptyList())
+            Triple(
+                runCatching { api.remarks() }.getOrDefault(emptyList()),
+                runCatching { api.tasks() }.getOrDefault(emptyList()),
+                runCatching { api.columns() }.getOrDefault(emptyList()),
+            )
         }
         remarks = loaded.first
         tasks = loaded.second
+        columns = loaded.third
     }
 
     LaunchedEffect(kindIntent) {
@@ -107,6 +118,7 @@ fun InboxScreen(
     LaunchedEffect(appName, body, kind, targets, filter) { persist() }
     LaunchedEffect(Unit) { reload() }
     val shown = remarks.filter { filter == "all" || it.kind == filter }
+    val sections = remarkSections(shown, tasks, columns)
     Column(
         Modifier
             .fillMaxSize()
@@ -114,10 +126,6 @@ fun InboxScreen(
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(
-            "Choisis d’abord l’application, puis la cible. Un tap modifie le retour et la tâche liée.",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
         AppKindFields(
             appName,
             { appName = it },
@@ -129,7 +137,10 @@ fun InboxScreen(
         OutlinedTextField(
             body,
             { body = it },
-            label = { Text("Ce qui cloche") },
+            label = { Text("Texte") },
+            placeholder = if (InboxCopy.bodyPlaceholder.isEmpty()) null else {
+                { Text(InboxCopy.bodyPlaceholder) }
+            },
             minLines = 4,
             modifier = Modifier.fillMaxWidth(),
         )
@@ -155,27 +166,19 @@ fun InboxScreen(
             FilterChip(selected = filter == "retour", onClick = { filter = "retour" }, label = { Text("Retours") })
             FilterChip(selected = filter == "note", onClick = { filter = "note" }, label = { Text("Notes") })
         }
-        shown.forEach { r ->
-            Card(
-                Modifier
-                    .fillMaxWidth()
-                    .clickable { editing = r },
-            ) {
-                Column(Modifier.padding(12.dp)) {
-                    val cible = targetsLabel(r.targets)
-                    Text(
-                        "${r.app} · ${r.kind}" + if (cible.isNotEmpty()) " · $cible" else "",
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    val whenLine = stampLine(r.createdAt, r.updatedAt)
-                    if (whenLine.isNotEmpty()) {
-                        Text(whenLine, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Text(r.body, style = MaterialTheme.typography.bodyMedium)
-                    Text("Modifier", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-                }
-            }
+        Text(InboxCopy.openTitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text(InboxCopy.openSubtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (sections.open.isEmpty()) {
+            Text("Aucun élément", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+        sections.open.forEach { row -> RemarkCard(row) { editing = row.remark } }
+        HorizontalDivider()
+        Text(InboxCopy.doneTitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text(InboxCopy.doneSubtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (sections.done.isEmpty()) {
+            Text("Aucun élément", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        sections.done.forEach { row -> RemarkCard(row) { editing = row.remark } }
     }
 
     editing?.let { r ->
@@ -241,6 +244,31 @@ fun InboxScreen(
                 }
             },
         )
+    }
+}
+
+@Composable
+private fun RemarkCard(row: RemarkRow, onClick: () -> Unit) {
+    val r = row.remark
+    Card(
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+    ) {
+        Column(Modifier.padding(12.dp)) {
+            val cible = targetsLabel(r.targets)
+            Text(
+                "${r.app} · ${r.kind}" + if (cible.isNotEmpty()) " · $cible" else "",
+                fontWeight = FontWeight.SemiBold,
+            )
+            val whenLine = stampLine(r.createdAt, r.updatedAt)
+            if (whenLine.isNotEmpty()) {
+                Text(whenLine, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Text(taskStateLabel(row), fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+            Text(r.body, style = MaterialTheme.typography.bodyMedium)
+            Text("Modifier", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+        }
     }
 }
 

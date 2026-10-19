@@ -48,6 +48,49 @@ describe('sous-tâche', () => {
     assert.equal(out.task.updated_at, at);
   });
 
+  it('crée une sous-tâche puis une sous-sous-tâche sans aplatir le parent', () => {
+    const childParent = resolveParentId('root', lookup('enfant'));
+    assert.equal(childParent.error, undefined);
+    assert.equal(childParent.parent_id, 'root');
+    const child = nextTaskCreate(
+      { title: 'Sous-tâche', parent_id: 'root', column_id: 'todo', targets: ['web'], priority: 2 },
+      100,
+      () => ({
+        ...childParent,
+        project: 'docs',
+        category: 'feature',
+        column_id: 'todo',
+        targets: '["web"]',
+      }),
+    );
+    assert.equal(child.error, undefined);
+    assert.equal(child.task.parent_id, 'root');
+    assert.equal(child.task.column_id, 'todo');
+
+    const grandParent = resolveParentId('child', lookup('petit'));
+    assert.equal(grandParent.error, undefined);
+    assert.equal(grandParent.parent_id, 'child');
+    const grand = nextTaskCreate(
+      { title: 'Sous-sous-tâche', parent_id: 'child', column_id: 'doing', targets: ['mobile'], priority: 3 },
+      200,
+      () => ({
+        parent_id: grandParent.parent_id,
+        project: 'docs',
+        category: 'feature',
+        column_id: 'doing',
+        targets: '["mobile"]',
+      }),
+    );
+    assert.equal(grand.error, undefined);
+    assert.equal(grand.task.parent_id, 'child');
+    assert.notEqual(grand.task.parent_id, 'root');
+    assert.equal(grand.task.column_id, 'doing');
+
+    const deeper = resolveParentId('grand', lookup('encore'));
+    assert.equal(deeper.error, undefined);
+    assert.equal(deeper.parent_id, 'grand');
+  });
+
   it('une cible vide est refusée quand elle est envoyée', () => {
     const out = nextTaskCreate({ title: 'x', targets: [] }, 10, () => ({ parent_id: null }));
     assert.equal(out.error, 'targets');
