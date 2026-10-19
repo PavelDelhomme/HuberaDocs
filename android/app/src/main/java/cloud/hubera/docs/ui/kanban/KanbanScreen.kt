@@ -41,6 +41,8 @@ import androidx.compose.ui.unit.dp
 import cloud.hubera.docs.data.Column
 import cloud.hubera.docs.data.DocsApi
 import cloud.hubera.docs.data.Task
+import cloud.hubera.docs.data.stampLine
+import cloud.hubera.docs.data.targetsLabel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -148,6 +150,7 @@ fun KanbanScreen(
                                 Column(Modifier.padding(10.dp)) {
                                     Text("${task.priority.coerceIn(1, 5)}  ${task.title}", fontWeight = FontWeight.SemiBold)
                                     Text("${task.project} · ${task.category}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    TaskWhen(task)
                                 }
                             }
                         }
@@ -176,6 +179,7 @@ fun KanbanScreen(
                     Column(Modifier.padding(20.dp).verticalScroll(rememberScrollState())) {
                         Text(open.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                         Text("${open.project} · ${open.category}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        TaskWhen(open)
                         PriorityPicker(open.priority.coerceIn(1, 5)) { p ->
                             scope.launch {
                                 withContext(Dispatchers.IO) { api.patchPriority(open.id, p) }
@@ -348,6 +352,18 @@ private fun NewTaskDialog(
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Annuler") } },
     )
+}
+
+@Composable
+private fun TaskWhen(task: Task) {
+    val whenLine = stampLine(task.createdAt, task.updatedAt)
+    val cible = targetsLabel(task.targets)
+    if (whenLine.isNotEmpty()) {
+        Text(whenLine, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+    if (cible.isNotEmpty()) {
+        Text(cible, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
 }
 
 @Composable

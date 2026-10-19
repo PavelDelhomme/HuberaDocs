@@ -153,6 +153,7 @@ h2 { font-size: 15px; color: var(--ink); margin: 16px 0 8px; }
   color: var(--text);
 }
 .task small { display: block; color: var(--muted); margin-top: 4px; }
+form.card label, .modal-card label { display: block; margin: 8px 0 4px; font-size: 13px; font-weight: 700; color: var(--muted); }
 .task .prio {
   display: inline-block; min-width: 1.1em; margin-right: 6px;
   font-weight: 700; color: var(--ink);

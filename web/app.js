@@ -72,6 +72,9 @@ const LAST_APP_KEY = 'hubera-docs-inbox-app';
 const DRAFT_KEY = 'hubera-docs-inbox-draft';
 const KIND_KEY = 'hubera-docs-inbox-kind';
 const FILTER_KEY = 'hubera-docs-inbox-filter';
+const TARGETS_KEY = 'hubera-docs-inbox-targets';
+const SURFACES = ['api', 'web', 'mobile'];
+const SURFACE_LABEL = { api: 'API', web: 'Web', mobile: 'Mobile' };
 let route = 'dash';
 let openFile = '';
 let me = null;
@@ -89,9 +92,69 @@ function persistInboxFields() {
   const appSel = document.querySelector('#fb [name="app"]');
   const body = document.querySelector('#fb [name="body"]');
   const kind = document.querySelector('#fb [name="kind"]');
+  const targets = document.querySelector('#fb .targets');
   if (appSel) writeLs(LAST_APP_KEY, appSel.value);
   if (body) writeLs(DRAFT_KEY, body.value);
   if (kind) writeLs(KIND_KEY, kind.value);
+  if (targets) writeLs(TARGETS_KEY, targets.dataset.value || '');
+}
+
+function parseTargets(raw) {
+  const list = Array.isArray(raw) ? raw : String(raw || '').split(/[,+\s]+/);
+  const want = new Set(list.map((item) => String(item || '').trim().toLowerCase()));
+  return SURFACES.filter((k) => want.has(k));
+}
+
+function fmtStamp(ms) {
+  const n = Number(ms);
+  if (!Number.isFinite(n) || n <= 0) return '';
+  return new Intl.DateTimeFormat('fr-FR', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(n));
+}
+
+function stampLine(created, updated) {
+  const c = fmtStamp(created);
+  const u = fmtStamp(updated || created);
+  if (!c) return '';
+  return `créé le ${c} · modifié le ${u}`;
+}
+
+function targetLine(raw) {
+  return parseTargets(raw).map((k) => SURFACE_LABEL[k]).join(' · ');
+}
+
+function targetChips(selected) {
+  const on = new Set(parseTargets(selected));
+  const buttons = SURFACES.map(
+    (k) =>
+      `<button type="button" class="chip${on.has(k) ? ' on' : ''}" data-target="${k}" aria-pressed="${on.has(k) ? 'true' : 'false'}">${SURFACE_LABEL[k]}</button>`,
+  ).join('');
+  return `<div class="chips targets" data-value="${[...on].join(',')}">${buttons}</div>`;
+}
+
+function bindTargets(root) {
+  const row = root.querySelector('.targets');
+  if (!row) return;
+  row.querySelectorAll('[data-target]').forEach((btn) => {
+    btn.onclick = () => {
+      const on = !btn.classList.contains('on');
+      btn.classList.toggle('on', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      const picked = [...row.querySelectorAll('[data-target].on')].map((b) => b.dataset.target);
+      row.dataset.value = parseTargets(picked).join(',');
+      if (row.closest('#fb')) persistInboxFields();
+    };
+  });
+}
+
+function readTargets(root) {
+  const row = root.querySelector('.targets');
+  return parseTargets(row?.dataset.value || '');
 }
 
 function parseHash() {
@@ -484,7 +547,7 @@ async function viewDash() {
     <h2>Tes derniers rapports / mails</h2>
     <ul class="list">${d.recentReports.map((r) => `<li class="tap" data-go="reports" data-f="${esc(r.filename || '')}"><strong>${esc(r.title)}</strong><br><small>${(r.sent_at || '').slice(0, 16)} · ${esc(r.kind)}</small><div class="lead">${esc(r.summary || '')}</div></li>`).join('') || '<li>Pas encore de PDF</li>'}</ul>
     <h2>Tâches récentes</h2>
-    <ul class="list">${d.recentTasks.map((t) => `<li class="tap" data-go="kanban"><b class="prio">${clampPrio(t.priority)}</b>${esc(t.title)}<small> ${esc(t.project)} · ${esc(t.column_id)}</small></li>`).join('')}</ul>
+    <ul class="list">${d.recentTasks.map((t) => `<li class="tap" data-go="kanban"><b class="prio">${clampPrio(t.priority)}</b>${esc(t.title)}<small> ${esc(t.project)} · ${esc(t.column_id)}</small><div class="lead">${esc(stampLine(t.created_at, t.updated_at))}${targetLine(t.targets) ? ` · ${esc(targetLine(t.targets))}` : ''}</div></li>`).join('')}</ul>
   `);
   app.querySelectorAll('[data-go]').forEach((el) => {
     el.onclick = () => {
@@ -573,7 +636,8 @@ async function viewKanban() {
       .map(
         (t) =>
           `<div class="task p${clampPrio(t.priority)}" data-id="${t.id}">
-            <b class="prio">${clampPrio(t.priority)}</b>${esc(t.title)}<small>${esc(t.project)} · ${esc(t.category)}</small></div>`,
+            <b class="prio">${clampPrio(t.priority)}</b>${esc(t.title)}<small>${esc(t.project)} · ${esc(t.category)}</small>
+            <small class="when">${esc(stampLine(t.created_at, t.updated_at))}${targetLine(t.targets) ? ` · ${esc(targetLine(t.targets))}` : ''}</small></div>`,
       )
       .join('');
   app.innerHTML = shell(`
@@ -599,6 +663,7 @@ function openTaskCard(t) {
   openModal(`
     <h2>${esc(t.title)}</h2>
     <p class="meta">${esc(t.project)} · ${esc(t.category)}</p>
+    <p class="meta">${esc(stampLine(t.created_at, t.updated_at))}${targetLine(t.targets) ? ` · ${esc(targetLine(t.targets))}` : ''}</p>
     <label>Priorité</label>
     ${priorityPicker(t.priority)}
     <div class="lead" id="tbody-ro">${esc(t.body || 'Pas encore de détail.')}</div>
@@ -923,6 +988,7 @@ async function viewInbox() {
   const lastApp = readLs(LAST_APP_KEY, 'docs');
   const draft = readLs(DRAFT_KEY, '');
   const kind = pendingInboxKind || readLs(KIND_KEY, 'retour');
+  const savedTargets = readLs(TARGETS_KEY, '');
   pendingInboxKind = '';
   writeLs(KIND_KEY, kind);
   const filter = readLs(FILTER_KEY, 'all');
@@ -932,14 +998,19 @@ async function viewInbox() {
     return true;
   });
   app.innerHTML = shell(`
-    <p class="lead">Tape un retour pour le modifier (texte, type, application). Ça met aussi à jour la tâche.</p>
+    <p class="lead">Choisis d’abord l’application, puis la cible. Un tap modifie le retour et la tâche liée.</p>
     <form id="fb" class="card">
+      <label>Application</label>
       <select name="app">${projects.map((p) => `<option ${p === lastApp ? 'selected' : ''}>${p}</option>`).join('')}</select>
+      <label>Cible</label>
+      ${targetChips(savedTargets)}
+      <p class="lead">API, web, mobile, ou une combinaison.</p>
       <select name="kind">
         <option value="retour" ${kind === 'note' ? '' : 'selected'}>Retour</option>
         <option value="note" ${kind === 'note' ? 'selected' : ''}>Note</option>
       </select>
       <textarea name="body" rows="5" placeholder="Ex. Nothing : Flowers spinner 20 s. Ou : ajouter le budget unique Fuel dans Docs." required></textarea>
+      <p class="err" id="fbErr" hidden></p>
       <button class="primary" type="submit">Enregistrer → tâche</button>
     </form>
     <div class="chips" id="inboxFilter">
@@ -947,8 +1018,13 @@ async function viewInbox() {
       <button type="button" class="chip ${filter === 'retour' ? 'on' : ''}" data-filter="retour">Retours</button>
       <button type="button" class="chip ${filter === 'note' ? 'on' : ''}" data-filter="note">Notes</button>
     </div>
-    <ul class="list">${shown.map((r) => `<li class="tap" data-edit="${esc(r.id)}"><strong>${esc(r.app)}</strong> · ${esc(r.kind || 'retour')} — ${esc(r.body)}</li>`).join('') || '<li>Aucun élément</li>'}</ul>
+    <ul class="list">${shown.map((r) => {
+      const cible = targetLine(r.targets);
+      const when = stampLine(r.created_at, r.updated_at);
+      return `<li class="tap" data-edit="${esc(r.id)}"><strong>${esc(r.app)}</strong> · ${esc(r.kind || 'retour')}${cible ? ` · ${esc(cible)}` : ''}<div class="lead">${esc(when)}</div>${esc(r.body)}</li>`;
+    }).join('') || '<li>Aucun élément</li>'}</ul>
   `);
+  bindTargets($('#fb'));
   const bodyEl = document.querySelector('#fb [name="body"]');
   if (bodyEl) bodyEl.value = draft;
   document.querySelector('#fb [name="app"]')?.addEventListener('change', persistInboxFields);
@@ -967,8 +1043,11 @@ async function viewInbox() {
       if (!r) return;
       openModal(`
         <h2>Modifier</h2>
+        <p class="meta">${esc(stampLine(r.created_at, r.updated_at))}</p>
         <label>Application</label>
         <select id="eapp">${projects.map((p) => `<option ${p === r.app ? 'selected' : ''}>${p}</option>`).join('')}</select>
+        <label>Cible</label>
+        ${targetChips(r.targets)}
         <label>Type</label>
         <select id="ekind">
           <option value="retour" ${r.kind === 'note' ? '' : 'selected'}>Retour</option>
@@ -976,21 +1055,33 @@ async function viewInbox() {
         </select>
         <label>Texte</label>
         <textarea id="ebody" rows="5">${esc(r.body)}</textarea>
+        <p class="err" id="eerr" hidden></p>
         <div class="modal-actions">
           <button class="primary" type="button" id="esave">Enregistrer</button>
           <button class="ghost" type="button" id="eclose">Annuler</button>
         </div>
       `);
+      bindTargets($('#modal'));
       $('#eclose').onclick = closeModal;
       $('#esave').onclick = async () => {
         const body = ($('#ebody').value || '').trim();
+        const targets = readTargets($('#modal'));
+        const err = $('#eerr');
         if (!body) return;
+        if (!targets.length) {
+          if (err) {
+            err.hidden = false;
+            err.textContent = 'Choisis au moins une cible : API, web ou mobile.';
+          }
+          return;
+        }
         await api('/api/remarks/' + encodeURIComponent(r.id), {
           method: 'PATCH',
           body: JSON.stringify({
             app: $('#eapp').value,
             kind: $('#ekind').value === 'note' ? 'note' : 'retour',
             body,
+            targets,
           }),
         });
         closeModal();
@@ -1003,12 +1094,23 @@ async function viewInbox() {
     const fd = new FormData(e.target);
     const appName = String(fd.get('app') || 'docs');
     const k = String(fd.get('kind') || 'retour') === 'note' ? 'note' : 'retour';
+    const targets = readTargets($('#fb'));
+    const err = $('#fbErr');
+    if (!targets.length) {
+      if (err) {
+        err.hidden = false;
+        err.textContent = 'Choisis au moins une cible : API, web ou mobile.';
+      }
+      return;
+    }
+    if (err) err.hidden = true;
     await api('/api/remarks', {
       method: 'POST',
-      body: JSON.stringify({ app: appName, body: fd.get('body'), kind: k }),
+      body: JSON.stringify({ app: appName, body: fd.get('body'), kind: k, targets }),
     });
     writeLs(LAST_APP_KEY, appName);
     writeLs(KIND_KEY, k);
+    writeLs(TARGETS_KEY, targets.join(','));
     writeLs(DRAFT_KEY, '');
     viewInbox();
   };

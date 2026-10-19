@@ -1,6 +1,15 @@
 {
   "versions": [
     {
+      "version": "0.2.25",
+      "date": "2026-10-19",
+      "title": "Retour : cible et dates",
+      "notes": [
+        "Un retour choisit d’abord l’application, puis la cible : API, web, mobile, ou une combinaison. Ce choix est gardé sur le retour et sur la tâche créée.",
+        "Créé le est posé à l’enregistrement. Modifié le avance à chaque changement. La priorité 1 à 5 reste. Le lanceur reste Hubera Docs. Mise à jour proposée, pas forcée."
+      ]
+    },
+    {
       "version": "0.2.24",
       "date": "2026-10-19",
       "title": "Priorité 1 à 5",

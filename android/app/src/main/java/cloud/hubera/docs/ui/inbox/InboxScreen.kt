@@ -35,6 +35,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cloud.hubera.docs.data.DocsApi
 import cloud.hubera.docs.data.Remark
+import cloud.hubera.docs.data.SURFACE_LABEL
+import cloud.hubera.docs.data.SURFACE_ORDER
+import cloud.hubera.docs.data.normalizeTargets
+import cloud.hubera.docs.data.stampLine
+import cloud.hubera.docs.data.targetsLabel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -57,6 +62,9 @@ fun InboxScreen(
     var appName by remember { mutableStateOf(prefs.getString("last_app", "docs") ?: "docs") }
     var body by remember { mutableStateOf(prefs.getString("draft", "") ?: "") }
     var kind by remember { mutableStateOf(prefs.getString("kind", "retour") ?: "retour") }
+    var targets by remember {
+        mutableStateOf(normalizeTargets((prefs.getString("targets", "") ?: "").split(",")).toSet())
+    }
     var filter by remember { mutableStateOf(prefs.getString("filter", "all") ?: "all") }
     var editing by remember { mutableStateOf<Remark?>(null) }
     val scope = rememberCoroutineScope()
@@ -67,6 +75,7 @@ fun InboxScreen(
             .putString("last_app", appName)
             .putString("draft", body)
             .putString("kind", kind)
+            .putString("targets", normalizeTargets(targets).joinToString(","))
             .putString("filter", filter)
             .apply()
     }
@@ -82,7 +91,7 @@ fun InboxScreen(
             onKindConsumed()
         }
     }
-    LaunchedEffect(appName, body, kind, filter) { persist() }
+    LaunchedEffect(appName, body, kind, targets, filter) { persist() }
     LaunchedEffect(Unit) { reload() }
     val shown = remarks.filter { filter == "all" || it.kind == filter }
     Column(
@@ -93,10 +102,17 @@ fun InboxScreen(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
-            "Tape un retour pour le modifier (texte, type, application). Ça met aussi à jour la tâche.",
+            "Choisis d’abord l’application, puis la cible. Un tap modifie le retour et la tâche liée.",
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        AppKindFields(appName, { appName = it }, kind, { kind = it })
+        AppKindFields(
+            appName,
+            { appName = it },
+            targets,
+            { targets = it },
+            kind,
+            { kind = it },
+        )
         OutlinedTextField(
             body,
             { body = it },
@@ -105,13 +121,15 @@ fun InboxScreen(
             modifier = Modifier.fillMaxWidth(),
         )
         Button(
+            enabled = body.isNotBlank() && targets.isNotEmpty(),
             onClick = {
-                if (body.isBlank()) return@Button
+                if (body.isBlank() || targets.isEmpty()) return@Button
                 val savedApp = appName.trim()
                 val savedKind = kind
                 val savedBody = body.trim()
+                val savedTargets = normalizeTargets(targets)
                 scope.launch {
-                    withContext(Dispatchers.IO) { api.addRemark(savedApp, savedBody, savedKind) }
+                    withContext(Dispatchers.IO) { api.addRemark(savedApp, savedBody, savedKind, savedTargets) }
                     body = ""
                     persist()
                     reload()
@@ -131,7 +149,15 @@ fun InboxScreen(
                     .clickable { editing = r },
             ) {
                 Column(Modifier.padding(12.dp)) {
-                    Text("${r.app} · ${r.kind}", fontWeight = FontWeight.SemiBold)
+                    val cible = targetsLabel(r.targets)
+                    Text(
+                        "${r.app} · ${r.kind}" + if (cible.isNotEmpty()) " · $cible" else "",
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    val whenLine = stampLine(r.createdAt, r.updatedAt)
+                    if (whenLine.isNotEmpty()) {
+                        Text(whenLine, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                     Text(r.body, style = MaterialTheme.typography.bodyMedium)
                     Text("Modifier", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                 }
@@ -144,9 +170,9 @@ fun InboxScreen(
             RemarkEditSheet(
                 remark = r,
                 onCancel = { editing = null },
-                onSave = { app, k, text ->
+                onSave = { app, k, text, picked ->
                     scope.launch {
-                        withContext(Dispatchers.IO) { api.patchRemark(r.id, app, text, k) }
+                        withContext(Dispatchers.IO) { api.patchRemark(r.id, app, text, k, picked) }
                         editing = null
                         reload()
                     }
@@ -160,6 +186,8 @@ fun InboxScreen(
 fun AppKindFields(
     appName: String,
     onApp: (String) -> Unit,
+    targets: Set<String>,
+    onTargets: (Set<String>) -> Unit,
     kind: String,
     onKind: (String) -> Unit,
 ) {
@@ -174,6 +202,25 @@ fun AppKindFields(
             }
         }
     }
+    Text("Cible", style = MaterialTheme.typography.labelMedium)
+    Text(
+        "API, web, mobile, ou une combinaison.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        SURFACE_ORDER.forEach { id ->
+            FilterChip(
+                selected = id in targets,
+                onClick = {
+                    val next = targets.toMutableSet()
+                    if (id in next) next.remove(id) else next.add(id)
+                    onTargets(next)
+                },
+                label = { Text(SURFACE_LABEL[id] ?: id) },
+            )
+        }
+    }
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         FilterChip(selected = kind == "retour", onClick = { onKind("retour") }, label = { Text("Retour") })
         FilterChip(selected = kind == "note", onClick = { onKind("note") }, label = { Text("Note") })
@@ -184,17 +231,22 @@ fun AppKindFields(
 private fun RemarkEditSheet(
     remark: Remark,
     onCancel: () -> Unit,
-    onSave: (String, String, String) -> Unit,
+    onSave: (String, String, String, List<String>) -> Unit,
 ) {
     var appName by remember { mutableStateOf(remark.app) }
     var kind by remember { mutableStateOf(remark.kind.ifBlank { "retour" }) }
     var body by remember { mutableStateOf(remark.body) }
+    var targets by remember { mutableStateOf(remark.targets.toSet()) }
+    val whenLine = stampLine(remark.createdAt, remark.updatedAt)
     Column(
         Modifier.padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text("Modifier le ${if (kind == "note") "note" else "retour"}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        AppKindFields(appName, { appName = it }, kind, { kind = it })
+        if (whenLine.isNotEmpty()) {
+            Text(whenLine, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        AppKindFields(appName, { appName = it }, targets, { targets = it }, kind, { kind = it })
         OutlinedTextField(
             body,
             { body = it },
@@ -203,7 +255,13 @@ private fun RemarkEditSheet(
             modifier = Modifier.fillMaxWidth(),
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { if (body.isNotBlank()) onSave(appName, kind, body.trim()) }) { Text("Enregistrer") }
+            Button(
+                enabled = body.isNotBlank() && targets.isNotEmpty(),
+                onClick = {
+                    val picked = normalizeTargets(targets)
+                    if (body.isNotBlank() && picked.isNotEmpty()) onSave(appName, kind, body.trim(), picked)
+                },
+            ) { Text("Enregistrer") }
             TextButton(onClick = onCancel) { Text("Annuler") }
         }
     }

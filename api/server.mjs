@@ -1,5 +1,7 @@
 import { isAllowedLaboFile } from './labo-files.mjs';
 import { betaChannelBlocked } from './betaChannel.mjs';
+import { parseTargets } from './targets.mjs';
+import { buildRemarkCreate, buildRemarkPatch } from './remarksLogic.mjs';
 import { createHash, randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, extname, join, resolve } from 'node:path';
@@ -82,6 +84,16 @@ if (!hasColumn('reports', 'owner_email')) {
 if (!hasColumn('remarks', 'kind')) {
   db.exec("ALTER TABLE remarks ADD COLUMN kind TEXT NOT NULL DEFAULT 'retour'");
 }
+if (!hasColumn('remarks', 'updated_at')) {
+  db.exec('ALTER TABLE remarks ADD COLUMN updated_at INTEGER');
+}
+if (!hasColumn('remarks', 'targets')) {
+  db.exec("ALTER TABLE remarks ADD COLUMN targets TEXT NOT NULL DEFAULT '[]'");
+}
+if (!hasColumn('tasks', 'targets')) {
+  db.exec("ALTER TABLE tasks ADD COLUMN targets TEXT NOT NULL DEFAULT '[]'");
+}
+db.prepare('UPDATE remarks SET updated_at = created_at WHERE updated_at IS NULL').run();
 const WORKSPACE_EMAIL = ADMINS[0] || 'paul@delhomme.ovh';
 db.prepare(`UPDATE reports SET owner_email = ? WHERE owner_email IS NULL OR owner_email = ''`).run(WORKSPACE_EMAIL);
 
@@ -163,6 +175,11 @@ function nid() {
 }
 function now() {
   return Date.now();
+}
+
+function expose(row) {
+  if (!row || typeof row !== 'object') return row;
+  return { ...row, targets: parseTargets(row.targets) };
 }
 function hashSession(token) {
   return createHash('sha256').update(SESSION_SECRET + ':' + token).digest('hex');
@@ -740,7 +757,7 @@ app.get('/api/dashboard', requireAuth, (req, res) => {
     email: req.admin.email,
     byCol,
     byProj,
-    recentTasks,
+    recentTasks: recentTasks.map(expose),
     recentReports,
     remarks,
     stacksNote: 'Voir documentation /guides/portainer-stacks.md',
@@ -790,7 +807,7 @@ app.get('/api/tasks', requireAuth, (req, res) => {
   const rows = project
     ? db.prepare('SELECT * FROM tasks WHERE project = ? ORDER BY priority, updated_at DESC').all(project)
     : db.prepare('SELECT * FROM tasks ORDER BY priority, updated_at DESC').all();
-  res.json({ tasks: rows });
+  res.json({ tasks: rows.map(expose) });
 });
 
 app.post('/api/tasks', requireAuth, (req, res) => {
@@ -812,7 +829,7 @@ app.post('/api/tasks', requireAuth, (req, res) => {
     `INSERT INTO tasks (id,title,body,project,category,column_id,priority,created_at,updated_at)
      VALUES (@id,@title,@body,@project,@category,@column_id,@priority,@created_at,@updated_at)`,
   ).run(row);
-  res.json(row);
+  res.json(expose(row));
 });
 
 app.patch('/api/tasks/:id', requireAuth, (req, res) => {
@@ -832,7 +849,7 @@ app.patch('/api/tasks/:id', requireAuth, (req, res) => {
     `UPDATE tasks SET title=@title, body=@body, project=@project, category=@category,
      column_id=@column_id, priority=@priority, updated_at=@updated_at WHERE id=@id`,
   ).run(next);
-  res.json(next);
+  res.json(expose(next));
 });
 
 app.get('/api/docs', requireAuth, (_req, res) => {
@@ -930,58 +947,73 @@ app.get('/api/remarks', requireAuth, (req, res) => {
     kind === 'note' || kind === 'retour'
       ? db.prepare('SELECT * FROM remarks WHERE kind = ? ORDER BY created_at DESC LIMIT 80').all(kind)
       : db.prepare('SELECT * FROM remarks ORDER BY created_at DESC LIMIT 80').all();
-  res.json({ remarks: rows });
+  res.json({ remarks: rows.map(expose) });
 });
 
 app.post('/api/remarks', requireAuth, (req, res) => {
-  const appName = String(req.body?.app || 'music').trim();
-  const body = String(req.body?.body || '').trim();
-  const kind = String(req.body?.kind || 'retour').trim() === 'note' ? 'note' : 'retour';
-  if (!body) return res.status(400).json({ error: 'body' });
-  const t = now();
-  const task = {
+  const built = buildRemarkCreate({
+    app: req.body?.app,
+    body: req.body?.body,
+    kind: req.body?.kind,
+    targets: req.body?.targets,
+    at: now(),
+  });
+  if (built.error) return res.status(400).json({ error: built.error });
+  const task = { id: nid(), ...built.task, targets: JSON.stringify(built.task.targets) };
+  db.prepare(
+    `INSERT INTO tasks (id,title,body,project,category,column_id,priority,targets,created_at,updated_at)
+     VALUES (@id,@title,@body,@project,@category,@column_id,@priority,@targets,@created_at,@updated_at)`,
+  ).run(task);
+  const remark = {
     id: nid(),
-    title: `[${kind} ${appName}] ${body.slice(0, 72)}`,
-    body,
-    project: appName,
-    category: kind === 'note' ? 'docs' : 'bug',
-    column_id: 'todo',
-    priority: 1,
-    created_at: t,
-    updated_at: t,
+    app: built.remark.app,
+    body: built.remark.body,
+    kind: built.remark.kind,
+    targets: JSON.stringify(built.remark.targets),
+    task_id: task.id,
+    created_at: built.remark.created_at,
+    updated_at: built.remark.updated_at,
   };
   db.prepare(
-    `INSERT INTO tasks (id,title,body,project,category,column_id,priority,created_at,updated_at)
-     VALUES (@id,@title,@body,@project,@category,@column_id,@priority,@created_at,@updated_at)`,
-  ).run(task);
-  const remark = { id: nid(), app: appName, body, kind, task_id: task.id, created_at: t };
-  db.prepare(
-    'INSERT INTO remarks (id,app,body,kind,task_id,created_at) VALUES (@id,@app,@body,@kind,@task_id,@created_at)',
+    `INSERT INTO remarks (id,app,body,kind,targets,task_id,created_at,updated_at)
+     VALUES (@id,@app,@body,@kind,@targets,@task_id,@created_at,@updated_at)`,
   ).run(remark);
-  res.json({ remark, task });
+  res.json({ remark: expose(remark), task: expose(task) });
 });
 
 app.patch('/api/remarks/:id', requireAuth, (req, res) => {
   const cur = db.prepare('SELECT * FROM remarks WHERE id = ?').get(req.params.id);
   if (!cur) return res.status(404).json({ error: 'missing' });
-  const appName = String(req.body?.app ?? cur.app).trim() || cur.app;
-  const body = String(req.body?.body ?? cur.body).trim();
-  if (!body) return res.status(400).json({ error: 'body' });
-  const kind = String(req.body?.kind ?? cur.kind ?? 'retour').trim() === 'note' ? 'note' : 'retour';
-  db.prepare('UPDATE remarks SET app = ?, body = ?, kind = ? WHERE id = ?').run(appName, body, kind, cur.id);
+  const built = buildRemarkPatch(cur, req.body || {}, now());
+  if (built.error) return res.status(built.error === 'missing' ? 404 : 400).json({ error: built.error });
+  const targets = JSON.stringify(built.remark.targets);
+  db.prepare(
+    'UPDATE remarks SET app = ?, body = ?, kind = ?, targets = ?, updated_at = ? WHERE id = ?',
+  ).run(built.remark.app, built.remark.body, built.remark.kind, targets, built.remark.updated_at, cur.id);
   if (cur.task_id) {
     db.prepare(
-      `UPDATE tasks SET title = ?, body = ?, project = ?, category = ?, updated_at = ? WHERE id = ?`,
+      `UPDATE tasks SET title = ?, body = ?, project = ?, category = ?, targets = ?, updated_at = ? WHERE id = ?`,
     ).run(
-      `[${kind} ${appName}] ${body.slice(0, 72)}`,
-      body,
-      appName,
-      kind === 'note' ? 'docs' : 'bug',
-      now(),
+      built.task.title,
+      built.task.body,
+      built.task.project,
+      built.task.category,
+      JSON.stringify(built.task.targets),
+      built.task.updated_at,
       cur.task_id,
     );
   }
-  res.json({ remark: { ...cur, app: appName, body, kind } });
+  res.json({
+    remark: expose({
+      ...cur,
+      app: built.remark.app,
+      body: built.remark.body,
+      kind: built.remark.kind,
+      targets,
+      created_at: built.remark.created_at,
+      updated_at: built.remark.updated_at,
+    }),
+  });
 });
 
 app.get('/labo/:file', (req, res) => {

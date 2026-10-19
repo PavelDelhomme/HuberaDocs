@@ -18,6 +18,9 @@ data class Task(
     val category: String,
     val columnId: String,
     val priority: Int,
+    val targets: List<String> = emptyList(),
+    val createdAt: Long = 0,
+    val updatedAt: Long = 0,
 )
 
 data class Column(val id: String, val label: String, val position: Int)
@@ -35,7 +38,15 @@ data class DocFile(val path: String, val bytes: Int)
 
 data class GanttBar(val id: String, val label: String, val start: String, val end: String, val pct: Int)
 
-data class Remark(val id: String, val app: String, val body: String, val kind: String = "retour")
+data class Remark(
+    val id: String,
+    val app: String,
+    val body: String,
+    val kind: String = "retour",
+    val targets: List<String> = emptyList(),
+    val createdAt: Long = 0,
+    val updatedAt: Long = 0,
+)
 
 data class Dashboard(
     val title: String,
@@ -303,23 +314,34 @@ class DocsApi(
                 r.optString("app"),
                 r.optString("body"),
                 r.optString("kind").ifBlank { "retour" },
+                jsonTargets(r),
+                r.optLong("created_at"),
+                r.optLong("updated_at").takeIf { it > 0L } ?: r.optLong("created_at"),
             )
         }
     }
 
-    fun addRemark(app: String, body: String, kind: String = "retour") {
+    fun addRemark(app: String, body: String, kind: String = "retour", targets: List<String>) {
         send(
             "POST",
             "/api/remarks",
-            JSONObject().put("app", app).put("body", body).put("kind", kind),
+            JSONObject()
+                .put("app", app)
+                .put("body", body)
+                .put("kind", kind)
+                .put("targets", JSONArray(normalizeTargets(targets))),
         )
     }
 
-    fun patchRemark(id: String, app: String, body: String, kind: String) {
+    fun patchRemark(id: String, app: String, body: String, kind: String, targets: List<String>) {
         send(
             "PATCH",
             "/api/remarks/$id",
-            JSONObject().put("app", app).put("body", body).put("kind", kind),
+            JSONObject()
+                .put("app", app)
+                .put("body", body)
+                .put("kind", kind)
+                .put("targets", JSONArray(normalizeTargets(targets))),
         )
     }
 
@@ -408,8 +430,19 @@ class DocsApi(
                 category = t.optString("category"),
                 columnId = t.optString("column_id"),
                 priority = t.optInt("priority", 2),
+                targets = jsonTargets(t),
+                createdAt = t.optLong("created_at"),
+                updatedAt = t.optLong("updated_at"),
             )
         }
+    }
+
+    private fun jsonTargets(o: JSONObject): List<String> {
+        val arr = o.optJSONArray("targets")
+        if (arr != null) {
+            return normalizeTargets((0 until arr.length()).map { arr.optString(it) })
+        }
+        return normalizeTargets(o.optString("targets").split(','))
     }
 
     private fun parseReports(arr: JSONArray?): List<Report> {
