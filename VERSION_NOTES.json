@@ -1,6 +1,14 @@
 {
   "versions": [
     {
+      "version": "0.2.33",
+      "date": "2026-10-19",
+      "title": "Tiroir depuis le bord",
+      "notes": [
+        "Un glissement depuis le bord gauche de l’écran ouvre le tiroir. Le geste ne couvre plus tout l’écran, donc les boutons restent cliquables. Mise à jour proposée, pas forcée."
+      ]
+    },
+    {
       "version": "0.2.32",
       "date": "2026-10-19",
       "title": "Retours traités",

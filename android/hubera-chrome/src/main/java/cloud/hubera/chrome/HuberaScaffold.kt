@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.WindowInsets
@@ -55,6 +57,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -247,9 +250,8 @@ fun HuberaScaffold(
     val scope = rememberCoroutineScope()
     ModalNavigationDrawer(
         drawerState = drawerState,
-        // Le geste horizontal du tiroir couvre tout l’écran et avale le clic du hamburger.
-        // On ne l’active qu’une fois le tiroir ouvert (pour le refermer). L’ouverture passe par le bouton.
-        gesturesEnabled = drawerState.isOpen,
+        // Le geste plein écran avale les clics. L’ouverture vient d’une bande sur le bord gauche.
+        gesturesEnabled = false,
         drawerContent = {
             ModalDrawerSheet(
                 windowInsets = WindowInsets.safeDrawing,
@@ -267,6 +269,7 @@ fun HuberaScaffold(
             }
         },
     ) {
+        Box {
         Scaffold(
             topBar = {
                 if (!hideTopBar) {
@@ -299,5 +302,21 @@ fun HuberaScaffold(
             snackbarHost = snackbarHost,
             content = content,
         )
+        if (!drawerState.isOpen) {
+            Box(
+                Modifier
+                    .align(Alignment.CenterStart)
+                    .width(24.dp)
+                    .fillMaxHeight()
+                    .pointerInput(Unit) {
+                        detectHorizontalDragGestures { _, dragAmount ->
+                            if (dragAmount > 12f) {
+                                scope.launch { drawerState.open() }
+                            }
+                        }
+                    },
+            )
+        }
+        }
     }
 }
