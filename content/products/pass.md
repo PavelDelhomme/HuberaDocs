@@ -2,6 +2,10 @@
 
 Coffre chiffré (Argon2id + XChaCha20). Extension navigateur déjà autofill au clic.
 
+## 19 oct 2026 — 0.1.14
+
+Mobile `cloud.hubera.pass` **0.1.14** / code **15**. Le service Android `PassAutofillService` propose les identifiants du coffre ouvert. Le mot de passe maître ne part pas vers le service. Tant que le coffre reste ouvert, la liste reste disponible ; après un vrai arrière-plan, elle tient encore 5 minutes. `inactive` (empreinte, collage) ne referme pas le coffre. Import : bouton sur la liste des coffres et dans un coffre, fichier JSON Bitwarden non chiffré, CSV Bitwarden, JSON Proton Pass, ou CSV/JSON courant. Les nouvelles entrées s’ajoutent, les doublons évidents sont ignorés, rien n’est effacé. Un export chiffré est refusé. Tâches Docs `ee49e5fffdfcd355` et `1720a16517d5ddf7`, priorité 2, colonne À faire. OTA `https://pass.hubera.cloud/updates.json` : `cloud.hubera.pass` en premier, `forceUpdate` false, `mandatory` false. Rapport `content/reports/2026-10-19-pass-0.1.14.md`.
+
 ## 17 oct 2026 — 0.1.10
 
 Mobile `cloud.hubera.pass` **0.1.10** / code **11**. Premier lancement : création du mot de passe maître seule. Ensuite un PIN à 6 chiffres, puis l’empreinte (ou le code d’appareil s’il n’y a pas d’empreinte). Le PIN et l’empreinte rouvrent le coffre ; ils ne remplacent pas le maître. Android authentifie l’empreinte, Pass ne la stocke pas. Les réglages ne montrent que le coffre : plus de lien web, plus de liste des autres apps. Bouton « Chercher une mise à jour » en plus de la détection automatique : proposée, jamais forcée, message clair s’il n’y a rien de plus récent. OTA `https://pass.hubera.cloud/updates.json` : `apkAvailable` true, `forceUpdate` false, `mandatory` false. Rapport `content/reports/2026-10-17-pass-0.1.10.md`.
