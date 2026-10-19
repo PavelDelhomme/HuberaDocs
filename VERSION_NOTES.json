@@ -1,12 +1,19 @@
 {
   "versions": [
     {
-      "version": "0.2.23",
+      "version": "0.2.24",
       "date": "2026-10-19",
       "title": "Priorité 1 à 5",
       "notes": [
-        "Chaque tâche a une priorité de 1 (la plus importante) à 5. On la choisit à la création et on peut la changer ensuite. Mise à jour proposée, pas forcée.",
-        "L’application s’appelle Hubera Docs dans le lanceur."
+        "Chaque tâche a une priorité de 1 (la plus importante) à 5. On la choisit à la création et on peut la changer ensuite. Le lanceur reste Hubera Docs. Mise à jour proposée, pas forcée."
+      ]
+    },
+    {
+      "version": "0.2.23",
+      "date": "2026-10-19",
+      "title": "Nom Hubera Docs",
+      "notes": [
+        "L’application s’appelle Hubera Docs dans le lanceur. Mise à jour proposée, pas forcée."
       ]
     },
     {
