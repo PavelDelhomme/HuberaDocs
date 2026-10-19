@@ -1,5 +1,7 @@
 # Hubera Music
 
+**19 oct ~20h.** Live téléphones **p+1.3.376** (code 10676) Samsung `R5CT7263YJL` et Blackview `EEA9700PRO0014587`, paquets `cloud.hubera.music` puis `ovh.delhomme.ytmusic`, `adb install -r`. OTA non forcée. Conteneur `ytmusic` inchangé depuis 18:32 (Paris), correctif de réparation (autre URL du même morceau, tous les comptes) toujours en place. Détail : [`../reports/2026-10-19-music-heal-fluidite.md`](../reports/2026-10-19-music-heal-fluidite.md).
+
 **DA vague 1 :** maquettes web/mobile (A/B/C, clair/sombre) → [`../design/labo-da-vague1.html`](../design/labo-da-vague1.html) · [`../design/README.md`](../design/README.md)
 
 Priorité 1. Live **p+1.3.369** vc 10669. Logo Accueil → menu apps Hubera. OTA avec icône qui tourne. Skip Maps via commande custom (plus de boucle DASH). Overlay Samsung + Blackview 13 oct. Nothing : pas d’ADB.
