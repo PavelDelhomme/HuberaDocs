@@ -1,6 +1,14 @@
 {
   "versions": [
     {
+      "version": "0.2.31",
+      "date": "2026-10-19",
+      "title": "Tableau des tâches",
+      "notes": [
+        "Les colonnes À faire, En cours et Fait montrent à nouveau chaque tâche, sous-tâche et sous-sous-tâche dans sa colonne, groupée sous son parent. Une tâche déjà faite ne cache plus les autres. On ouvre une carte, on voit ses sous-tâches, on peut en ajouter. Priorité 1 à 5, créé le, modifié le et la cible restent. Le lanceur reste Hubera Docs. Mise à jour proposée, pas forcée."
+      ]
+    },
+    {
       "version": "0.2.30",
       "date": "2026-10-19",
       "title": "Session Hubera ID",

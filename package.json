@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node api/server.mjs",
     "dev": "node --watch api/server.mjs",
-    "test": "node --test api/labo-files.test.mjs api/betaChannel.test.mjs api/targets.test.mjs api/remarksLogic.test.mjs api/tasksLogic.test.mjs"
+    "test": "node --test api/labo-files.test.mjs api/betaChannel.test.mjs api/targets.test.mjs api/remarksLogic.test.mjs api/tasksLogic.test.mjs api/boardLogic.test.mjs"
   },
   "dependencies": {
     "better-sqlite3": "^12.4.1",

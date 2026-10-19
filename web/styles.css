@@ -158,6 +158,7 @@ h2 { font-size: 15px; color: var(--ink); margin: 16px 0 8px; }
   margin: 6px 0 0 10px; padding: 6px 8px; border-left: 3px solid var(--line);
   border-radius: 8px; cursor: pointer; background: var(--col);
 }
+.subtask .subtask { margin-left: 8px; }
 .subtask small { display: block; color: var(--muted); margin-top: 2px; }
 button.linkish {
   width: auto; margin: 0; padding: 0; border: 0; background: none;

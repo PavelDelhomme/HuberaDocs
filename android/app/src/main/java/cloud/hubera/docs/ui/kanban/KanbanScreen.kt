@@ -38,9 +38,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import cloud.hubera.docs.data.BoardNode
 import cloud.hubera.docs.data.Column
 import cloud.hubera.docs.data.DocsApi
 import cloud.hubera.docs.data.Task
+import cloud.hubera.docs.data.columnBoard
 import cloud.hubera.docs.data.directSubtasks
 import cloud.hubera.docs.data.stampLine
 import cloud.hubera.docs.data.targetsLabel
@@ -105,6 +107,12 @@ fun KanbanScreen(
         }
     }
 
+    fun openCard(task: Task) {
+        draft = keepTaskDraft(draft, task.id, task.title, task.body, task.columnId, task.project, task.priority)
+        panelId = task.id
+        editing = false
+    }
+
     Box(Modifier.fillMaxSize()) {
         Column(
             Modifier
@@ -112,7 +120,7 @@ fun KanbanScreen(
                 .padding(horizontal = 12.dp, vertical = 8.dp),
         ) {
             Text(
-                "Tape une carte pour la fiche. Sous-tâche depuis la fiche ou un retour.",
+                "À faire, En cours, Fait. Une sous-tâche reste dans sa colonne, sous son parent.",
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall,
             )
@@ -130,44 +138,27 @@ fun KanbanScreen(
                             .verticalScroll(rememberScrollState()),
                     ) {
                         Text(col.label.uppercase(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-                        tasks.filter { it.columnId == col.id && it.parentId.isBlank() }.forEach { task ->
+                        columnBoard(tasks, col.id).forEach { node ->
+                            val task = node.task
                             Card(
                                 Modifier
                                     .fillMaxWidth()
                                     .padding(top = 8.dp)
-                                    .clickable {
-                                        draft = keepTaskDraft(
-                                            draft,
-                                            task.id,
-                                            task.title,
-                                            task.body,
-                                            task.columnId,
-                                            task.project,
-                                            task.priority,
-                                        )
-                                        panelId = task.id
-                                        editing = false
-                                    },
+                                    .clickable { openCard(task) },
                             ) {
                                 Column(Modifier.padding(10.dp)) {
                                     Text("${task.priority.coerceIn(1, 5)}  ${task.title}", fontWeight = FontWeight.SemiBold)
                                     Text("${task.project} · ${task.category}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    TaskWhen(task)
-                                    directSubtasks(tasks, task.id).forEach { child ->
-                                        Column(
-                                            Modifier
-                                                .fillMaxWidth()
-                                                .padding(top = 6.dp)
-                                                .clickable {
-                                                    draft = keepTaskDraft(draft, child.id, child.title, child.body, child.columnId, child.project, child.priority)
-                                                    panelId = child.id
-                                                    editing = false
-                                                },
-                                        ) {
-                                            Text("${child.priority.coerceIn(1, 5)}  ${child.title}", style = MaterialTheme.typography.bodyMedium)
-                                            TaskWhen(child)
-                                        }
+                                    val parent = tasks.firstOrNull { it.id == task.parentId }
+                                    if (parent != null && parent.columnId != task.columnId) {
+                                        Text(
+                                            "Sous ${parent.title}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
                                     }
+                                    TaskWhen(task)
+                                    node.children.forEach { child -> BoardChild(child) { openCard(it) } }
                                 }
                             }
                         }
@@ -338,6 +329,20 @@ fun KanbanScreen(
             },
             dismissButton = { TextButton(onClick = { showCol = false }) { Text("Annuler") } },
         )
+    }
+}
+
+@Composable
+private fun BoardChild(node: BoardNode, onOpen: (Task) -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(top = 6.dp, start = 8.dp)
+            .clickable { onOpen(node.task) },
+    ) {
+        Text("${node.task.priority.coerceIn(1, 5)}  ${node.task.title}", style = MaterialTheme.typography.bodyMedium)
+        TaskWhen(node.task)
+        node.children.forEach { child -> BoardChild(child, onOpen) }
     }
 }
 

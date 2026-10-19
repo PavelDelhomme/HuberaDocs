@@ -1,4 +1,5 @@
 import { renderPdfBytes, renderHtmlBlob, clearPdfStage } from './pdf-view.js';
+import { columnBoard } from './boardLogic.mjs';
 
 const $ = (sel, el = document) => el.querySelector(sel);
 const app = $('#app');
@@ -674,29 +675,37 @@ async function viewKanban() {
         { id: 'done', label: 'Fait' },
         { id: 'later', label: 'Plus tard' },
       ];
+  const parentElsewhere = (t) => {
+    const parent = t.parent_id ? taskById(t.parent_id) : null;
+    if (!parent || parent.column_id === t.column_id) return '';
+    return `<small>Sous ${esc(parent.title)}</small>`;
+  };
+  const nestedHtml = (node) => {
+    const t = node.task;
+    const cible = targetLine(t.targets);
+    const inner = (node.children || []).map(nestedHtml).join('');
+    return `<div class="subtask" data-id="${esc(t.id)}">
+      <b class="prio">${clampPrio(t.priority)}</b>${esc(t.title)}
+      <small>${esc(stampLine(t.created_at, t.updated_at))}${cible ? ` · ${esc(cible)}` : ''}</small>
+      ${inner}
+    </div>`;
+  };
   const cell = (id) =>
-    kanbanTasks
-      .filter((t) => t.column_id === id && !t.parent_id)
-      .map((t) => {
-        const kids = childTasks(t.id)
-          .map((k) => {
-            const cible = targetLine(k.targets);
-            return `<div class="subtask" data-id="${esc(k.id)}">
-              <b class="prio">${clampPrio(k.priority)}</b>${esc(k.title)}
-              <small>${esc(stampLine(k.created_at, k.updated_at))}${cible ? ` · ${esc(cible)}` : ''}</small>
-            </div>`;
-          })
-          .join('');
+    columnBoard(kanbanTasks, id)
+      .map((node) => {
+        const t = node.task;
         const cible = targetLine(t.targets);
+        const kids = (node.children || []).map(nestedHtml).join('');
         return `<div class="task p${clampPrio(t.priority)}" data-id="${t.id}">
             <b class="prio">${clampPrio(t.priority)}</b>${esc(t.title)}<small>${esc(t.project)} · ${esc(t.category)}</small>
+            ${parentElsewhere(t)}
             <small class="when">${esc(stampLine(t.created_at, t.updated_at))}${cible ? ` · ${esc(cible)}` : ''}</small>
             ${kids}
           </div>`;
       })
       .join('');
   app.innerHTML = shell(`
-    <p class="lead">Une carte = une tâche. La fiche et un retour permettent d’ajouter une sous-tâche, puis de la modifier.</p>
+    <p class="lead">Colonnes À faire, En cours, Fait. Une sous-tâche reste dans sa colonne, groupée sous son parent. La fiche permet d’en ajouter.</p>
     <div class="kanban">${kanbanCols
       .map((c) => `<div class="col" data-col="${esc(c.id)}"><h3>${esc(c.label)}</h3>${cell(c.id)}</div>`)
       .join('')}
