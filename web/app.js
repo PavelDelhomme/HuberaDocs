@@ -1114,7 +1114,7 @@ async function viewAccount() {
       <strong>Version serveur ${esc(ver.version || '')}</strong>
       <p class="lead">${
         ver.apkAvailable
-          ? `Mise à jour v${esc(ver.version || '')} disponible — jamais forcée.`
+          ? `Mise à jour v${esc(ver.version || '')} disponible.`
           : 'Application à jour — aucune mise à jour disponible.'
       }</p>
       <p class="lead">forceUpdate=${esc(String(ver.forceUpdate))} · mandatory=${esc(String(ver.mandatory))}</p>

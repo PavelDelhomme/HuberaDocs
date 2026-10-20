@@ -78,7 +78,7 @@ fun DocsAccountScreen(
     ) {
         Text(email.ifBlank { "Connecté" }, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         Text(
-            "Installée ${BuildConfig.VERSION_NAME} · mise à jour jamais forcée.",
+            "Installée ${BuildConfig.VERSION_NAME}.",
             style = MaterialTheme.typography.bodySmall,
         )
         Text("Thème", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
@@ -148,7 +148,7 @@ fun DocsAccountScreen(
         }
         if (!available && !busy) {
             Text(
-                "S’il n’y a rien de plus récent, le message ci-dessus le dit. La mise à jour n’est jamais forcée.",
+                "S’il n’y a rien de plus récent, le message ci-dessus le dit.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

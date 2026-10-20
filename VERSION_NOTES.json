@@ -5,7 +5,7 @@
       "date": "2026-10-19",
       "title": "Tag à côté de la priorité",
       "notes": [
-        "Une tâche créée à la main peut porter un tag, par exemple urgent, sans changer sa priorité. Mise à jour proposée, pas forcée."
+        "Une tâche créée à la main peut porter un tag, par exemple urgent, sans changer sa priorité."
       ]
     },
     {
@@ -13,7 +13,7 @@
       "date": "2026-10-19",
       "title": "Tiroir depuis le bord",
       "notes": [
-        "Un glissement depuis le bord gauche de l’écran ouvre le tiroir. Le geste ne couvre plus tout l’écran, donc les boutons restent cliquables. Mise à jour proposée, pas forcée."
+        "Un glissement depuis le bord gauche de l’écran ouvre le tiroir. Le geste ne couvre plus tout l’écran, donc les boutons restent cliquables."
       ]
     },
     {
@@ -21,7 +21,7 @@
       "date": "2026-10-19",
       "title": "Retours traités",
       "notes": [
-        "La page Retours sépare À traiter et Traités. Une tâche en Fait fait passer son retour dans Traités. Le champ n’affiche plus de phrase d’exemple. Les sous-tâches restent. Mise à jour proposée, pas forcée."
+        "La page Retours sépare À traiter et Traités. Une tâche en Fait fait passer son retour dans Traités. Le champ n’affiche plus de phrase d’exemple. Les sous-tâches restent."
       ]
     },
     {
@@ -29,7 +29,7 @@
       "date": "2026-10-19",
       "title": "Tableau des tâches",
       "notes": [
-        "Les colonnes À faire, En cours et Fait montrent à nouveau chaque tâche, sous-tâche et sous-sous-tâche dans sa colonne, groupée sous son parent. Une tâche déjà faite ne cache plus les autres. On ouvre une carte, on voit ses sous-tâches, on peut en ajouter. Priorité 1 à 5, créé le, modifié le et la cible restent. Le lanceur reste Hubera Docs. Mise à jour proposée, pas forcée."
+        "Les colonnes À faire, En cours et Fait montrent à nouveau chaque tâche, sous-tâche et sous-sous-tâche dans sa colonne, groupée sous son parent. Une tâche déjà faite ne cache plus les autres. On ouvre une carte, on voit ses sous-tâches, on peut en ajouter. Priorité 1 à 5, créé le, modifié le et la cible restent. Le lanceur reste Hubera Docs."
       ]
     },
     {
@@ -37,7 +37,7 @@
       "date": "2026-10-19",
       "title": "Session Hubera ID",
       "notes": [
-        "Si le jeton du compte déjà dans Hubera ID est périmé, Docs le renouvelle puis ouvre ce compte. Un autre compte reste refusé par le serveur. Le sélecteur reste lisible sur fond foncé. Lanceur Hubera Docs. Mise à jour proposée, pas forcée."
+        "Si le jeton du compte déjà dans Hubera ID est périmé, Docs le renouvelle puis ouvre ce compte. Un autre compte reste refusé par le serveur. Le sélecteur reste lisible sur fond foncé. Lanceur Hubera Docs."
       ]
     },
     {
@@ -45,7 +45,7 @@
       "date": "2026-10-19",
       "title": "Sélecteur lisible",
       "notes": [
-        "Le sélecteur de compte suit le thème de l’app : fond foncé, texte clair. Hubera Docs n’ouvre que le compte autorisé par le serveur. Un autre compte est refusé, sans mot de passe à retaper pour le compte déjà connu. Lanceur Hubera Docs. Mise à jour proposée, pas forcée."
+        "Le sélecteur de compte suit le thème de l’app : fond foncé, texte clair. Hubera Docs n’ouvre que le compte autorisé par le serveur. Un autre compte est refusé, sans mot de passe à retaper pour le compte déjà connu. Lanceur Hubera Docs."
       ]
     },
     {
@@ -53,7 +53,7 @@
       "date": "2026-10-19",
       "title": "Session Hubera ID",
       "notes": [
-        "Docs ouvre le compte déjà connu dans Hubera ID, sans mot de passe et sans l’erreur rouge d’auth. Un autre compte ne reçoit pas ce jeton. Le formulaire n’apparaît qu’après la lecture des comptes. Mise à jour proposée, pas forcée."
+        "Docs ouvre le compte déjà connu dans Hubera ID, sans mot de passe et sans l’erreur rouge d’auth. Un autre compte ne reçoit pas ce jeton. Le formulaire n’apparaît qu’après la lecture des comptes."
       ]
     },
     {
@@ -61,7 +61,7 @@
       "date": "2026-10-19",
       "title": "Session Hubera ID",
       "notes": [
-        "Après une mise à jour, Docs redemande le jeton du compte déjà ouvert dans Hubera ID. Pas de mot de passe à chaque ouverture. Un autre compte ne reçoit pas ce jeton. Mise à jour proposée, pas forcée."
+        "Après une mise à jour, Docs redemande le jeton du compte déjà ouvert dans Hubera ID. Pas de mot de passe à chaque ouverture. Un autre compte ne reçoit pas ce jeton."
       ]
     },
     {
@@ -69,7 +69,7 @@
       "date": "2026-10-19",
       "title": "Sous-tâches",
       "notes": [
-        "Depuis une tâche ou un retour, on ajoute une sous-tâche, puis d’autres, y compris sous une sous-tâche. On peut les modifier. Créé le et modifié le restent. La priorité 1 à 5 et la cible API, web ou mobile restent. Le lanceur reste Hubera Docs. Mise à jour proposée, pas forcée."
+        "Depuis une tâche ou un retour, on ajoute une sous-tâche, puis d’autres, y compris sous une sous-tâche. On peut les modifier. Créé le et modifié le restent. La priorité 1 à 5 et la cible API, web ou mobile restent. Le lanceur reste Hubera Docs."
       ]
     },
     {
@@ -78,7 +78,7 @@
       "title": "Retour : cible et dates",
       "notes": [
         "Un retour choisit d’abord l’application, puis la cible : API, web, mobile, ou une combinaison. Ce choix est gardé sur le retour et sur la tâche créée.",
-        "Créé le est posé à l’enregistrement. Modifié le avance à chaque changement. La priorité 1 à 5 reste. Le lanceur reste Hubera Docs. Mise à jour proposée, pas forcée."
+        "Créé le est posé à l’enregistrement. Modifié le avance à chaque changement. La priorité 1 à 5 reste. Le lanceur reste Hubera Docs."
       ]
     },
     {
@@ -86,7 +86,7 @@
       "date": "2026-10-19",
       "title": "Priorité 1 à 5",
       "notes": [
-        "Chaque tâche a une priorité de 1 (la plus importante) à 5. On la choisit à la création et on peut la changer ensuite. Le lanceur reste Hubera Docs. Mise à jour proposée, pas forcée."
+        "Chaque tâche a une priorité de 1 (la plus importante) à 5. On la choisit à la création et on peut la changer ensuite. Le lanceur reste Hubera Docs."
       ]
     },
     {
@@ -94,7 +94,7 @@
       "date": "2026-10-19",
       "title": "Nom Hubera Docs",
       "notes": [
-        "L’application s’appelle Hubera Docs dans le lanceur. Mise à jour proposée, pas forcée."
+        "L’application s’appelle Hubera Docs dans le lanceur."
       ]
     },
     {
@@ -102,7 +102,7 @@
       "date": "2026-10-16",
       "title": "Tiroir et brouillon",
       "notes": [
-        "Le bouton menu ouvre le tiroir. Le texte d’une tâche en cours de saisie reste jusqu’à l’enregistrement. Mise à jour proposée, pas forcée."
+        "Le bouton menu ouvre le tiroir. Le texte d’une tâche en cours de saisie reste jusqu’à l’enregistrement."
       ]
     },
     {
@@ -110,7 +110,7 @@
       "date": "2026-10-16",
       "title": "Mode sombre",
       "notes": [
-        "L’app suit un thème sombre lisible (teal et orange inchangés). Compte permet Sombre, Clair ou Système. Mise à jour proposée, pas forcée."
+        "L’app suit un thème sombre lisible (teal et orange inchangés). Compte permet Sombre, Clair ou Système."
       ]
     },
     {
@@ -118,7 +118,7 @@
       "date": "2026-10-16",
       "title": "Téléchargement OTA repris",
       "notes": [
-        "Une mise à jour interrompue reprend au bon endroit. Un fichier qui n’est pas une APK est refusé. Jamais forcée."
+        "Une mise à jour interrompue reprend au bon endroit. Un fichier qui n’est pas une APK est refusé."
       ]
     },
     {
@@ -126,7 +126,7 @@
       "date": "2026-10-12",
       "title": "Labo DA HTML brut",
       "notes": [
-        "Les maquettes vague 1 et 2 s’ouvrent en HTML (plus de page Docs vide). Mise à jour proposée, pas forcée."
+        "Les maquettes vague 1 et 2 s’ouvrent en HTML (plus de page Docs vide)."
       ]
     },
     {
@@ -134,7 +134,7 @@
       "date": "2026-10-10",
       "title": "En-tête sous la barre d’état",
       "notes": [
-        "Le hamburger, le titre et le compte passent sous la barre d’état (même chrome que Music). Mise à jour proposée, pas forcée."
+        "Le hamburger, le titre et le compte passent sous la barre d’état (même chrome que Music)."
       ]
     },
     {
@@ -143,7 +143,7 @@
       "title": "Barres plus basses, OTA sans boucle",
       "notes": [
         "La barre du bas n’est plus trop haute : un seul padding, au-dessus des boutons système.",
-        "La mise à jour demande d’abord l’autorisation d’installer, puis télécharge. Plus de boucle. Jamais forcée."
+        "La mise à jour demande d’abord l’autorisation d’installer, puis télécharge. Plus de boucle."
       ]
     },
     {
@@ -153,7 +153,7 @@
       "notes": [
         "Un retour ou une note se reprend : texte, type (retour/note) et application. La tâche liée suit.",
         "Les rapports .md s’affichent rendus (titres, listes), plus le brut. Un fichier ouvert met le bouton retour dans la barre, pas en dessous.",
-        "Hubera Admin embarque le cockpit (tâches, docs, rapports, retours, Gantt) en interface d’app, pas une page web. Mise à jour proposée, pas forcée."
+        "Hubera Admin embarque le cockpit (tâches, docs, rapports, retours, Gantt) en interface d’app, pas une page web."
       ]
     },
     {
@@ -190,7 +190,7 @@
       "title": "Chrome Music + OTA au lancement",
       "notes": [
         "Chrome Google-like calqué sur Music : hamburger, header compact, compte en haut à droite, nav bas Accueil · Tâches · Docs · Rapports.",
-        "OTA au lancement : dialogue de proposition, jamais forcé, jamais bloquant. Compte affiche la version, les notes et le téléchargement APK.",
+        "Compte affiche la version, les notes et le téléchargement APK.",
         "Dual slots APK cloud.hubera.docs + ovh.delhomme.hubera.docs. Pas de WebView du site."
       ]
     },

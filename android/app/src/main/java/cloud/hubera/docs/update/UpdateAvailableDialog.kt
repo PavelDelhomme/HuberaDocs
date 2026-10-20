@@ -68,7 +68,7 @@ fun UpdateAvailableDialog(
                 Text(
                     releaseNotes?.takeIf { it.isNotBlank() }
                         ?: message?.takeIf { it.isNotBlank() }
-                        ?: versionName?.let { "Version $it — nouveautés et améliorations. Jamais forcée." }
+                        ?: versionName?.let { "Version $it — nouveautés et améliorations." }
                         ?: "Une nouvelle version de Hubera Docs est disponible.",
                 )
                 if (busy) {
