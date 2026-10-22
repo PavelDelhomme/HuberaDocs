@@ -36,6 +36,7 @@ import androidx.compose.material3.Text
 import cloud.hubera.chrome.HuberaNavItem
 import cloud.hubera.chrome.HuberaProduct
 import cloud.hubera.chrome.HuberaScaffold
+import cloud.hubera.chrome.LocalHuberaCloseDrawer
 import cloud.hubera.docs.data.TokenStore
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -263,6 +264,7 @@ private fun DocsRoot(
         userEmail = email,
         hideBottomNav = showAccount || nestedBack != null,
         extraDrawer = {
+            val closeDrawer = LocalHuberaCloseDrawer.current
             Text(
                 "Dans Docs",
                 style = MaterialTheme.typography.labelLarge,
@@ -271,7 +273,10 @@ private fun DocsRoot(
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .clickable { go("inbox") }
+                    .clickable {
+                        closeDrawer()
+                        go("inbox")
+                    }
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -282,7 +287,10 @@ private fun DocsRoot(
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .clickable { go("gantt") }
+                    .clickable {
+                        closeDrawer()
+                        go("gantt")
+                    }
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {

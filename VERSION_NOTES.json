@@ -1,6 +1,14 @@
 {
   "versions": [
     {
+      "version": "0.2.39",
+      "date": "2026-10-22",
+      "title": "Tiroir : ouvrir, choisir, fermer",
+      "notes": [
+        "Un glissement depuis le bord gauche ouvre le tiroir. Un tap sur une ligne ferme le tiroir et ouvre cette page. Le bouton retour, le bouton fermer et un tap à côté du tiroir le ferment aussi."
+      ]
+    },
+    {
       "version": "0.2.38",
       "date": "2026-10-22",
       "title": "Retours pour chaque application",
