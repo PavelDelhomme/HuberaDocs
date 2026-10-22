@@ -391,6 +391,7 @@ private fun TaskEditForm(
             { onChange(draft.copy(body = it)) },
             label = { Text("Détail") },
             minLines = 4,
+            maxLines = 8,
             modifier = Modifier.fillMaxWidth(),
         )
         Text("Colonne", style = MaterialTheme.typography.labelMedium)
@@ -440,10 +441,20 @@ private fun NewTaskDialog(
         onDismissRequest = onDismiss,
         title = { Text("Nouvelle tâche") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(title, onTitle, label = { Text("Titre") })
-                OutlinedTextField(body, onBody, label = { Text("Détail") })
-                OutlinedTextField(tag, { tag = it }, label = { Text("Tag") }, placeholder = { Text("urgent") })
+            Column(
+                Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                OutlinedTextField(title, onTitle, label = { Text("Titre") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(
+                    body,
+                    onBody,
+                    label = { Text("Détail") },
+                    minLines = 3,
+                    maxLines = 8,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(tag, { tag = it }, label = { Text("Tag") }, placeholder = { Text("urgent") }, modifier = Modifier.fillMaxWidth())
                 PriorityPicker(priority) { priority = it }
             }
         },

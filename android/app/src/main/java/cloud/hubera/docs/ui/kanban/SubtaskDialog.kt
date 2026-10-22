@@ -52,7 +52,14 @@ fun SubtaskDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 OutlinedTextField(title, { title = it }, label = { Text("Titre") }, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(body, { body = it }, label = { Text("Détail") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(
+                    body,
+                    { body = it },
+                    label = { Text("Détail") },
+                    minLines = 3,
+                    maxLines = 8,
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 PriorityPicker(priority) { priority = it }
                 Text("Cible", style = MaterialTheme.typography.labelMedium)
                 Text(

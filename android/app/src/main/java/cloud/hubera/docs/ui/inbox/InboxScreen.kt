@@ -9,6 +9,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -151,6 +153,7 @@ fun InboxScreen(
                 { Text(InboxCopy.bodyPlaceholder) }
             },
             minLines = 4,
+            maxLines = 8,
             modifier = Modifier.fillMaxWidth(),
         )
         Button(
@@ -352,7 +355,12 @@ private fun RemarkEditSheet(
     var criticality by remember { mutableIntStateOf(remark.criticality.coerceIn(1, 5)) }
     val whenLine = stampLine(remark.createdAt, remark.updatedAt)
     Column(
-        Modifier.padding(20.dp),
+        Modifier
+            .fillMaxWidth()
+            .imePadding()
+            .navigationBarsPadding()
+            .verticalScroll(rememberScrollState())
+            .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text("Modifier le ${if (kind == "note") "note" else "retour"}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -368,6 +376,7 @@ private fun RemarkEditSheet(
             { body = it },
             label = { Text("Texte") },
             minLines = 4,
+            maxLines = 8,
             modifier = Modifier.fillMaxWidth(),
         )
         if (remark.taskId.isNotBlank()) {
@@ -450,12 +459,22 @@ private fun TaskQuickEdit(
         onDismissRequest = onDismiss,
         title = { Text("Modifier la sous-tâche") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(
+                Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 if (whenLine.isNotEmpty()) {
                     Text(whenLine, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                OutlinedTextField(title, { title = it }, label = { Text("Titre") })
-                OutlinedTextField(body, { body = it }, label = { Text("Détail") })
+                OutlinedTextField(title, { title = it }, label = { Text("Titre") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(
+                    body,
+                    { body = it },
+                    label = { Text("Détail") },
+                    minLines = 3,
+                    maxLines = 8,
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 PriorityPicker(priority) { priority = it }
             }
         },
