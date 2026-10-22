@@ -1,6 +1,14 @@
 {
   "versions": [
     {
+      "version": "0.2.40",
+      "date": "2026-10-23",
+      "title": "Criticité d’un retour",
+      "notes": [
+        "Le formulaire Retour propose une criticité de 1 à 5. 5 est la plus grave, 1 la moins grave. Ce choix est enregistré sur le retour. La priorité de la tâche liée ne change pas."
+      ]
+    },
+    {
       "version": "0.2.39",
       "date": "2026-10-22",
       "title": "Tiroir : ouvrir, choisir, fermer",

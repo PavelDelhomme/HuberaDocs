@@ -1,11 +1,20 @@
 import { parseTargets } from './targets.mjs';
 
+/** 1 la moins grave, 5 la plus grave. Distinct de la priorité des tâches. */
+export function clampCriticality(value, fallback = 1) {
+  const n = Math.round(Number(value));
+  if (!Number.isFinite(n)) return fallback;
+  if (n < 1) return 1;
+  if (n > 5) return 5;
+  return n;
+}
+
 /**
  * Création d’un retour. `at` est l’horodatage d’enregistrement (ms),
  * posé à la fois sur créé le et modifié le.
- * La priorité de la tâche créée reste 1, comme avant ce champ.
+ * La priorité de la tâche créée reste 1. La criticité reste sur le retour.
  */
-export function buildRemarkCreate({ app, body, kind, targets, at }) {
+export function buildRemarkCreate({ app, body, kind, targets, criticality, at }) {
   const text = String(body || '').trim();
   const appName = String(app || '').trim() || 'docs';
   const k = String(kind || 'retour').trim() === 'note' ? 'note' : 'retour';
@@ -14,6 +23,7 @@ export function buildRemarkCreate({ app, body, kind, targets, at }) {
   if (!text) return { error: 'body' };
   if (!picked.length) return { error: 'targets' };
   if (!Number.isFinite(when) || when <= 0) return { error: 'at' };
+  const level = k === 'retour' ? clampCriticality(criticality, 1) : 1;
   const task = {
     title: `[${k} ${appName}] ${text.slice(0, 72)}`,
     body: text,
@@ -30,6 +40,7 @@ export function buildRemarkCreate({ app, body, kind, targets, at }) {
     body: text,
     kind: k,
     targets: picked,
+    criticality: level,
     created_at: when,
     updated_at: when,
   };
@@ -50,12 +61,17 @@ export function buildRemarkPatch(cur, input, at) {
   const kind = String(input?.kind ?? cur.kind ?? 'retour').trim() === 'note' ? 'note' : 'retour';
   const targets = input?.targets == null ? parseTargets(cur.targets) : parseTargets(input.targets);
   if (input?.targets != null && !targets.length) return { error: 'targets' };
+  const previous = clampCriticality(cur.criticality, 1);
+  const level = kind === 'retour'
+    ? (input?.criticality == null ? previous : clampCriticality(input.criticality, previous))
+    : previous;
   return {
     remark: {
       app: appName,
       body,
       kind,
       targets,
+      criticality: level,
       task_id: cur.task_id,
       created_at: cur.created_at,
       updated_at: when,

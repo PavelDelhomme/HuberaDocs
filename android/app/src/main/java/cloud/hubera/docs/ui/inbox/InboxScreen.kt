@@ -27,12 +27,15 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cloud.hubera.docs.data.Column
@@ -79,6 +82,7 @@ fun InboxScreen(
     var appName by remember { mutableStateOf(prefs.getString("last_app", "docs") ?: "docs") }
     var body by remember { mutableStateOf(prefs.getString("draft", "") ?: "") }
     var kind by remember { mutableStateOf(prefs.getString("kind", "retour") ?: "retour") }
+    var criticality by remember { mutableIntStateOf(1) }
     var targets by remember {
         mutableStateOf(normalizeTargets((prefs.getString("targets", "") ?: "").split(",")).toSet())
     }
@@ -136,6 +140,9 @@ fun InboxScreen(
             kind,
             { kind = it },
         )
+        if (kind != "note") {
+            CriticalityPicker(criticality) { criticality = it }
+        }
         OutlinedTextField(
             body,
             { body = it },
@@ -154,8 +161,11 @@ fun InboxScreen(
                 val savedKind = kind
                 val savedBody = body.trim()
                 val savedTargets = normalizeTargets(targets)
+                val savedLevel = if (savedKind == "note") 1 else criticality.coerceIn(1, 5)
                 scope.launch {
-                    withContext(Dispatchers.IO) { api.addRemark(savedApp, savedBody, savedKind, savedTargets) }
+                    withContext(Dispatchers.IO) {
+                        api.addRemark(savedApp, savedBody, savedKind, savedTargets, savedLevel)
+                    }
                     body = ""
                     persist()
                     reload()
@@ -191,9 +201,9 @@ fun InboxScreen(
                 onOpenChild = { editTask = it },
                 onAddSubtask = { subParentId = r.taskId },
                 onCancel = { editing = null },
-                onSave = { app, k, text, picked ->
+                onSave = { app, k, text, picked, level ->
                     scope.launch {
-                        withContext(Dispatchers.IO) { api.patchRemark(r.id, app, text, k, picked) }
+                        withContext(Dispatchers.IO) { api.patchRemark(r.id, app, text, k, picked, level) }
                         editing = null
                         reload()
                     }
@@ -268,6 +278,13 @@ private fun RemarkCard(row: RemarkRow, onClick: () -> Unit) {
                 Text(whenLine, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Text(taskStateLabel(row), fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+            if (r.kind != "note") {
+                Text(
+                    "Criticité ${r.criticality.coerceIn(1, 5)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             Text(r.body, style = MaterialTheme.typography.bodyMedium)
             Text("Modifier", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
         }
@@ -326,12 +343,13 @@ private fun RemarkEditSheet(
     onOpenChild: (Task) -> Unit,
     onAddSubtask: () -> Unit,
     onCancel: () -> Unit,
-    onSave: (String, String, String, List<String>) -> Unit,
+    onSave: (String, String, String, List<String>, Int) -> Unit,
 ) {
     var appName by remember { mutableStateOf(remark.app) }
     var kind by remember { mutableStateOf(remark.kind.ifBlank { "retour" }) }
     var body by remember { mutableStateOf(remark.body) }
     var targets by remember { mutableStateOf(remark.targets.toSet()) }
+    var criticality by remember { mutableIntStateOf(remark.criticality.coerceIn(1, 5)) }
     val whenLine = stampLine(remark.createdAt, remark.updatedAt)
     Column(
         Modifier.padding(20.dp),
@@ -342,6 +360,9 @@ private fun RemarkEditSheet(
             Text(whenLine, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         AppKindFields(appName, { appName = it }, targets, { targets = it }, kind, { kind = it })
+        if (kind != "note") {
+            CriticalityPicker(criticality) { criticality = it }
+        }
         OutlinedTextField(
             body,
             { body = it },
@@ -376,11 +397,41 @@ private fun RemarkEditSheet(
                 enabled = body.isNotBlank() && targets.isNotEmpty(),
                 onClick = {
                     val picked = normalizeTargets(targets)
-                    if (body.isNotBlank() && picked.isNotEmpty()) onSave(appName, kind, body.trim(), picked)
+                    if (body.isNotBlank() && picked.isNotEmpty()) {
+                        onSave(appName, kind, body.trim(), picked, criticality.coerceIn(1, 5))
+                    }
                 },
             ) { Text("Enregistrer") }
             TextButton(onClick = onCancel) { Text("Annuler") }
         }
+    }
+}
+
+@Composable
+private fun CriticalityPicker(value: Int, onChange: (Int) -> Unit) {
+    val selected = value.coerceIn(1, 5)
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text("Criticité", style = MaterialTheme.typography.labelMedium)
+        Row(
+            Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            (1..5).forEach { n ->
+                OutlinedButton(
+                    onClick = { onChange(n) },
+                    modifier = Modifier.semantics {
+                        contentDescription = if (n == selected) "Criticité $n choisie" else "Criticité $n"
+                    },
+                ) {
+                    Text(if (n == selected) "✓ $n" else "$n")
+                }
+            }
+        }
+        Text(
+            "5 la plus grave, 1 la moins grave",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

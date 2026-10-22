@@ -94,6 +94,9 @@ if (!hasColumn('remarks', 'updated_at')) {
 if (!hasColumn('remarks', 'targets')) {
   db.exec("ALTER TABLE remarks ADD COLUMN targets TEXT NOT NULL DEFAULT '[]'");
 }
+if (!hasColumn('remarks', 'criticality')) {
+  db.exec('ALTER TABLE remarks ADD COLUMN criticality INTEGER NOT NULL DEFAULT 1');
+}
 if (!hasColumn('tasks', 'targets')) {
   db.exec("ALTER TABLE tasks ADD COLUMN targets TEXT NOT NULL DEFAULT '[]'");
 }
@@ -968,6 +971,7 @@ app.post('/api/remarks', requireAuth, (req, res) => {
     body: req.body?.body,
     kind: req.body?.kind,
     targets: req.body?.targets,
+    criticality: req.body?.criticality,
     at: now(),
   });
   if (built.error) return res.status(400).json({ error: built.error });
@@ -982,13 +986,14 @@ app.post('/api/remarks', requireAuth, (req, res) => {
     body: built.remark.body,
     kind: built.remark.kind,
     targets: JSON.stringify(built.remark.targets),
+    criticality: built.remark.criticality,
     task_id: task.id,
     created_at: built.remark.created_at,
     updated_at: built.remark.updated_at,
   };
   db.prepare(
-    `INSERT INTO remarks (id,app,body,kind,targets,task_id,created_at,updated_at)
-     VALUES (@id,@app,@body,@kind,@targets,@task_id,@created_at,@updated_at)`,
+    `INSERT INTO remarks (id,app,body,kind,targets,criticality,task_id,created_at,updated_at)
+     VALUES (@id,@app,@body,@kind,@targets,@criticality,@task_id,@created_at,@updated_at)`,
   ).run(remark);
   res.json({ remark: expose(remark), task: expose(task) });
 });
@@ -1000,8 +1005,16 @@ app.patch('/api/remarks/:id', requireAuth, (req, res) => {
   if (built.error) return res.status(built.error === 'missing' ? 404 : 400).json({ error: built.error });
   const targets = JSON.stringify(built.remark.targets);
   db.prepare(
-    'UPDATE remarks SET app = ?, body = ?, kind = ?, targets = ?, updated_at = ? WHERE id = ?',
-  ).run(built.remark.app, built.remark.body, built.remark.kind, targets, built.remark.updated_at, cur.id);
+    'UPDATE remarks SET app = ?, body = ?, kind = ?, targets = ?, criticality = ?, updated_at = ? WHERE id = ?',
+  ).run(
+    built.remark.app,
+    built.remark.body,
+    built.remark.kind,
+    targets,
+    built.remark.criticality,
+    built.remark.updated_at,
+    cur.id,
+  );
   if (cur.task_id) {
     db.prepare(
       `UPDATE tasks SET title = ?, body = ?, project = ?, category = ?, targets = ?, updated_at = ? WHERE id = ?`,
@@ -1022,6 +1035,7 @@ app.patch('/api/remarks/:id', requireAuth, (req, res) => {
       body: built.remark.body,
       kind: built.remark.kind,
       targets,
+      criticality: built.remark.criticality,
       created_at: built.remark.created_at,
       updated_at: built.remark.updated_at,
     }),

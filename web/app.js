@@ -622,6 +622,46 @@ function clampPrio(value, fallback = 2) {
   return n;
 }
 
+function clampCrit(value, fallback = 1) {
+  const n = Math.round(Number(value));
+  if (!Number.isFinite(n)) return fallback;
+  if (n < 1) return 1;
+  if (n > 5) return 5;
+  return n;
+}
+
+function criticalityPicker(selected) {
+  const n = clampCrit(selected, 1);
+  const chips = [1, 2, 3, 4, 5]
+    .map(
+      (i) =>
+        `<button type="button" class="chip${i === n ? ' on' : ''}" data-crit="${i}" aria-pressed="${i === n ? 'true' : 'false'}">${i}</button>`,
+    )
+    .join('');
+  return `<div class="crit-row" data-value="${n}"><span class="meta">Criticité</span>${chips}<span class="meta">5 la plus grave, 1 la moins grave</span></div>`;
+}
+
+function bindCriticality(root) {
+  const row = root?.querySelector?.('.crit-row');
+  if (!row) return;
+  row.querySelectorAll('[data-crit]').forEach((btn) => {
+    btn.onclick = () => {
+      const v = clampCrit(btn.dataset.crit, 1);
+      row.dataset.value = String(v);
+      row.querySelectorAll('[data-crit]').forEach((b) => {
+        const on = Number(b.dataset.crit) === v;
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    };
+  });
+}
+
+function readCriticality(root, fallback = 1) {
+  const row = root?.querySelector?.('.crit-row');
+  return clampCrit(row?.dataset.value, fallback);
+}
+
 function priorityPicker(selected) {
   const n = clampPrio(selected);
   const chips = [1, 2, 3, 4, 5]
@@ -1178,7 +1218,8 @@ async function viewInbox() {
         const r = row.remark;
         const cible = targetLine(r.targets);
         const when = stampLine(r.created_at, r.updated_at);
-        return `<li class="tap" data-edit="${esc(r.id)}"><strong>${esc(r.app)}</strong> · ${esc(r.kind || 'retour')}${cible ? ` · ${esc(cible)}` : ''}<div class="lead">${esc(when)}</div><div class="task-state">${esc(taskStateLabel(row))}</div>${esc(r.body)}</li>`;
+        const crit = (r.kind || 'retour') === 'note' ? '' : `<div class="lead">Criticité ${clampCrit(r.criticality, 1)}</div>`;
+        return `<li class="tap" data-edit="${esc(r.id)}"><strong>${esc(r.app)}</strong> · ${esc(r.kind || 'retour')}${cible ? ` · ${esc(cible)}` : ''}<div class="lead">${esc(when)}</div>${crit}<div class="task-state">${esc(taskStateLabel(row))}</div>${esc(r.body)}</li>`;
       })
       .join('') || '<li>Aucun élément</li>';
   app.innerHTML = shell(`
@@ -1193,6 +1234,7 @@ async function viewInbox() {
         <option value="retour" ${kind === 'note' ? '' : 'selected'}>Retour</option>
         <option value="note" ${kind === 'note' ? 'selected' : ''}>Note</option>
       </select>
+      ${criticalityPicker(1)}
       <label>Texte</label>
       <textarea name="body" rows="5"${inboxTextareaAttrs()} required></textarea>
       <p class="err" id="fbErr" hidden></p>
@@ -1213,6 +1255,13 @@ async function viewInbox() {
     <ul class="list">${remarkItems(sections.done)}</ul>
   `);
   bindTargets($('#fb'));
+  bindCriticality($('#fb'));
+  const syncCrit = () => {
+    const row = document.querySelector('#fb .crit-row');
+    if (row) row.hidden = document.querySelector('#fb [name="kind"]')?.value === 'note';
+  };
+  syncCrit();
+  document.querySelector('#fb [name="kind"]')?.addEventListener('change', syncCrit);
   const bodyEl = document.querySelector('#fb [name="body"]');
   if (bodyEl) bodyEl.value = draft;
   document.querySelector('#fb [name="app"]')?.addEventListener('change', persistInboxFields);
@@ -1239,6 +1288,7 @@ async function viewInbox() {
         <option value="retour" ${r.kind === 'note' ? '' : 'selected'}>Retour</option>
         <option value="note" ${r.kind === 'note' ? 'selected' : ''}>Note</option>
       </select>
+      ${(r.kind || 'retour') === 'note' ? '' : criticalityPicker(r.criticality)}
       <label>Texte</label>
       <textarea id="ebody" rows="5">${esc(r.body)}</textarea>
       <p class="err" id="eerr" hidden></p>
@@ -1250,6 +1300,7 @@ async function viewInbox() {
       </div>
     `);
     bindTargets($('#modal'));
+    bindCriticality($('#modal'));
     bindSubtaskOpens($('#modal'));
     $('#eclose').onclick = closeModal;
     if (r.task_id) {
@@ -1284,6 +1335,7 @@ async function viewInbox() {
           kind: $('#ekind').value === 'note' ? 'note' : 'retour',
           body,
           targets,
+          criticality: readCriticality($('#modal'), r.criticality),
         }),
       });
       closeModal();
@@ -1313,7 +1365,13 @@ async function viewInbox() {
     if (err) err.hidden = true;
     await api('/api/remarks', {
       method: 'POST',
-      body: JSON.stringify({ app: appName, body: fd.get('body'), kind: k, targets }),
+      body: JSON.stringify({
+        app: appName,
+        body: fd.get('body'),
+        kind: k,
+        targets,
+        criticality: k === 'retour' ? readCriticality($('#fb'), 1) : 1,
+      }),
     });
     writeLs(LAST_APP_KEY, appName);
     writeLs(KIND_KEY, k);

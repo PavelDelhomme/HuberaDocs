@@ -49,6 +49,7 @@ data class Remark(
     val createdAt: Long = 0,
     val updatedAt: Long = 0,
     val taskId: String = "",
+    val criticality: Int = 1,
 )
 
 data class Dashboard(
@@ -356,11 +357,18 @@ class DocsApi(
                 r.optLong("created_at"),
                 r.optLong("updated_at").takeIf { it > 0L } ?: r.optLong("created_at"),
                 r.optString("task_id"),
+                r.optInt("criticality", 1).coerceIn(1, 5),
             )
         }
     }
 
-    fun addRemark(app: String, body: String, kind: String = "retour", targets: List<String>) {
+    fun addRemark(
+        app: String,
+        body: String,
+        kind: String = "retour",
+        targets: List<String>,
+        criticality: Int = 1,
+    ) {
         send(
             "POST",
             "/api/remarks",
@@ -368,11 +376,19 @@ class DocsApi(
                 .put("app", app)
                 .put("body", body)
                 .put("kind", kind)
-                .put("targets", JSONArray(normalizeTargets(targets))),
+                .put("targets", JSONArray(normalizeTargets(targets)))
+                .put("criticality", criticality.coerceIn(1, 5)),
         )
     }
 
-    fun patchRemark(id: String, app: String, body: String, kind: String, targets: List<String>) {
+    fun patchRemark(
+        id: String,
+        app: String,
+        body: String,
+        kind: String,
+        targets: List<String>,
+        criticality: Int = 1,
+    ) {
         send(
             "PATCH",
             "/api/remarks/$id",
@@ -380,7 +396,8 @@ class DocsApi(
                 .put("app", app)
                 .put("body", body)
                 .put("kind", kind)
-                .put("targets", JSONArray(normalizeTargets(targets))),
+                .put("targets", JSONArray(normalizeTargets(targets)))
+                .put("criticality", criticality.coerceIn(1, 5)),
         )
     }
 
