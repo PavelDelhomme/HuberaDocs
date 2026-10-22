@@ -259,6 +259,7 @@ function shell(inner) {
         <button type="button" data-go="gantt" class="drawer-item ${route === 'gantt' ? 'on' : ''}">${navIcons.gantt}<span>Gantt</span></button>
         <button type="button" data-go="inbox" class="drawer-item ${route === 'inbox' ? 'on' : ''}">${navIcons.inbox}<span>Retours</span></button>
         <button type="button" data-go="account" class="drawer-item ${route === 'account' ? 'on' : ''}">${navIcons.account}<span>Compte / MAJ</span></button>
+        <button type="button" data-go="report" class="drawer-item"><span>Signaler un problème</span></button>
       </div>
     </aside>
     <header class="top">
@@ -292,6 +293,37 @@ function closeDrawer() {
   $('#drawer')?.classList.remove('is-open');
 }
 
+function openAnonymousReport() {
+  document.getElementById('anonReport')?.remove();
+  const el = document.createElement('div');
+  el.id = 'anonReport';
+  el.setAttribute('role', 'dialog');
+  el.setAttribute('aria-label', 'Signaler un problème');
+  el.style.cssText = 'position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center';
+  el.innerHTML = `
+    <div id="anonReportSheet" style="background:var(--surface,#fff);color:inherit;width:min(480px,100%);padding:20px 16px 28px;border-radius:16px 16px 0 0">
+      <strong>Signaler un problème</strong>
+      <p>Trace anonyme · Docs. Aucune adresse, aucun secret.</p>
+      <p id="anonReportStatus"></p>
+      <button type="button" id="anonReportSave">Enregistrer la trace</button>
+      <button type="button" id="anonReportClose">Fermer</button>
+    </div>`;
+  document.body.appendChild(el);
+  el.addEventListener('click', (e) => e.stopPropagation());
+  el.querySelector('#anonReportClose').onclick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    el.remove();
+  };
+  el.querySelector('#anonReportSave').onclick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try { localStorage.setItem('hubera-anon-trace', 'app=docs'); } catch { /* ignore */ }
+    const s = el.querySelector('#anonReportStatus');
+    if (s) s.textContent = 'Trace anonyme enregistrée';
+  };
+}
+
 function closeFabMenu() {
   $('#fabMenu')?.classList.remove('is-open');
 }
@@ -321,7 +353,15 @@ function bindShell() {
   });
   document.querySelectorAll('[data-go]').forEach((b) => {
     if (b.tagName === 'A') return;
-    b.onclick = () => {
+    b.onclick = (e) => {
+      if (b.dataset.go === 'report') {
+        e.preventDefault();
+        e.stopPropagation();
+        closeDrawer();
+        closeFabMenu();
+        openAnonymousReport();
+        return;
+      }
       closeDrawer();
       closeFabMenu();
       go(b.dataset.go);

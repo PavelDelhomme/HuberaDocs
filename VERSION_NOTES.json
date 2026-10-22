@@ -1,6 +1,14 @@
 {
   "versions": [
     {
+      "version": "0.2.41",
+      "date": "2026-10-23",
+      "title": "Signaler un problème",
+      "notes": [
+        "Le tiroir a « Signaler un problème ». La trace enregistrée porte l’application et la version, sans adresse et sans secret."
+      ]
+    },
+    {
       "version": "0.2.40",
       "date": "2026-10-23",
       "title": "Criticité d’un retour",

@@ -143,6 +143,38 @@ fun HuberaDrawerContent(
     userEmail: String? = null,
     extra: @Composable ColumnScope.() -> Unit = {},
 ) {
+    var reportOpen by remember { mutableStateOf(false) }
+    var reportSaved by remember { mutableStateOf(false) }
+    val reportCtx = LocalContext.current
+    if (reportOpen) {
+        AlertDialog(
+            onDismissRequest = { reportOpen = false },
+            title = { Text("Signaler un problème") },
+            text = {
+                Column {
+                    Text("Trace anonyme · ${current.title} · $versionLabel. Aucune adresse, aucun secret.")
+                    if (reportSaved) {
+                        Spacer(Modifier.height(8.dp))
+                        Text("Trace anonyme enregistrée")
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val line = "app=${current.id} version=$versionLabel"
+                        runCatching {
+                            reportCtx.filesDir.resolve("anonymous-trace.txt").writeText(line)
+                        }
+                        reportSaved = true
+                    },
+                ) { Text("Enregistrer la trace") }
+            },
+            dismissButton = {
+                TextButton(onClick = { reportOpen = false }) { Text("Fermer") }
+            },
+        )
+    }
     Column(
         Modifier
             .fillMaxWidth()
@@ -193,6 +225,20 @@ fun HuberaDrawerContent(
             Icon(Icons.Outlined.Person, contentDescription = null)
             Spacer(Modifier.width(12.dp))
             Text("Compte")
+        }
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clickable {
+                    reportSaved = false
+                    reportOpen = true
+                }
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(Icons.Outlined.Info, contentDescription = null)
+            Spacer(Modifier.width(12.dp))
+            Text("Signaler un problème")
         }
         Row(
             Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
