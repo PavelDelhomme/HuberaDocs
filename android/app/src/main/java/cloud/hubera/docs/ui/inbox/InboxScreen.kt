@@ -56,8 +56,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 val inboxApps = listOf(
-    "music", "maps", "fuel", "docs", "admin", "pass", "drive", "mail", "contacts",
-    "photos", "calendar", "cook", "jobs", "id", "ops", "platform",
+    "music", "maps", "fuel", "mail", "drive", "photos", "contacts", "calendar",
+    "notes", "tasks", "pass", "cook", "id", "docs", "admin", "jobs",
+    "stream", "budget", "taskflow", "cms", "office", "vtcbuilder",
+    "ops", "platform",
 )
 
 @OptIn(ExperimentalMaterial3Api::class)

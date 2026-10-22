@@ -68,7 +68,12 @@ function openHuberaApp(slug) {
   }
 }
 const hamburgerSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>';
-const projects = ['music','maps','fuel','contacts','mail','photos','calendar','pass','drive','cook','jobs','admin','docs','id','ops','platform'];
+const projects = [
+  'music', 'maps', 'fuel', 'mail', 'drive', 'photos', 'contacts', 'calendar',
+  'notes', 'tasks', 'pass', 'cook', 'id', 'docs', 'admin', 'jobs',
+  'stream', 'budget', 'taskflow', 'cms', 'office', 'vtcbuilder',
+  'ops', 'platform',
+];
 const THEME_KEY = 'hubera-docs-theme';
 const LAST_APP_KEY = 'hubera-docs-inbox-app';
 const DRAFT_KEY = 'hubera-docs-inbox-draft';

@@ -1,6 +1,14 @@
 {
   "versions": [
     {
+      "version": "0.2.38",
+      "date": "2026-10-22",
+      "title": "Retours pour chaque application",
+      "notes": [
+        "Le formulaire Retour propose aussi Notes, Tasks, Stream, Budget, Taskflow, CMS, Office et VTCBuilder. Les applications déjà listées restent."
+      ]
+    },
+    {
       "version": "0.2.34",
       "date": "2026-10-19",
       "title": "Tag à côté de la priorité",

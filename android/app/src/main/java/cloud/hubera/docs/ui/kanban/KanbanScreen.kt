@@ -70,7 +70,10 @@ private val TaskDraftSaver = Saver<TaskDraft?, List<String>>(
 )
 
 private val projects = listOf(
-    "music", "maps", "fuel", "docs", "pass", "drive", "mail", "ops", "platform", "admin",
+    "music", "maps", "fuel", "mail", "drive", "photos", "contacts", "calendar",
+    "notes", "tasks", "pass", "cook", "id", "docs", "admin", "jobs",
+    "stream", "budget", "taskflow", "cms", "office", "vtcbuilder",
+    "ops", "platform",
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
