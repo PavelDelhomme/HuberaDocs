@@ -57,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import cloud.hubera.docs.data.Dashboard
 import cloud.hubera.docs.data.DocsApi
 import cloud.hubera.docs.data.DocsIdSession
+import cloud.hubera.id.sso.HuberaIdAccounts
 import cloud.hubera.docs.data.GanttBar
 import cloud.hubera.docs.ui.DocsSpeedDial
 import cloud.hubera.docs.ui.account.DocsAccountScreen
@@ -135,6 +136,7 @@ private fun DocsRoot(
     var ready by remember { mutableStateOf(false) }
     var logged by remember { mutableStateOf(false) }
     var email by remember { mutableStateOf(tokens.email().orEmpty()) }
+    var accountEmails by remember { mutableStateOf<List<String>>(emptyList()) }
     val checker = remember { UpdateChecker(api, ctx.applicationContext) }
     LaunchedEffect(Unit) {
         logged = withContext(Dispatchers.IO) {
@@ -157,6 +159,16 @@ private fun DocsRoot(
             }
         }
         ready = true
+    }
+    LaunchedEffect(logged, email) {
+        if (!logged) return@LaunchedEffect
+        accountEmails = withContext(Dispatchers.IO) {
+            runCatching {
+                HuberaIdAccounts.listAccounts(ctx.applicationContext)
+                    .map { it.email.trim() }
+                    .filter { it.isNotEmpty() }
+            }.getOrDefault(emptyList())
+        }
     }
     if (!ready) {
         BackHandler { activity?.moveTaskToBack(true) }
@@ -262,6 +274,16 @@ private fun DocsRoot(
         selectedNavId = if (showAccount || nestedBack != null || tab !in docsTabs.map { it.id }) null else tab,
         onNavSelect = { go(it) },
         userEmail = email,
+        accountEmails = accountEmails,
+        onPickAccount = pick@{ picked ->
+            if (picked.equals(email, ignoreCase = true)) return@pick
+            scope.launch {
+                val opened = withContext(Dispatchers.IO) {
+                    runCatching { DocsIdSession.signInFresh(ctx, api, picked) }.getOrNull()
+                }
+                if (!opened.isNullOrBlank()) email = picked
+            }
+        },
         hideBottomNav = showAccount || nestedBack != null,
         extraDrawer = {
             val closeDrawer = LocalHuberaCloseDrawer.current

@@ -43,6 +43,8 @@ import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -77,25 +79,69 @@ val LocalHuberaCloseDrawer = staticCompositionLocalOf<() -> Unit> { {} }
 @Composable
 fun HuberaAccountButton(
     onClick: () -> Unit,
+    userEmail: String? = null,
+    accountEmails: List<String> = emptyList(),
+    onPickAccount: (String) -> Unit = {},
     userPicture: @Composable (() -> Unit)? = null,
 ) {
-    IconButton(onClick = onClick) {
-        if (userPicture != null) {
-            userPicture()
-        } else {
-            Box(
-                Modifier
-                    .size(32.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    Icons.Default.Person,
-                    contentDescription = "Compte",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+    var open by remember { mutableStateOf(false) }
+    val emails = remember(userEmail, accountEmails) {
+        val seen = linkedSetOf<String>()
+        val out = mutableListOf<String>()
+        fun addMail(raw: String?) {
+            val mail = raw?.trim().orEmpty()
+            if (mail.isNotEmpty() && seen.add(mail.lowercase())) out.add(mail)
+        }
+        addMail(userEmail)
+        for (mail in accountEmails) addMail(mail)
+        out.toList()
+    }
+    Box {
+        IconButton(onClick = { open = true }) {
+            if (userPicture != null) {
+                userPicture()
+            } else {
+                Box(
+                    Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        Icons.Default.Person,
+                        contentDescription = "Compte",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            for (mail in emails) {
+                DropdownMenuItem(
+                    text = {
+                        Column {
+                            Text(mail, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(
+                                "Compte Hubera ID",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    },
+                    onClick = {
+                        open = false
+                        onPickAccount(mail)
+                    },
                 )
             }
+            DropdownMenuItem(
+                text = { Text("Paramètres") },
+                onClick = {
+                    open = false
+                    onClick()
+                },
+            )
         }
     }
 }
@@ -293,6 +339,8 @@ fun HuberaScaffold(
     selectedNavId: String?,
     onNavSelect: (String) -> Unit,
     userEmail: String? = null,
+    accountEmails: List<String> = emptyList(),
+    onPickAccount: (String) -> Unit = {},
     extraActions: @Composable RowScope.() -> Unit = {},
     extraDrawer: @Composable ColumnScope.() -> Unit = {},
     userPicture: @Composable (() -> Unit)? = null,
@@ -316,7 +364,13 @@ fun HuberaScaffold(
                             onAccountClick = onAccountClick,
                             extraActions = {
                                 extraActions()
-                                HuberaAccountButton(onClick = onAccountClick, userPicture = userPicture)
+                                HuberaAccountButton(
+                                    onClick = onAccountClick,
+                                    userEmail = userEmail,
+                                    accountEmails = accountEmails,
+                                    onPickAccount = onPickAccount,
+                                    userPicture = userPicture,
+                                )
                             },
                             userPicture = userPicture,
                         )

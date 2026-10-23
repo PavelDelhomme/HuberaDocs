@@ -1,6 +1,14 @@
 {
   "versions": [
     {
+      "version": "0.2.43",
+      "date": "2026-10-23",
+      "title": "Comptes sous l’icône",
+      "notes": [
+        "L’icône de compte en haut à droite ouvre les adresses Hubera ID connectées et Paramètres. Choisir une autre adresse change le compte de Docs sans mot de passe saisi."
+      ]
+    },
+    {
       "version": "0.2.42",
       "date": "2026-10-23",
       "title": "Retour long : Enregistrer reste accessible",
