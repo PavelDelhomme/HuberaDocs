@@ -277,17 +277,30 @@ class DocsApi(
         send("POST", "/api/tasks", payload)
     }
 
-    fun patchTask(id: String, title: String, body: String, columnId: String, project: String, priority: Int) {
-        send(
-            "PATCH",
-            "/api/tasks/$id",
-            JSONObject()
-                .put("title", title)
-                .put("body", body)
-                .put("column_id", columnId)
-                .put("project", project)
-                .put("priority", priority.coerceIn(1, 5)),
-        )
+    fun patchTask(
+        id: String,
+        title: String,
+        body: String,
+        columnId: String,
+        project: String,
+        priority: Int,
+        targets: List<String>? = null,
+    ) {
+        val payload = JSONObject()
+            .put("title", title)
+            .put("body", body)
+            .put("column_id", columnId)
+            .put("project", project)
+            .put("priority", priority.coerceIn(1, 5))
+        val picked = targets?.let { normalizeTargets(it) }
+        if (picked != null && picked.isNotEmpty()) payload.put("targets", JSONArray(picked))
+        send("PATCH", "/api/tasks/$id", payload)
+    }
+
+    fun patchTargets(id: String, targets: List<String>) {
+        val picked = normalizeTargets(targets)
+        if (picked.isEmpty()) return
+        send("PATCH", "/api/tasks/$id", JSONObject().put("targets", JSONArray(picked)))
     }
 
     fun patchPriority(id: String, priority: Int) {

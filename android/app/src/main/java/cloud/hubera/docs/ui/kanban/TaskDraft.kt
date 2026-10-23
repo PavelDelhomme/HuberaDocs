@@ -11,6 +11,7 @@ data class TaskDraft(
     val columnId: String,
     val project: String,
     val priority: Int = 2,
+    val targets: List<String> = emptyList(),
 )
 
 fun keepTaskDraft(
@@ -21,8 +22,9 @@ fun keepTaskDraft(
     columnId: String,
     project: String,
     priority: Int = 2,
+    targets: List<String> = emptyList(),
 ): TaskDraft {
     if (current != null && current.taskId == taskId) return current
     val p = priority.coerceIn(1, 5)
-    return TaskDraft(taskId, title, body, columnId, project, p)
+    return TaskDraft(taskId, title, body, columnId, project, p, targets)
 }

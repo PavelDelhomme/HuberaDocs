@@ -135,26 +135,31 @@ function targetLine(raw) {
   return parseTargets(raw).map((k) => SURFACE_LABEL[k]).join(' · ');
 }
 
-function targetChips(selected) {
+function targetChips(selected, opts) {
   const on = new Set(parseTargets(selected));
+  const keep = opts && opts.keepOne ? '1' : '';
   const buttons = SURFACES.map(
     (k) =>
       `<button type="button" class="chip${on.has(k) ? ' on' : ''}" data-target="${k}" aria-pressed="${on.has(k) ? 'true' : 'false'}">${SURFACE_LABEL[k]}</button>`,
   ).join('');
-  return `<div class="chips targets" data-value="${[...on].join(',')}">${buttons}</div>`;
+  return `<div class="chips targets" data-keep="${keep}" data-value="${[...on].join(',')}">${buttons}</div>`;
 }
 
-function bindTargets(root) {
+function bindTargets(root, onChange) {
   const row = root.querySelector('.targets');
   if (!row) return;
   row.querySelectorAll('[data-target]').forEach((btn) => {
     btn.onclick = () => {
-      const on = !btn.classList.contains('on');
+      const turningOff = btn.classList.contains('on');
+      const onNow = [...row.querySelectorAll('[data-target].on')];
+      if (turningOff && row.dataset.keep === '1' && onNow.length <= 1) return;
+      const on = !turningOff;
       btn.classList.toggle('on', on);
       btn.setAttribute('aria-pressed', on ? 'true' : 'false');
       const picked = [...row.querySelectorAll('[data-target].on')].map((b) => b.dataset.target);
       row.dataset.value = parseTargets(picked).join(',');
       if (row.closest('#fb')) persistInboxFields();
+      if (typeof onChange === 'function') onChange(parseTargets(picked));
     };
   });
 }
@@ -827,6 +832,9 @@ function openTaskCard(t) {
     <p class="meta">${esc(stampLine(t.created_at, t.updated_at))}${cible ? ` · ${esc(cible)}` : ''}</p>
     <label>Priorité</label>
     ${priorityPicker(t.priority)}
+    <label>Cible</label>
+    ${targetChips(t.targets, { keepOne: true })}
+    <p class="lead">API, web ou mobile. Au moins une reste active.</p>
     <div class="lead" id="tbody-ro">${esc(t.body || 'Pas encore de détail.')}</div>
     <h3>Sous-tâches</h3>
     ${subtaskListHtml(t.id)}
@@ -837,6 +845,17 @@ function openTaskCard(t) {
     </div>
   `);
   bindPriority($('#modal'));
+  bindTargets($('#modal'), async (picked) => {
+    const prev = parseTargets(t.targets).join(',');
+    if (!picked.length || picked.join(',') === prev) return;
+    await api('/api/tasks/' + t.id, {
+      method: 'PATCH',
+      body: JSON.stringify({ targets: picked }),
+    });
+    await refreshTasks();
+    const fresh = taskById(t.id);
+    if (fresh) openTaskCard(fresh);
+  });
   bindSubtaskOpens($('#modal'));
   const row = $('#modal .prio-row');
   if (row) {
@@ -876,6 +895,10 @@ function openTaskEdit(t) {
     <textarea id="tbody" rows="6">${esc(t.body || '')}</textarea>
     <label>Priorité</label>
     ${priorityPicker(t.priority)}
+    <label>Cible</label>
+    ${targetChips(t.targets, { keepOne: true })}
+    <p class="lead">API, web ou mobile. Au moins une reste active.</p>
+    <p class="meta">${esc(stampLine(t.created_at, t.updated_at))}</p>
     <label>Colonne</label>
     <select id="tcol">${colOptions(t.column_id)}</select>
     <label>Projet</label>
@@ -886,19 +909,23 @@ function openTaskEdit(t) {
     </div>
   `);
   bindPriority($('#modal'));
+  bindTargets($('#modal'));
   $('#tclose').onclick = () => openTaskCard(t);
   $('#tsave').onclick = async () => {
     const title = ($('#ttitle').value || '').trim();
     if (!title) return;
+    const targets = readTargets($('#modal'));
+    const payload = {
+      title,
+      body: $('#tbody').value,
+      column_id: $('#tcol').value,
+      project: $('#tproj').value,
+      priority: readPriority(t.priority),
+    };
+    if (targets.length) payload.targets = targets;
     await api('/api/tasks/' + t.id, {
       method: 'PATCH',
-      body: JSON.stringify({
-        title,
-        body: $('#tbody').value,
-        column_id: $('#tcol').value,
-        project: $('#tproj').value,
-        priority: readPriority(t.priority),
-      }),
+      body: JSON.stringify(payload),
     });
     await refreshTasks();
     const fresh = taskById(t.id);

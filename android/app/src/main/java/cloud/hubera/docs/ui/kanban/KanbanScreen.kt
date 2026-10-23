@@ -45,8 +45,14 @@ import cloud.hubera.docs.data.DocsApi
 import cloud.hubera.docs.data.Task
 import cloud.hubera.docs.data.columnBoard
 import cloud.hubera.docs.data.directSubtasks
+import cloud.hubera.docs.data.SURFACE_LABEL
+import cloud.hubera.docs.data.SURFACE_ORDER
+import cloud.hubera.docs.data.normalizeTargets
 import cloud.hubera.docs.data.stampLine
 import cloud.hubera.docs.data.targetsLabel
+import androidx.compose.material3.FilterChip
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -54,7 +60,7 @@ import kotlinx.coroutines.withContext
 private val TaskDraftSaver = Saver<TaskDraft?, List<String>>(
     save = { value ->
         val d = value ?: return@Saver emptyList()
-        listOf(d.taskId, d.title, d.body, d.columnId, d.project, d.priority.toString())
+        listOf(d.taskId, d.title, d.body, d.columnId, d.project, d.priority.toString(), d.targets.joinToString(","))
     },
     restore = { saved ->
         if (saved.size < 5) null
@@ -65,6 +71,7 @@ private val TaskDraftSaver = Saver<TaskDraft?, List<String>>(
             saved[3],
             saved[4],
             saved.getOrNull(5)?.toIntOrNull()?.coerceIn(1, 5) ?: 2,
+            normalizeTargets(saved.getOrNull(6)?.split(',').orEmpty()),
         )
     },
 )
@@ -112,7 +119,7 @@ fun KanbanScreen(
     }
 
     fun openCard(task: Task) {
-        draft = keepTaskDraft(draft, task.id, task.title, task.body, task.columnId, task.project, task.priority)
+        draft = keepTaskDraft(draft, task.id, task.title, task.body, task.columnId, task.project, task.priority, task.targets)
         panelId = task.id
         editing = false
     }
@@ -177,7 +184,7 @@ fun KanbanScreen(
         val open = tasks.firstOrNull { it.id == panelId }
         if (open != null) {
             val current = draft?.takeIf { it.taskId == open.id }
-                ?: keepTaskDraft(null, open.id, open.title, open.body, open.columnId, open.project, open.priority)
+                ?: keepTaskDraft(null, open.id, open.title, open.body, open.columnId, open.project, open.priority, open.targets)
             BackHandler {
                 panelId = null
                 editing = false
@@ -205,7 +212,7 @@ fun KanbanScreen(
                                 "Sous-tâche de ${parent.title}",
                                 color = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.clickable {
-                                    draft = keepTaskDraft(draft, parent.id, parent.title, parent.body, parent.columnId, parent.project, parent.priority)
+                                    draft = keepTaskDraft(draft, parent.id, parent.title, parent.body, parent.columnId, parent.project, parent.priority, parent.targets)
                                     panelId = parent.id
                                     editing = false
                                 },
@@ -216,6 +223,12 @@ fun KanbanScreen(
                         PriorityPicker(open.priority.coerceIn(1, 5)) { p ->
                             scope.launch {
                                 withContext(Dispatchers.IO) { api.patchPriority(open.id, p) }
+                                reload()
+                            }
+                        }
+                        TargetChips(open.targets) { picked ->
+                            scope.launch {
+                                withContext(Dispatchers.IO) { api.patchTargets(open.id, picked) }
                                 reload()
                             }
                         }
@@ -234,7 +247,7 @@ fun KanbanScreen(
                                     .fillMaxWidth()
                                     .padding(top = 6.dp)
                                     .clickable {
-                                        draft = keepTaskDraft(draft, child.id, child.title, child.body, child.columnId, child.project, child.priority)
+                                        draft = keepTaskDraft(draft, child.id, child.title, child.body, child.columnId, child.project, child.priority, child.targets)
                                         panelId = child.id
                                         editing = false
                                     },
@@ -267,9 +280,9 @@ fun KanbanScreen(
                         columns = columns,
                         onChange = { draft = it },
                         onCancel = { editing = false },
-                        onSave = { title, body, col, proj, prio ->
+                        onSave = { title, body, col, proj, prio, picked ->
                             scope.launch {
-                                withContext(Dispatchers.IO) { api.patchTask(open.id, title, body, col, proj, prio) }
+                                withContext(Dispatchers.IO) { api.patchTask(open.id, title, body, col, proj, prio, picked) }
                                 draft = null
                                 panelId = null
                                 editing = false
@@ -371,7 +384,7 @@ private fun TaskEditForm(
     columns: List<Column>,
     onChange: (TaskDraft) -> Unit,
     onCancel: () -> Unit,
-    onSave: (String, String, String, String, Int) -> Unit,
+    onSave: (String, String, String, String, Int, List<String>) -> Unit,
 ) {
     Column(
         Modifier
@@ -411,9 +424,17 @@ private fun TaskEditForm(
             }
         }
         PriorityPicker(draft.priority.coerceIn(1, 5)) { onChange(draft.copy(priority = it)) }
+        TargetChips(draft.targets) { onChange(draft.copy(targets = it)) }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             androidx.compose.material3.Button(onClick = {
-                onSave(draft.title, draft.body, draft.columnId, draft.project, draft.priority.coerceIn(1, 5))
+                onSave(
+                    draft.title,
+                    draft.body,
+                    draft.columnId,
+                    draft.project,
+                    draft.priority.coerceIn(1, 5),
+                    normalizeTargets(draft.targets),
+                )
             }) { Text("Enregistrer") }
             TextButton(onClick = onCancel) { Text("Annuler") }
         }
@@ -478,6 +499,47 @@ private fun TaskWhen(task: Task) {
     }
     if (cible.isNotEmpty()) {
         Text(cible, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+@Composable
+private fun TargetChips(selected: List<String>, onChange: (List<String>) -> Unit) {
+    val on = normalizeTargets(selected).toSet()
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text("Cible", style = MaterialTheme.typography.labelMedium)
+        Text(
+            "API, web ou mobile. Au moins une reste active.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Row(
+            Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            SURFACE_ORDER.forEach { id ->
+                val label = SURFACE_LABEL[id] ?: id
+                val chosen = id in on
+                FilterChip(
+                    selected = chosen,
+                    onClick = {
+                        val next = on.toMutableSet()
+                        if (chosen) {
+                            if (next.size <= 1) return@FilterChip
+                            next.remove(id)
+                        } else {
+                            next.add(id)
+                        }
+                        val picked = normalizeTargets(next)
+                        if (picked.isEmpty()) return@FilterChip
+                        onChange(picked)
+                    },
+                    modifier = Modifier.semantics {
+                        contentDescription = if (chosen) "Cible $label choisie" else "Cible $label"
+                    },
+                    label = { Text(label) },
+                )
+            }
+        }
     }
 }
 
