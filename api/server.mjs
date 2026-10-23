@@ -972,6 +972,7 @@ app.post('/api/remarks', requireAuth, (req, res) => {
     kind: req.body?.kind,
     targets: req.body?.targets,
     criticality: req.body?.criticality,
+    priority: req.body?.priority,
     at: now(),
   });
   if (built.error) return res.status(400).json({ error: built.error });
@@ -1016,17 +1017,32 @@ app.patch('/api/remarks/:id', requireAuth, (req, res) => {
     cur.id,
   );
   if (cur.task_id) {
-    db.prepare(
-      `UPDATE tasks SET title = ?, body = ?, project = ?, category = ?, targets = ?, updated_at = ? WHERE id = ?`,
-    ).run(
-      built.task.title,
-      built.task.body,
-      built.task.project,
-      built.task.category,
-      JSON.stringify(built.task.targets),
-      built.task.updated_at,
-      cur.task_id,
-    );
+    if (built.task.priority == null) {
+      db.prepare(
+        `UPDATE tasks SET title = ?, body = ?, project = ?, category = ?, targets = ?, updated_at = ? WHERE id = ?`,
+      ).run(
+        built.task.title,
+        built.task.body,
+        built.task.project,
+        built.task.category,
+        JSON.stringify(built.task.targets),
+        built.task.updated_at,
+        cur.task_id,
+      );
+    } else {
+      db.prepare(
+        `UPDATE tasks SET title = ?, body = ?, project = ?, category = ?, targets = ?, priority = ?, updated_at = ? WHERE id = ?`,
+      ).run(
+        built.task.title,
+        built.task.body,
+        built.task.project,
+        built.task.category,
+        JSON.stringify(built.task.targets),
+        built.task.priority,
+        built.task.updated_at,
+        cur.task_id,
+      );
+    }
   }
   res.json({
     remark: expose({

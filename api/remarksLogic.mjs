@@ -1,5 +1,13 @@
 import { parseTargets } from './targets.mjs';
 
+/** 1 la plus importante, 5 la plus basse. */
+export function clampPriority(value, fallback = 5) {
+  const n = Math.round(Number(value));
+  if (!Number.isFinite(n)) return fallback;
+  if (n < 1) return 1;
+  if (n > 5) return 5;
+  return n;
+}
 /** 1 la moins grave, 5 la plus grave. Distinct de la priorité des tâches. */
 export function clampCriticality(value, fallback = 1) {
   const n = Math.round(Number(value));
@@ -12,9 +20,10 @@ export function clampCriticality(value, fallback = 1) {
 /**
  * Création d’un retour. `at` est l’horodatage d’enregistrement (ms),
  * posé à la fois sur créé le et modifié le.
- * La priorité de la tâche créée reste 1. La criticité reste sur le retour.
+ * La criticité reste sur le retour. La priorité de la tâche est choisie
+ * sur le formulaire ; sans choix, c’est 5, la plus basse.
  */
-export function buildRemarkCreate({ app, body, kind, targets, criticality, at }) {
+export function buildRemarkCreate({ app, body, kind, targets, criticality, priority, at }) {
   const text = String(body || '').trim();
   const appName = String(app || '').trim() || 'docs';
   const k = String(kind || 'retour').trim() === 'note' ? 'note' : 'retour';
@@ -30,7 +39,7 @@ export function buildRemarkCreate({ app, body, kind, targets, criticality, at })
     project: appName,
     category: k === 'note' ? 'docs' : 'bug',
     column_id: 'todo',
-    priority: 1,
+    priority: clampPriority(priority, 5),
     targets: picked,
     created_at: when,
     updated_at: when,
@@ -49,7 +58,7 @@ export function buildRemarkCreate({ app, body, kind, targets, criticality, at })
 
 /**
  * Modification d’un retour. Créé le ne bouge pas. Modifié le prend `at`.
- * La priorité de la tâche liée n’est pas dans ce patch.
+ * La priorité de la tâche liée ne change que si le formulaire l’envoie.
  */
 export function buildRemarkPatch(cur, input, at) {
   const when = Number(at);
@@ -65,6 +74,7 @@ export function buildRemarkPatch(cur, input, at) {
   const level = kind === 'retour'
     ? (input?.criticality == null ? previous : clampCriticality(input.criticality, previous))
     : previous;
+  const taskPriority = input?.priority == null ? undefined : clampPriority(input.priority, 5);
   return {
     remark: {
       app: appName,
@@ -83,6 +93,7 @@ export function buildRemarkPatch(cur, input, at) {
       category: kind === 'note' ? 'docs' : 'bug',
       targets,
       updated_at: when,
+      priority: taskPriority,
     },
   };
 }

@@ -18,7 +18,7 @@ describe('retour → tâche', () => {
     assert.equal(out.task.updated_at, at);
     assert.deepEqual(out.remark.targets, ['api', 'mobile']);
     assert.deepEqual(out.task.targets, ['api', 'mobile']);
-    assert.equal(out.task.priority, 1);
+    assert.equal(out.task.priority, 5);
     assert.equal(out.remark.criticality, 1);
     assert.equal(out.task.project, 'maps');
   });
@@ -33,7 +33,18 @@ describe('retour → tâche', () => {
       at: 20,
     });
     assert.equal(out.remark.criticality, 5);
-    assert.equal(out.task.priority, 1);
+    assert.equal(out.task.priority, 5);
+    const chosen = buildRemarkCreate({
+      app: 'docs',
+      body: 'Priorité choisie.',
+      kind: 'retour',
+      targets: ['mobile'],
+      criticality: 5,
+      priority: 2,
+      at: 22,
+    });
+    assert.equal(chosen.remark.criticality, 5);
+    assert.equal(chosen.task.priority, 2);
     const clamped = buildRemarkCreate({
       app: 'docs',
       body: 'Trop haut.',
@@ -43,7 +54,7 @@ describe('retour → tâche', () => {
       at: 21,
     });
     assert.equal(clamped.remark.criticality, 5);
-    assert.equal(clamped.task.priority, 1);
+    assert.equal(clamped.task.priority, 5);
   });
 
   it('refuse une cible vide', () => {
@@ -70,7 +81,9 @@ describe('retour → tâche', () => {
     const raised = buildRemarkPatch(cur, { criticality: 4 }, 6000);
     assert.equal(raised.remark.criticality, 4);
     assert.equal(raised.task.priority, undefined);
-    assert.equal(raised.remark.created_at, 1000);
+    const ranked = buildRemarkPatch(cur, { priority: 3 }, 7000);
+    assert.equal(ranked.task.priority, 3);
+    assert.equal(ranked.remark.created_at, 1000);
     assert.equal(out.task.body, 'nouveau texte');
   });
 });

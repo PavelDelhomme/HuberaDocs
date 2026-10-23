@@ -1,6 +1,14 @@
 {
   "versions": [
     {
+      "version": "0.2.45",
+      "date": "2026-10-23",
+      "title": "Priorité sur le retour",
+      "notes": [
+        "Le formulaire Retour propose la priorité de la tâche créée. 1 est la plus importante, 5 la plus basse. Sans choix, c’est 5. La criticité du retour ne change pas cette priorité. Le lanceur reste Hubera Docs."
+      ]
+    },
+    {
       "version": "0.2.44",
       "date": "2026-10-23",
       "title": "Cibles multiples sur la fiche tâche",

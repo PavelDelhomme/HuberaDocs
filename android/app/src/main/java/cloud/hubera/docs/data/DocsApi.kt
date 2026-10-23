@@ -381,6 +381,7 @@ class DocsApi(
         kind: String = "retour",
         targets: List<String>,
         criticality: Int = 1,
+        priority: Int = 5,
     ) {
         send(
             "POST",
@@ -390,7 +391,8 @@ class DocsApi(
                 .put("body", body)
                 .put("kind", kind)
                 .put("targets", JSONArray(normalizeTargets(targets)))
-                .put("criticality", criticality.coerceIn(1, 5)),
+                .put("criticality", criticality.coerceIn(1, 5))
+                .put("priority", priority.coerceIn(1, 5)),
         )
     }
 
@@ -401,17 +403,16 @@ class DocsApi(
         kind: String,
         targets: List<String>,
         criticality: Int = 1,
+        priority: Int? = null,
     ) {
-        send(
-            "PATCH",
-            "/api/remarks/$id",
-            JSONObject()
-                .put("app", app)
-                .put("body", body)
-                .put("kind", kind)
-                .put("targets", JSONArray(normalizeTargets(targets)))
-                .put("criticality", criticality.coerceIn(1, 5)),
-        )
+        val payload = JSONObject()
+            .put("app", app)
+            .put("body", body)
+            .put("kind", kind)
+            .put("targets", JSONArray(normalizeTargets(targets)))
+            .put("criticality", criticality.coerceIn(1, 5))
+        if (priority != null) payload.put("priority", priority.coerceIn(1, 5))
+        send("PATCH", "/api/remarks/$id", payload)
     }
 
     fun version(clientVersion: String, clientCode: Int, pkg: String): VersionInfo {

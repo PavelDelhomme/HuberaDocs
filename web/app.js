@@ -734,9 +734,13 @@ function bindPriority(root) {
   });
 }
 
-function readPriority(fallback = 2) {
-  const row = document.querySelector('#modal .prio-row');
+function readPriorityIn(root, fallback = 5) {
+  const row = root?.querySelector?.('.prio-row');
   return clampPrio(row?.dataset.value, fallback);
+}
+
+function readPriority(fallback = 2) {
+  return readPriorityIn(document.querySelector('#modal'), fallback);
 }
 
 function closeModal() {
@@ -1302,6 +1306,9 @@ async function viewInbox() {
         <option value="note" ${kind === 'note' ? 'selected' : ''}>Note</option>
       </select>
       ${criticalityPicker(1)}
+      <label>Priorité</label>
+      ${priorityPicker(5)}
+      <p class="lead">5 est la plus basse. C’est le choix de départ.</p>
       <label>Texte</label>
       <textarea name="body" rows="5"${inboxTextareaAttrs()} required></textarea>
       <p class="err" id="fbErr" hidden></p>
@@ -1323,6 +1330,7 @@ async function viewInbox() {
   `);
   bindTargets($('#fb'));
   bindCriticality($('#fb'));
+  bindPriority($('#fb'));
   const syncCrit = () => {
     const row = document.querySelector('#fb .crit-row');
     if (row) row.hidden = document.querySelector('#fb [name="kind"]')?.value === 'note';
@@ -1356,6 +1364,9 @@ async function viewInbox() {
         <option value="note" ${r.kind === 'note' ? 'selected' : ''}>Note</option>
       </select>
       ${(r.kind || 'retour') === 'note' ? '' : criticalityPicker(r.criticality)}
+      <label>Priorité</label>
+      ${priorityPicker(linked?.priority ?? 5)}
+      <p class="lead">1 la plus importante, 5 la plus basse.</p>
       <label>Texte</label>
       <textarea id="ebody" rows="5">${esc(r.body)}</textarea>
       <p class="err" id="eerr" hidden></p>
@@ -1368,6 +1379,7 @@ async function viewInbox() {
     `);
     bindTargets($('#modal'));
     bindCriticality($('#modal'));
+    bindPriority($('#modal'));
     bindSubtaskOpens($('#modal'));
     $('#eclose').onclick = closeModal;
     if (r.task_id) {
@@ -1403,6 +1415,7 @@ async function viewInbox() {
           body,
           targets,
           criticality: readCriticality($('#modal'), r.criticality),
+          priority: readPriorityIn($('#modal'), linked?.priority ?? 5),
         }),
       });
       closeModal();
@@ -1438,6 +1451,7 @@ async function viewInbox() {
         kind: k,
         targets,
         criticality: k === 'retour' ? readCriticality($('#fb'), 1) : 1,
+        priority: readPriorityIn($('#fb'), 5),
       }),
     });
     writeLs(LAST_APP_KEY, appName);

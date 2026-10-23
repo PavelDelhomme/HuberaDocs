@@ -36,6 +36,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import cloud.hubera.docs.ui.kanban.PriorityPicker
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -85,6 +86,7 @@ fun InboxScreen(
     var body by remember { mutableStateOf(prefs.getString("draft", "") ?: "") }
     var kind by remember { mutableStateOf(prefs.getString("kind", "retour") ?: "retour") }
     var criticality by remember { mutableIntStateOf(1) }
+    var priority by remember { mutableIntStateOf(5) }
     var targets by remember {
         mutableStateOf(normalizeTargets((prefs.getString("targets", "") ?: "").split(",")).toSet())
     }
@@ -145,6 +147,12 @@ fun InboxScreen(
         if (kind != "note") {
             CriticalityPicker(criticality) { criticality = it }
         }
+        PriorityPicker(priority) { priority = it }
+        Text(
+            "5 est la plus basse. C’est le choix de départ.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         OutlinedTextField(
             body,
             { body = it },
@@ -165,11 +173,13 @@ fun InboxScreen(
                 val savedBody = body.trim()
                 val savedTargets = normalizeTargets(targets)
                 val savedLevel = if (savedKind == "note") 1 else criticality.coerceIn(1, 5)
+                val savedPriority = priority.coerceIn(1, 5)
                 scope.launch {
                     withContext(Dispatchers.IO) {
-                        api.addRemark(savedApp, savedBody, savedKind, savedTargets, savedLevel)
+                        api.addRemark(savedApp, savedBody, savedKind, savedTargets, savedLevel, savedPriority)
                     }
                     body = ""
+                    priority = 5
                     persist()
                     reload()
                 }
@@ -200,13 +210,14 @@ fun InboxScreen(
         ModalBottomSheet(onDismissRequest = { editing = null }, sheetState = sheet) {
             RemarkEditSheet(
                 remark = r,
+                initialPriority = tasks.firstOrNull { it.id == r.taskId }?.priority ?: 5,
                 children = directSubtasks(tasks, r.taskId),
                 onOpenChild = { editTask = it },
                 onAddSubtask = { subParentId = r.taskId },
                 onCancel = { editing = null },
-                onSave = { app, k, text, picked, level ->
+                onSave = { app, k, text, picked, level, prio ->
                     scope.launch {
-                        withContext(Dispatchers.IO) { api.patchRemark(r.id, app, text, k, picked, level) }
+                        withContext(Dispatchers.IO) { api.patchRemark(r.id, app, text, k, picked, level, prio) }
                         editing = null
                         reload()
                     }
@@ -340,19 +351,21 @@ fun AppKindFields(
 }
 
 @Composable
-private fun RemarkEditSheet(
+fun RemarkEditSheet(
     remark: Remark,
+    initialPriority: Int = 5,
     children: List<Task>,
     onOpenChild: (Task) -> Unit,
     onAddSubtask: () -> Unit,
     onCancel: () -> Unit,
-    onSave: (String, String, String, List<String>, Int) -> Unit,
+    onSave: (String, String, String, List<String>, Int, Int) -> Unit,
 ) {
     var appName by remember { mutableStateOf(remark.app) }
     var kind by remember { mutableStateOf(remark.kind.ifBlank { "retour" }) }
     var body by remember { mutableStateOf(remark.body) }
     var targets by remember { mutableStateOf(remark.targets.toSet()) }
     var criticality by remember { mutableIntStateOf(remark.criticality.coerceIn(1, 5)) }
+    var priority by remember { mutableIntStateOf(initialPriority.coerceIn(1, 5)) }
     val whenLine = stampLine(remark.createdAt, remark.updatedAt)
     Column(
         Modifier
@@ -371,6 +384,12 @@ private fun RemarkEditSheet(
         if (kind != "note") {
             CriticalityPicker(criticality) { criticality = it }
         }
+        PriorityPicker(priority) { priority = it }
+        Text(
+            "1 la plus importante, 5 la plus basse.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         OutlinedTextField(
             body,
             { body = it },
@@ -407,7 +426,7 @@ private fun RemarkEditSheet(
                 onClick = {
                     val picked = normalizeTargets(targets)
                     if (body.isNotBlank() && picked.isNotEmpty()) {
-                        onSave(appName, kind, body.trim(), picked, criticality.coerceIn(1, 5))
+                        onSave(appName, kind, body.trim(), picked, criticality.coerceIn(1, 5), priority.coerceIn(1, 5))
                     }
                 },
             ) { Text("Enregistrer") }
