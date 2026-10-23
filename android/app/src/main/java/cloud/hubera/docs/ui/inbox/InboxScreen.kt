@@ -1,10 +1,13 @@
 package cloud.hubera.docs.ui.inbox
 
 import android.content.Context
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,8 +26,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -34,6 +40,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import cloud.hubera.docs.ui.kanban.PriorityPicker
@@ -46,6 +53,7 @@ import cloud.hubera.docs.data.DocsApi
 import cloud.hubera.docs.data.InboxCopy
 import cloud.hubera.docs.data.Remark
 import cloud.hubera.docs.data.RemarkRow
+import cloud.hubera.docs.data.returnSwipeDeletes
 import cloud.hubera.docs.data.remarkSections
 import cloud.hubera.docs.data.taskStateLabel
 import cloud.hubera.docs.data.SURFACE_LABEL
@@ -92,6 +100,7 @@ fun InboxScreen(
     }
     var filter by remember { mutableStateOf(prefs.getString("filter", "all") ?: "all") }
     var editing by remember { mutableStateOf<Remark?>(null) }
+    var confirmDelete by remember { mutableStateOf<Remark?>(null) }
     val scope = rememberCoroutineScope()
     val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -196,14 +205,39 @@ fun InboxScreen(
         if (sections.open.isEmpty()) {
             Text("Aucun élément", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        sections.open.forEach { row -> RemarkCard(row) { editing = row.remark } }
+        sections.open.forEach { row ->
+            SwipeRemarkCard(row, onEdit = { editing = row.remark }, onDelete = { confirmDelete = row.remark })
+        }
         HorizontalDivider()
         Text(InboxCopy.doneTitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Text(InboxCopy.doneSubtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (sections.done.isEmpty()) {
             Text("Aucun élément", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        sections.done.forEach { row -> RemarkCard(row) { editing = row.remark } }
+        sections.done.forEach { row ->
+            SwipeRemarkCard(row, onEdit = { editing = row.remark }, onDelete = { confirmDelete = row.remark })
+        }
+    }
+
+    confirmDelete?.let { r ->
+        AlertDialog(
+            onDismissRequest = { confirmDelete = null },
+            title = { Text("Supprimer ce retour ?") },
+            text = { Text("La carte de retour part. La tâche du tableau reste.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    val id = r.id
+                    confirmDelete = null
+                    scope.launch {
+                        withContext(Dispatchers.IO) { runCatching { api.deleteRemark(id) } }
+                        reload()
+                    }
+                }) { Text("Supprimer") }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDelete = null }) { Text("Annuler") }
+            },
+        )
     }
 
     editing?.let { r ->
@@ -271,6 +305,68 @@ fun InboxScreen(
             },
         )
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SwipeRemarkCard(row: RemarkRow, onEdit: () -> Unit, onDelete: () -> Unit) {
+    if (row.remark.kind != "retour") {
+        RemarkCard(row, onEdit)
+        return
+    }
+    val state = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            val startToEnd = value == SwipeToDismissBoxValue.StartToEnd
+            if (value == SwipeToDismissBoxValue.Settled) return@rememberSwipeToDismissBoxState false
+            if (returnSwipeDeletes(startToEnd)) onDelete() else onEdit()
+            false
+        },
+        positionalThreshold = { distance -> distance * 0.35f },
+    )
+    SwipeToDismissBox(
+        state = state,
+        enableDismissFromStartToEnd = true,
+        enableDismissFromEndToStart = true,
+        backgroundContent = {
+            val deleting = state.targetValue == SwipeToDismissBoxValue.StartToEnd ||
+                state.dismissDirection == SwipeToDismissBoxValue.StartToEnd
+            Row(Modifier.fillMaxSize()) {
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(MaterialTheme.colorScheme.errorContainer),
+                    contentAlignment = Alignment.CenterStart,
+                ) {
+                    if (deleting) {
+                        Text(
+                            "Supprimer",
+                            modifier = Modifier.padding(start = 20.dp),
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.CenterEnd,
+                ) {
+                    if (!deleting && state.targetValue == SwipeToDismissBoxValue.EndToStart) {
+                        Text(
+                            "Modifier",
+                            modifier = Modifier.padding(end = 20.dp),
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+            }
+        },
+        content = { RemarkCard(row, onEdit) },
+    )
 }
 
 @Composable

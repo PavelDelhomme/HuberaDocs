@@ -1058,6 +1058,13 @@ app.patch('/api/remarks/:id', requireAuth, (req, res) => {
   });
 });
 
+app.delete('/api/remarks/:id', requireAuth, (req, res) => {
+  const cur = db.prepare('SELECT id FROM remarks WHERE id = ?').get(req.params.id);
+  if (!cur) return res.status(404).json({ error: 'missing' });
+  db.prepare('DELETE FROM remarks WHERE id = ?').run(cur.id);
+  res.json({ ok: true, id: cur.id });
+});
+
 app.get('/labo/:file', (req, res) => {
   const file = String(req.params.file || '');
   if (!isAllowedLaboFile(file)) {

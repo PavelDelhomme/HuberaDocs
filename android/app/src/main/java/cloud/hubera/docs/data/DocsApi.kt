@@ -415,6 +415,11 @@ class DocsApi(
         send("PATCH", "/api/remarks/$id", payload)
     }
 
+    /** Retire le retour. La tâche liée n’est pas touchée. */
+    fun deleteRemark(id: String) {
+        exec(req("/api/remarks/$id").delete().build())
+    }
+
     fun version(clientVersion: String, clientCode: Int, pkg: String): VersionInfo {
         val q =
             "/api/version?clientVersion=${java.net.URLEncoder.encode(clientVersion, "UTF-8")}" +
