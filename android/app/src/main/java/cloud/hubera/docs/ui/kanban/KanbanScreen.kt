@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -101,7 +102,13 @@ fun KanbanScreen(
     var newTitle by rememberSaveable { mutableStateOf("") }
     var newBody by rememberSaveable { mutableStateOf("") }
     var subParentId by rememberSaveable { mutableStateOf<String?>(null) }
+    var flash by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
+    LaunchedEffect(flash) {
+        if (flash == null) return@LaunchedEffect
+        delay(4_000)
+        flash = null
+    }
 
     fun reload() {
         scope.launch {
@@ -286,11 +293,29 @@ fun KanbanScreen(
                                 draft = null
                                 panelId = null
                                 editing = false
+                                flash = "Tâche modifiée."
                                 reload()
                             }
                         },
                     )
                 }
+            }
+        }
+        flash?.let { message ->
+            Surface(
+                Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(12.dp),
+                color = MaterialTheme.colorScheme.inverseSurface,
+                shape = MaterialTheme.shapes.medium,
+                shadowElevation = 8.dp,
+            ) {
+                Text(
+                    message,
+                    Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    color = MaterialTheme.colorScheme.inverseOnSurface,
+                    fontWeight = FontWeight.SemiBold,
+                )
             }
         }
     }
@@ -309,6 +334,7 @@ fun KanbanScreen(
                     newTitle = ""
                     newBody = ""
                     showNew = false
+                    flash = "Tâche créée."
                     reload()
                 }
             },
@@ -337,6 +363,7 @@ fun KanbanScreen(
                     panelId = subParent.id
                     editing = false
                     subParentId = null
+                    flash = "Tâche créée."
                     reload()
                 }
             },
