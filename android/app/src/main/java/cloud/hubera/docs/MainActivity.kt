@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
+import android.os.SystemClock
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
@@ -43,6 +44,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -55,6 +57,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cloud.hubera.docs.data.Dashboard
+import cloud.hubera.docs.data.DocsBack
 import cloud.hubera.docs.data.DocsApi
 import cloud.hubera.docs.data.DocsIdSession
 import cloud.hubera.id.sso.HuberaIdAccounts
@@ -252,12 +255,25 @@ private fun DocsRoot(
         nestedBack = back
     }
 
+    var lastHomeBack by remember { mutableLongStateOf(0L) }
     BackHandler {
-        val back = nestedBack
-        when {
-            back != null -> back()
-            showAccount -> showAccount = false
-            else -> activity?.moveTaskToBack(true)
+        when (
+            DocsBack.step(
+                hasDetail = nestedBack != null,
+                showAccount = showAccount,
+                tab = tab,
+                lastHomeBackMs = lastHomeBack,
+                nowMs = SystemClock.elapsedRealtime(),
+            )
+        ) {
+            DocsBack.Step.Detail -> nestedBack?.invoke()
+            DocsBack.Step.Account -> showAccount = false
+            DocsBack.Step.Home -> {
+                lastHomeBack = 0L
+                go("home")
+            }
+            DocsBack.Step.Stay -> lastHomeBack = SystemClock.elapsedRealtime()
+            DocsBack.Step.Background -> activity?.moveTaskToBack(true)
         }
     }
 

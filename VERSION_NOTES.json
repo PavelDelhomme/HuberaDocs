@@ -1,6 +1,22 @@
 {
   "versions": [
     {
+      "version": "0.2.49",
+      "date": "2026-10-23",
+      "title": "Retour des listes vers l'accueil",
+      "notes": [
+        "Depuis la liste Tâches, Docs ou Rapports, le retour ramène à l'accueil. Un retour depuis une fiche revient à sa liste. Un second retour très rapide depuis l'accueil passe l'application en arrière-plan. Un seul retour ne quitte pas."
+      ]
+    },
+    {
+      "version": "0.2.48",
+      "date": "2026-10-23",
+      "title": "Plusieurs applications sur un retour",
+      "notes": [
+        "Le formulaire Retour coche une ou plusieurs applications. La dernière reste cochée. Le texte déjà écrit ne change pas."
+      ]
+    },
+    {
       "version": "0.2.45",
       "date": "2026-10-23",
       "title": "Priorité sur le retour",
