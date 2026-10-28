@@ -16,7 +16,7 @@ const labels = {
   account: 'Compte',
 };
 const titles = {
-  dash: 'Docs',
+  dash: 'Cockpit',
   kanban: 'Tâches',
   docs: 'Docs',
   reports: 'Rapports',
@@ -96,14 +96,58 @@ function writeLs(k, v) {
   try { localStorage.setItem(k, v); } catch { /* ignore */ }
 }
 function persistInboxFields() {
-  const appSel = document.querySelector('#fb [name="app"]');
+  const apps = document.querySelector('#fb .apps');
   const body = document.querySelector('#fb [name="body"]');
   const kind = document.querySelector('#fb [name="kind"]');
   const targets = document.querySelector('#fb .targets');
-  if (appSel) writeLs(LAST_APP_KEY, appSel.value);
+  if (apps) writeLs(LAST_APP_KEY, apps.dataset.value || 'docs');
   if (body) writeLs(DRAFT_KEY, body.value);
   if (kind) writeLs(KIND_KEY, kind.value);
   if (targets) writeLs(TARGETS_KEY, targets.dataset.value || '');
+}
+
+function parseApps(raw) {
+  const parts = String(raw || '')
+    .split(/\s*[,·+]\s*|\s+et\s+/)
+    .map((item) => String(item || '').trim().toLowerCase())
+    .filter(Boolean);
+  const ordered = projects.filter((p) => parts.includes(p));
+  return ordered.length ? ordered : ['docs'];
+}
+
+function appChips(selected) {
+  const on = new Set(parseApps(selected));
+  const buttons = projects
+    .map(
+      (p) =>
+        `<button type="button" class="chip${on.has(p) ? ' on' : ''}" data-app="${p}" aria-pressed="${on.has(p) ? 'true' : 'false'}">${on.has(p) ? '✓ ' : ''}${p}</button>`,
+    )
+    .join('');
+  return `<div class="chips apps" data-value="${[...on].join(',')}">${buttons}</div>`;
+}
+
+function bindApps(root) {
+  const row = root.querySelector('.apps');
+  if (!row) return;
+  row.querySelectorAll('[data-app]').forEach((btn) => {
+    btn.onclick = () => {
+      const turningOff = btn.classList.contains('on');
+      const onNow = [...row.querySelectorAll('[data-app].on')];
+      if (turningOff && onNow.length <= 1) return;
+      const on = !turningOff;
+      btn.classList.toggle('on', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      btn.textContent = `${on ? '✓ ' : ''}${btn.dataset.app}`;
+      const picked = [...row.querySelectorAll('[data-app].on')].map((b) => b.dataset.app);
+      row.dataset.value = parseApps(picked.join(',')).join(',');
+      if (row.closest('#fb')) persistInboxFields();
+    };
+  });
+}
+
+function readApps(root) {
+  const row = root.querySelector('.apps');
+  return parseApps(row?.dataset.value || '');
 }
 
 function parseTargets(raw) {
@@ -254,7 +298,7 @@ function shell(inner) {
       <div class="drawer-sheet" role="dialog" aria-label="Menu">
         <div class="drawer-accent"></div>
         <div class="drawer-head">
-          <strong>Hubera Docs</strong>
+          <strong>Hubera Cockpit</strong>
           <small>${esc(me?.email || 'Compte Hubera')}</small>
         </div>
         <button type="button" data-go="dash" class="drawer-item ${route === 'dash' ? 'on' : ''}">${navIcons.dash}<span>Cahier unique</span></button>
@@ -560,7 +604,7 @@ function loginView(err = '', twofa = false) {
     : `<div class="theme-bar">${themeBtnHtml()}</div>
       <form class="login card" autocomplete="on">
         <img class="login-logo" src="/favicon.svg" width="56" height="56" alt="" />
-        <h1>Hubera Docs</h1>
+        <h1>Hubera Cockpit</h1>
         ${picker}
         <div class="cred" ${accounts.length && !twofa ? 'hidden' : ''}>
         <label for="docs-email">E-mail</label>
@@ -1296,7 +1340,8 @@ async function viewInbox() {
   app.innerHTML = shell(`
     <form id="fb" class="card">
       <label>Application</label>
-      <select name="app">${projects.map((p) => `<option ${p === lastApp ? 'selected' : ''}>${p}</option>`).join('')}</select>
+      ${appChips(lastApp)}
+      <p class="lead">Une ou plusieurs applications.</p>
       <label>Cible</label>
       ${targetChips(savedTargets)}
       <p class="lead">API, web, mobile, ou une combinaison.</p>
@@ -1328,6 +1373,7 @@ async function viewInbox() {
     </div>
     <ul class="list">${remarkItems(sections.done)}</ul>
   `);
+  bindApps($('#fb'));
   bindTargets($('#fb'));
   bindCriticality($('#fb'));
   bindPriority($('#fb'));
@@ -1339,7 +1385,7 @@ async function viewInbox() {
   document.querySelector('#fb [name="kind"]')?.addEventListener('change', syncCrit);
   const bodyEl = document.querySelector('#fb [name="body"]');
   if (bodyEl) bodyEl.value = draft;
-  document.querySelector('#fb [name="app"]')?.addEventListener('change', persistInboxFields);
+  document.querySelector('#fb .apps')?.addEventListener('click', persistInboxFields);
   document.querySelector('#fb [name="kind"]')?.addEventListener('change', persistInboxFields);
   bodyEl?.addEventListener('input', persistInboxFields);
   document.querySelectorAll('#inboxFilter [data-filter]').forEach((b) => {
@@ -1355,7 +1401,8 @@ async function viewInbox() {
       <h2>Modifier</h2>
       <p class="meta">${esc(stampLine(r.created_at, r.updated_at))}</p>
       <label>Application</label>
-      <select id="eapp">${projects.map((p) => `<option ${p === r.app ? 'selected' : ''}>${p}</option>`).join('')}</select>
+      ${appChips(r.app)}
+      <p class="lead">Une ou plusieurs applications.</p>
       <label>Cible</label>
       ${targetChips(r.targets)}
       <label>Type</label>
@@ -1377,6 +1424,7 @@ async function viewInbox() {
         <button class="ghost" type="button" id="eclose">Annuler</button>
       </div>
     `);
+    bindApps($('#modal'));
     bindTargets($('#modal'));
     bindCriticality($('#modal'));
     bindPriority($('#modal'));
@@ -1410,7 +1458,7 @@ async function viewInbox() {
       await api('/api/remarks/' + encodeURIComponent(r.id), {
         method: 'PATCH',
         body: JSON.stringify({
-          app: $('#eapp').value,
+          app: readApps($('#modal')).join(', '),
           kind: $('#ekind').value === 'note' ? 'note' : 'retour',
           body,
           targets,
@@ -1431,7 +1479,7 @@ async function viewInbox() {
   $('#fb').onsubmit = async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
-    const appName = String(fd.get('app') || 'docs');
+    const appName = readApps($('#fb')).join(', ');
     const k = String(fd.get('kind') || 'retour') === 'note' ? 'note' : 'retour';
     const targets = readTargets($('#fb'));
     const err = $('#fbErr');

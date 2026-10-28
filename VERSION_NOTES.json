@@ -1,6 +1,14 @@
 {
   "versions": [
     {
+      "version": "0.2.50",
+      "date": "2026-10-26",
+      "title": "Hubera Cockpit",
+      "notes": [
+        "L’application s’appelle Hubera Cockpit (ex-Hubera Docs). Même URL docs.hubera.cloud. Tâches, docs, PDF/mails, Gantt, retours. Mobile : Nothing, Samsung lab, Blackview. OTA non forcée."
+      ]
+    },
+    {
       "version": "0.2.49",
       "date": "2026-10-23",
       "title": "Retour des listes vers l'accueil",

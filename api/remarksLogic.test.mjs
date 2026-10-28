@@ -23,6 +23,19 @@ describe('retour → tâche', () => {
     assert.equal(out.task.project, 'maps');
   });
 
+  it('garde deux applications sur le même retour', () => {
+    const out = buildRemarkCreate({
+      app: 'music, maps',
+      body: 'Le même souci sur les deux.',
+      kind: 'retour',
+      targets: ['mobile'],
+      at: 30,
+    });
+    assert.equal(out.remark.app, 'music, maps');
+    assert.equal(out.task.project, 'music, maps');
+    assert.equal(out.task.title.startsWith('[retour music, maps]'), true);
+  });
+
   it('enregistre la criticité du retour sans changer la priorité de la tâche', () => {
     const out = buildRemarkCreate({
       app: 'docs',

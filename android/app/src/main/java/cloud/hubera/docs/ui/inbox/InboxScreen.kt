@@ -50,6 +50,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cloud.hubera.docs.data.Column
 import cloud.hubera.docs.data.DocsApi
+import cloud.hubera.docs.data.joinApps
+import cloud.hubera.docs.data.parseApps
 import cloud.hubera.docs.data.InboxCopy
 import cloud.hubera.docs.data.Remark
 import cloud.hubera.docs.data.RemarkRow
@@ -90,7 +92,9 @@ fun InboxScreen(
     var columns by remember { mutableStateOf<List<Column>>(emptyList()) }
     var subParentId by remember { mutableStateOf<String?>(null) }
     var editTask by remember { mutableStateOf<Task?>(null) }
-    var appName by remember { mutableStateOf(prefs.getString("last_app", "docs") ?: "docs") }
+    var apps by remember {
+        mutableStateOf(parseApps(prefs.getString("last_app", "docs") ?: "docs", inboxApps).toSet())
+    }
     var body by remember { mutableStateOf(prefs.getString("draft", "") ?: "") }
     var kind by remember { mutableStateOf(prefs.getString("kind", "retour") ?: "retour") }
     var criticality by remember { mutableIntStateOf(1) }
@@ -106,7 +110,7 @@ fun InboxScreen(
 
     fun persist() {
         prefs.edit()
-            .putString("last_app", appName)
+            .putString("last_app", joinApps(apps, inboxApps))
             .putString("draft", body)
             .putString("kind", kind)
             .putString("targets", normalizeTargets(targets).joinToString(","))
@@ -134,7 +138,7 @@ fun InboxScreen(
             onKindConsumed()
         }
     }
-    LaunchedEffect(appName, body, kind, targets, filter) { persist() }
+    LaunchedEffect(apps, body, kind, targets, filter) { persist() }
     LaunchedEffect(Unit) { reload() }
     val shown = remarks.filter { filter == "all" || it.kind == filter }
     val sections = remarkSections(shown, tasks, columns)
@@ -146,8 +150,8 @@ fun InboxScreen(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         AppKindFields(
-            appName,
-            { appName = it },
+            apps,
+            { apps = it },
             targets,
             { targets = it },
             kind,
@@ -177,7 +181,7 @@ fun InboxScreen(
             enabled = body.isNotBlank() && targets.isNotEmpty(),
             onClick = {
                 if (body.isBlank() || targets.isEmpty()) return@Button
-                val savedApp = appName.trim()
+                val savedApp = joinApps(apps, inboxApps)
                 val savedKind = kind
                 val savedBody = body.trim()
                 val savedTargets = normalizeTargets(targets)
@@ -403,21 +407,41 @@ private fun RemarkCard(row: RemarkRow, onClick: () -> Unit) {
 
 @Composable
 fun AppKindFields(
-    appName: String,
-    onApp: (String) -> Unit,
+    apps: Set<String>,
+    onApps: (Set<String>) -> Unit,
     targets: Set<String>,
     onTargets: (Set<String>) -> Unit,
     kind: String,
     onKind: (String) -> Unit,
 ) {
     Text("Application", style = MaterialTheme.typography.labelMedium)
+    Text(
+        "Une ou plusieurs applications.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
     Row(
         Modifier.horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         inboxApps.forEach { p ->
-            OutlinedButton(onClick = { onApp(p) }) {
-                Text(if (p == appName) "✓ $p" else p)
+            val on = p in apps
+            OutlinedButton(
+                onClick = {
+                    val next = apps.toMutableSet()
+                    if (p in next) {
+                        if (next.size <= 1) return@OutlinedButton
+                        next.remove(p)
+                    } else {
+                        next.add(p)
+                    }
+                    onApps(next)
+                },
+                modifier = Modifier.semantics {
+                    contentDescription = if (on) "Application $p cochée" else "Application $p"
+                },
+            ) {
+                Text(if (on) "✓ $p" else p)
             }
         }
     }
@@ -456,7 +480,7 @@ fun RemarkEditSheet(
     onCancel: () -> Unit,
     onSave: (String, String, String, List<String>, Int, Int) -> Unit,
 ) {
-    var appName by remember { mutableStateOf(remark.app) }
+    var apps by remember { mutableStateOf(parseApps(remark.app, inboxApps).toSet()) }
     var kind by remember { mutableStateOf(remark.kind.ifBlank { "retour" }) }
     var body by remember { mutableStateOf(remark.body) }
     var targets by remember { mutableStateOf(remark.targets.toSet()) }
@@ -476,7 +500,7 @@ fun RemarkEditSheet(
         if (whenLine.isNotEmpty()) {
             Text(whenLine, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        AppKindFields(appName, { appName = it }, targets, { targets = it }, kind, { kind = it })
+        AppKindFields(apps, { apps = it }, targets, { targets = it }, kind, { kind = it })
         if (kind != "note") {
             CriticalityPicker(criticality) { criticality = it }
         }
@@ -522,7 +546,7 @@ fun RemarkEditSheet(
                 onClick = {
                     val picked = normalizeTargets(targets)
                     if (body.isNotBlank() && picked.isNotEmpty()) {
-                        onSave(appName, kind, body.trim(), picked, criticality.coerceIn(1, 5), priority.coerceIn(1, 5))
+                        onSave(joinApps(apps, inboxApps), kind, body.trim(), picked, criticality.coerceIn(1, 5), priority.coerceIn(1, 5))
                     }
                 },
             ) { Text("Enregistrer") }

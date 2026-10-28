@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"/>
+<title>Hubera Cloud — structure repositories 2026-10-26</title>
+<style>
+  body { font-family: 'Segoe UI', system-ui, sans-serif; color:#111; margin:24px; line-height:1.45; }
+  h1 { font-size:22px; margin:0 0 8px; }
+  h2 { font-size:16px; margin:28px 0 8px; border-bottom:1px solid #ddd; padding-bottom:4px; }
+  h3 { font-size:13px; margin:16px 0 6px; }
+  .meta { color:#555; font-size:12px; }
+  table { border-collapse:collapse; width:100%; font-size:11px; margin:8px 0 16px; }
+  th, td { border:1px solid #ccc; padding:4px 6px; text-align:left; vertical-align:top; }
+  th { background:#f3f3f3; }
+  code, .mono { font-family: ui-monospace, monospace; font-size:10.5px; }
+  ul { margin:6px 0 10px 18px; }
+  .box { background:#fafafa; border:1px solid #e5e5e5; padding:10px 12px; margin:10px 0; }
+  .warn { background:#fff8e6; border-color:#f0d78c; }
+  .ok { background:#eefaf0; border-color:#b7e0be; }
+  @page { margin: 14mm; }
+</style></head><body>
+<h1>Hubera Cloud — cartographie repositories</h1>
+<p class="meta">Généré 2026-10-26 15:41 Europe/Paris · racine <code>~/Documents/Dev/Perso/HuberaCloud</code> · destinataires PDF/mail ops</p>
+
+<div class="box warn">
+
+<p><strong>Pourquoi le compte de test n’a pas vu le bug</strong></p>
+<ul>
+<li>Le hardcode Maps (<code>HUBERA_OWNER = Paul</code> + <code>contacts-seed.json</code>) date du <strong>25 sept. 2026</strong> (commit Maps 0.1.11). Les tests labo (Samsung/Blackview/Nothing) tournaient presque toujours avec <em>ton</em> compte Hubera ID déjà piné dans AccountManager / SSO — donc l’UI « Paul » paraissait normale.</li>
+<li>Le compte QA / Youen n’était pas systématiquement ouvert sur un appareil « vierge » (pas de session Paul, pas de localStorage hérité, pas de seed).</li>
+<li>Les contacts API sont bien filtrés par <code>user_id</code> : la fuite venait du <em>seed public</em> + identité UI Maps, pas d’un JWT qui donnait les contacts Paul à Youen côté serveur.</li>
+<li>Sur iPhone (web/PWA) : <code>localStorage.hubera-maps-email</code> pouvait rester à <code>paul@</code> après le seed/owner, et le toast « Hubera ID · paul@ » s’affichait sans session réelle.</li>
+</ul>
+
+<p><strong>Correctif immédiat</strong> : Maps <strong>0.1.127</strong> — purge e-mails owner sans token, login Hubera ID si non connecté, sélecteur Android = session Maps d’abord + déconnexion, seed contacts vide. OTA non forcée.</p>
+</div>
+
+<h2>1. Racine HuberaCloud (meta + orchestration)</h2>
+<p>Monorepo <em>léger</em> : presque tous les produits sont des <strong>symlinks</strong> vers des dépôts Git séparés sous <code>~/Documents/Dev/Perso/</code>. Le dépôt <code>HuberaCloud</code> porte catalog, scripts Portainer/NPM, rules Cursor, workspace, .env local.</p>
+<table><tr><th>Entrée</th><th>Type</th><th>Détail</th></tr>
+<tr><td class='mono'>.cursor</td><td>dir</td><td>2 entrées</td></tr>
+<tr><td class='mono'>.env</td><td>file</td><td>1934 o</td></tr>
+<tr><td class='mono'>.env.example</td><td>file</td><td>1345 o</td></tr>
+<tr><td class='mono'>ClouditySuite.code-workspace</td><td>link</td><td></td></tr>
+<tr><td class='mono'>EMAIL-dev@delhomme.ovh.md</td><td>file</td><td>703 o</td></tr>
+<tr><td class='mono'>Hubera-Fuel-dans-Maps-10-propositions-2026-09-29.pdf</td><td>file</td><td>1350531 o</td></tr>
+<tr><td class='mono'>Hubera.code-workspace</td><td>file</td><td>1452 o</td></tr>
+<tr><td class='mono'>HuberaCloud.code-workspace</td><td>file</td><td>1504 o</td></tr>
+<tr><td class='mono'>Makefile</td><td>file</td><td>3975 o</td></tr>
+<tr><td class='mono'>NOTES.md</td><td>file</td><td>445 o</td></tr>
+<tr><td class='mono'>README.md</td><td>file</td><td>2874 o</td></tr>
+<tr><td class='mono'>RESTE-A-FAIRE.md</td><td>file</td><td>205 o</td></tr>
+<tr><td class='mono'>STATUS.md</td><td>file</td><td>1687 o</td></tr>
+<tr><td class='mono'>apps</td><td>dir</td><td>4 entrées</td></tr>
+<tr><td class='mono'>captures</td><td>dir</td><td>1 entrées</td></tr>
+<tr><td class='mono'>catalog.json</td><td>file</td><td>16943 o</td></tr>
+<tr><td class='mono'>docs</td><td>dir</td><td>8 entrées</td></tr>
+<tr><td class='mono'>kits</td><td>dir</td><td>4 entrées</td></tr>
+<tr><td class='mono'>package.json</td><td>file</td><td>213 o</td></tr>
+<tr><td class='mono'>packages</td><td>dir</td><td>2 entrées</td></tr>
+<tr><td class='mono'>platform</td><td>dir</td><td>9 entrées</td></tr>
+<tr><td class='mono'>products</td><td>dir</td><td>24 entrées</td></tr>
+<tr><td class='mono'>scripts</td><td>dir</td><td>14 entrées</td></tr>
+<tr><td class='mono'>updates</td><td>dir</td><td>3 entrées</td></tr>
+</table><h2>2. products/ — apps Hubera (symlink → dépôt GitHub)</h2><table><tr><th>Slug</th><th>Kind</th><th>Cible locale</th><th>Remote GitHub</th><th>Branche</th><th>Dirty</th></tr><tr><td class='mono'>budget</td><td>symlink</td><td class='mono'>/home/pactivisme/Documents/Dev/Perso/BudgetAi</td><td class='mono'>git@github.com:PavelDelhomme/HuberaBudget.git</td><td>dev</td><td>no</td></tr>
+<tr><td class='mono'>calendar</td><td>symlink</td><td class='mono'>/home/pactivisme/Documents/Dev/Perso/HuberaCalendar</td><td class='mono'>git@github.com:PavelDelhomme/HuberaCalendar.git</td><td>main</td><td>yes</td></tr>
+<tr><td class='mono'>cloudity</td><td>symlink</td><td class='mono'>/home/pactivisme/Documents/Dev/Perso/Cloudity/Cloudity</td><td class='mono'>git@github.com:PavelDelhomme/HuberaCloudity.git</td><td>chore/restructure-platform</td><td>yes</td></tr>
+<tr><td class='mono'>cms</td><td>symlink</td><td class='mono'>/home/pactivisme/Documents/Dev/Perso/HuberaWordPress</td><td class='mono'>git@github.com:PavelDelhomme/HuberaPress.git</td><td>main</td><td>yes</td></tr>
+<tr><td class='mono'>contacts</td><td>symlink</td><td class='mono'>/home/pactivisme/Documents/Dev/Perso/HuberaContacts</td><td class='mono'>git@github.com:PavelDelhomme/HuberaContacts.git</td><td>main</td><td>yes</td></tr>
+<tr><td class='mono'>cook</td><td>plain</td><td class='mono'>—</td><td class='mono'>—</td><td>—</td><td>—</td></tr>
+<tr><td class='mono'>docs</td><td>symlink</td><td class='mono'>/home/pactivisme/Documents/Dev/Perso/HuberaDocs</td><td class='mono'>git@github.com:PavelDelhomme/HuberaDocs.git</td><td>main</td><td>yes</td></tr>
+<tr><td class='mono'>drive</td><td>symlink</td><td class='mono'>/home/pactivisme/Documents/Dev/Perso/HuberaDrive</td><td class='mono'>git@github.com:PavelDelhomme/HuberaDrive.git</td><td>main</td><td>yes</td></tr>
+<tr><td class='mono'>fuel</td><td>symlink</td><td class='mono'>/home/pactivisme/Documents/Dev/Perso/GasoilTracking</td><td class='mono'>git@github.com:PavelDelhomme/HuberaFuel.git</td><td>prod</td><td>yes</td></tr>
+<tr><td class='mono'>id</td><td>symlink</td><td class='mono'>/home/pactivisme/Documents/Dev/Perso/HuberaID</td><td class='mono'>git@github.com:PavelDelhomme/HuberaID.git</td><td>main</td><td>yes</td></tr>
+<tr><td class='mono'>jobs</td><td>symlink</td><td class='mono'>/home/pactivisme/Documents/Dev/Perso/JobbingTrack</td><td class='mono'>git@github.com:PavelDelhomme/HuberaJobs.git</td><td>dev</td><td>yes</td></tr>
+<tr><td class='mono'>mail</td><td>symlink</td><td class='mono'>/home/pactivisme/Documents/Dev/Perso/HuberaMail</td><td class='mono'>git@github.com:PavelDelhomme/HuberaMail.git</td><td>main</td><td>yes</td></tr>
+<tr><td class='mono'>maps</td><td>symlink</td><td class='mono'>/home/pactivisme/Documents/Dev/Perso/Maps</td><td class='mono'>git@github.com:PavelDelhomme/HuberaMaps.git</td><td>main</td><td>yes</td></tr>
+<tr><td class='mono'>music</td><td>symlink</td><td class='mono'>/home/pactivisme/Documents/Dev/Perso/YTMusic</td><td class='mono'>git@github.com:PavelDelhomme/HuberaMusic.git</td><td>feat/music-drawer-open-native</td><td>yes</td></tr>
+<tr><td class='mono'>notes</td><td>symlink</td><td class='mono'>/home/pactivisme/Documents/Dev/Perso/HuberaNotes</td><td class='mono'>git@github.com:PavelDelhomme/HuberaNotes.git</td><td>main</td><td>yes</td></tr>
+<tr><td class='mono'>office</td><td>symlink</td><td class='mono'>/home/pactivisme/Documents/Dev/Perso/HuberaOffice</td><td class='mono'>git@github.com:PavelDelhomme/HuberaOffice.git</td><td>main</td><td>no</td></tr>
+<tr><td class='mono'>pass</td><td>symlink</td><td class='mono'>/home/pactivisme/Documents/Dev/Perso/HuberaPass</td><td class='mono'>git@github.com:PavelDelhomme/HuberaPass.git</td><td>main</td><td>yes</td></tr>
+<tr><td class='mono'>photos</td><td>symlink</td><td class='mono'>/home/pactivisme/Documents/Dev/Perso/HuberaPhotos</td><td class='mono'>git@github.com:PavelDelhomme/HuberaPhotos.git</td><td>main</td><td>yes</td></tr>
+<tr><td class='mono'>stream</td><td>symlink</td><td class='mono'>/home/pactivisme/Documents/Dev/Perso/StreamMake</td><td class='mono'>git@github.com:PavelDelhomme/HuberaStream.git</td><td>main</td><td>no</td></tr>
+<tr><td class='mono'>taskflow</td><td>symlink</td><td class='mono'>/home/pactivisme/Documents/Dev/Perso/taskflow/taskflow</td><td class='mono'>git@github.com:PavelDelhomme/HuberaTasks.git</td><td>main</td><td>no</td></tr>
+<tr><td class='mono'>vtcbuilder</td><td>symlink</td><td class='mono'>/home/pactivisme/Documents/Dev/Perso/VTCBuilder</td><td class='mono'>git@github.com:PavelDelhomme/HuberaVTCBuilder.git</td><td>feature/blocks-implementation-tests</td><td>yes</td></tr>
+<tr><td class='mono'>www</td><td>symlink</td><td class='mono'>/home/pactivisme/Documents/Dev/Perso/Hubera/apps/www</td><td class='mono'>git@github.com:PavelDelhomme/Hubera.git</td><td>main</td><td>yes</td></tr>
+</table><h2>3. Families catalog.json</h2><ul><li><strong>Cloud personnel</strong> (cloud) : id, mail, drive, pass, calendar, contacts, notes, photos, office, maps, cook</li><li><strong>Métiers</strong> (metier) : music, fuel, jobs, budget, taskflow, stream</li><li><strong>Sites</strong> (sites) : cms, vtcbuilder</li><li><strong>Pilotage</strong> (pilotage) : docs</li></ul><h2>4. platform/</h2><table><tr><th>Nom</th><th>Contenu / remote</th></tr><tr><td class='mono'>README.md</td><td class='mono'></td></tr>
+<tr><td class='mono'>app-contract</td><td class='mono'>package.json, src</td></tr>
+<tr><td class='mono'>design-tokens</td><td class='mono'>README.md, package.json, tokens.css, tokens.json</td></tr>
+<tr><td class='mono'>identity-sdk</td><td class='mono'>/home/pactivisme/Documents/Dev/Perso/Cloudity/Cloudity/platform/identity-sdk</td></tr>
+<tr><td class='mono'>mobile_ota_installer</td><td class='mono'>README.md, android, lib, pubspec.yaml</td></tr>
+<tr><td class='mono'>mobile_update</td><td class='mono'>README.md, hubera_ota.dart, update_checker.dart</td></tr>
+<tr><td class='mono'>ops</td><td class='mono'>README.md, rust</td></tr>
+<tr><td class='mono'>suite-cookie</td><td class='mono'>README.md, hubera-suite-auth.js, package.json</td></tr>
+<tr><td class='mono'>theme</td><td class='mono'>/home/pactivisme/Documents/Dev/Perso/AllInOne/packages/theme</td></tr>
+</table><h2>4. apps/</h2><table><tr><th>Nom</th><th>Contenu / remote</th></tr><tr><td class='mono'>Hubera-Fuel-dans-Maps-10-propositions-2026-09-29.pdf</td><td class='mono'></td></tr>
+<tr><td class='mono'>README.md</td><td class='mono'></td></tr>
+<tr><td class='mono'>admin</td><td class='mono'>README.md</td></tr>
+<tr><td class='mono'>www</td><td class='mono'>DOCS.md, Dockerfile, README.md, docker-compose.yml, landings.json, nginx.conf, products.json, public, scripts</td></tr>
+</table><h2>4. kits/</h2><table><tr><th>Nom</th><th>Contenu / remote</th></tr><tr><td class='mono'>README.md</td><td class='mono'></td></tr>
+<tr><td class='mono'>allinone</td><td class='mono'>/home/pactivisme/Documents/Dev/Perso/AllInOne</td></tr>
+<tr><td class='mono'>backoffice-lab</td><td class='mono'>/home/pactivisme/Documents/Dev/Perso/JobbingTrack-Backoffice-Kit</td></tr>
+<tr><td class='mono'>mail</td><td class='mono'>README.md, __pycache__, hubera_mail.py, identities.json</td></tr>
+</table><h2>4. packages/</h2><table><tr><th>Nom</th><th>Contenu / remote</th></tr><tr><td class='mono'>hubera-chrome-android</td><td class='mono'>build.gradle.kts, consumer-rules.pro, src</td></tr>
+<tr><td class='mono'>hubera-chrome-flutter</td><td class='mono'>lib, pubspec.yaml</td></tr>
+</table><h2>4. scripts/</h2><table><tr><th>Nom</th><th>Contenu / remote</th></tr><tr><td class='mono'>__pycache__</td><td class='mono'>ovh_client.cpython-314.pyc, portainer-stack.cpython-314.pyc</td></tr>
+<tr><td class='mono'>check-links.sh</td><td class='mono'></td></tr>
+<tr><td class='mono'>extract-cloud-products.py</td><td class='mono'></td></tr>
+<tr><td class='mono'>legacy-watch.py</td><td class='mono'></td></tr>
+<tr><td class='mono'>new-app.sh</td><td class='mono'></td></tr>
+<tr><td class='mono'>npm-add-host.py</td><td class='mono'></td></tr>
+<tr><td class='mono'>npm-add-press.py</td><td class='mono'></td></tr>
+<tr><td class='mono'>npm-set-www.py</td><td class='mono'></td></tr>
+<tr><td class='mono'>ovh-pull-secrets.sh</td><td class='mono'></td></tr>
+<tr><td class='mono'>ovh_client.py</td><td class='mono'></td></tr>
+<tr><td class='mono'>portainer-stack.py</td><td class='mono'></td></tr>
+<tr><td class='mono'>status.sh</td><td class='mono'></td></tr>
+<tr><td class='mono'>tests</td><td class='mono'>__pycache__, blackview-lock-watchdog.py, blackview-music-1h.py, blackview-music-2h.py, html_pdf_mail.py, music-bv-samsung-2h.py</td></tr>
+<tr><td class='mono'>updates-build.py</td><td class='mono'></td></tr>
+</table><h2>4. docs/</h2><table><tr><th>Nom</th><th>Contenu / remote</th></tr><tr><td class='mono'>ARCHITECTURE.md</td><td class='mono'></td></tr>
+<tr><td class='mono'>COMMENT-OUVRIR.md</td><td class='mono'></td></tr>
+<tr><td class='mono'>DEPLOY.md</td><td class='mono'></td></tr>
+<tr><td class='mono'>PLAN-DEVELOPPEMENT.md</td><td class='mono'></td></tr>
+<tr><td class='mono'>PLAN.md</td><td class='mono'></td></tr>
+<tr><td class='mono'>REGLES-ZERO-PERTE.md</td><td class='mono'></td></tr>
+<tr><td class='mono'>reports</td><td class='mono'>Hubera-Recap-2026-09-28-maps035-fuel-suite.pdf, architecture-stream-proxy-music-2026-10-06.html, architecture-stream-proxy-music-2026-10-06.pdf, cloudity-suite-integration-20260915-184002.pdf, hubera-</td></tr>
+<tr><td class='mono'>tests</td><td class='mono'>blackview-music-1h-2026-09-22.md, blackview-music-2h-2026-09-22.md, blackview-music-verify-1h-2026-09-22.md, maps-music-fuel-smoke-2026-09-25.md, music-bv-samsung-2h-2026-09-22.md, music-bv-samsung-ve</td></tr>
+</table><h2>4. updates/</h2><table><tr><th>Nom</th><th>Contenu / remote</th></tr><tr><td class='mono'>cook.VERSION</td><td class='mono'></td></tr>
+<tr><td class='mono'>legacy-watch-state.json</td><td class='mono'></td></tr>
+<tr><td class='mono'>versions.json</td><td class='mono'></td></tr>
+</table>
+<h2>5. Cursor meta « Hubera Cloud »</h2>
+<div class="box">
+<p>Workspace : <code>HuberaCloud.code-workspace</code> (+ lien ClouditySuite). Rules <code>.cursor/rules/</code> :</p>
+<ul><li class="mono">backlog-produit-plus-tard.mdc</li><li class="mono">hubera-da-later.mdc</li><li class="mono">hubera-docs.mdc</li><li class="mono">hubera-ota-common.mdc</li><li class="mono">offline-tests-device-mesh.mdc</li><li class="mono">portainer-stacks.mdc</li></ul>
+<p>Problème org : un projet Cursor « Hubera Cloud » mélange meta + 20 produits symlinked ; les remotes GitHub sont déjà séparés (HuberaMusic, HuberaMaps, …) mais l’UI Cursor / folders locaux restent un plat de nouilles.</p>
+</div>
+
+<h2>6. Audit hardcode identité Paul (prod)</h2>
+<table><tr><th>Produit</th><th>État</th></tr>
+<tr><td class='mono'>maps</td><td>corrigé 0.1.127 (plus de HUBERA_OWNER / seed)</td></tr>
+<tr><td class='mono'>music</td><td>fallback mail ops paul@ dans auth-incident uniquement</td></tr>
+<tr><td class='mono'>fuel</td><td>isOwner(paul@) côté API admin</td></tr>
+<tr><td class='mono'>id</td><td>migration.json owner_force + nginx health owner=</td></tr>
+<tr><td class='mono'>stream</td><td>STREAM_OWNER_EMAILS hardcodé</td></tr>
+<tr><td class='mono'>vtcbuilder</td><td>DEFAULT_ADMIN_EMAIL / settings contact</td></tr>
+<tr><td class='mono'>jobs</td><td>allowlist auth.controller</td></tr>
+<tr><td class='mono'>mail/drive</td><td>suite_defaults.personalAdminEmail (constante doc, pas login UI)</td></tr>
+<tr><td class='mono'>docs→cockpit</td><td>allowlist env DOCS_ADMIN_EMAILS (pas hardcodé)</td></tr>
+</table>
+
+<h2>7. Modèle cible (comme Google suite, version Hubera)</h2>
+<div class="box ok">
+<ol>
+<li><strong>Identité</strong> : uniquement Hubera ID. Aucun e-mail owner en UI. Non connecté → Connexion / Création compte. Test QA = e-mail du <code>.env</code> (<code>HUBERA_OWNER_EMAIL</code> pour Paul ops ; comptes lab séparés à ajouter <code>QA_EMAIL</code>).</li>
+<li><strong>Dépôts</strong> : 1 app = 1 GitHub (<code>PavelDelhomme/Hubera*</code>) + 1 stack Portainer + volumes. Meta <code>HuberaCloud</code> = catalog + scripts + design tokens + cockpit tasks seulement.</li>
+<li><strong>Déploiements</strong> : web / API / mobile versionnés séparément (Music = référence OTA). Jamais <code>down -v</code>.</li>
+<li><strong>Design system</strong> : package commun (<code>platform/design-tokens</code> + composants) ; Hubera Admin <em>web desktop</em> édite tokens/composants et publie un registry versionné consommé live web + prochaine OTA mobile.</li>
+<li><strong>Hubera Cockpit</strong> (ex-Docs) : kanban + retours + PDF/mails + Gantt. Allowlist Paul. Apps mobiles uniquement Nothing + Samsung lab + Blackview.</li>
+</ol>
+</div>
+
+<h2>8. Plan de restructuration (à faire / Cockpit)</h2>
+<ol>
+<li>Renommer produit Docs → <strong>Hubera Cockpit</strong> (UI, lanceur, notes OTA) ; domaine <code>docs.hubera.cloud</code> gardé court terme, alias <code>cockpit.hubera.cloud</code> ensuite.</li>
+<li>Inventaire GitHub : renommer restes non-Hubera* ; archiver Cloudity legacy naming.</li>
+<li>Cursor : un workspace multi-root propre (meta + un folder par famille) ou projets Cursor séparés par produit critique (Music / Maps / Fuel / ID / Cockpit).</li>
+<li>Ajouter <code>QA_EMAIL</code> / <code>LAB_EMAIL</code> dans <code>.env.example</code> et smoke « appareil vierge » obligatoire avant merge identité.</li>
+<li>Registry composants Admin + live reload web ; mobile via OTA non forcée.</li>
+</ol>
+
+<p class="meta">Fin du rapport — Hubera Cockpit / ops · ne contient aucun secret.</p>
+</body></html>

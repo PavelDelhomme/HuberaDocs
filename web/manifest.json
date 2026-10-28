@@ -1,6 +1,6 @@
 {
-  "name": "Hubera Docs — cahier unique",
-  "short_name": "Docs",
+  "name": "Hubera Cockpit — cahier unique",
+  "short_name": "Cockpit",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

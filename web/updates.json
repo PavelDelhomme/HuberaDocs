@@ -1,0 +1,8 @@
+{
+  "name": "Hubera Cockpit",
+  "version": "0.2.50",
+  "versionCode": 250,
+  "forceUpdate": false,
+  "mandatory": false,
+  "notes": "Renommage Hubera Cockpit (ex-Docs)."
+}

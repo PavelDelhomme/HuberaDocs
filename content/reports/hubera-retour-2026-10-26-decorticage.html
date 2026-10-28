@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"/>
+<title>Hubera — retour décorticage 26 oct 2026</title>
+<style>
+body{font-family:Segoe UI,system-ui,sans-serif;color:#111;margin:22px;line-height:1.45;font-size:13px}
+h1{font-size:20px;margin:0 0 6px} h2{font-size:15px;margin:22px 0 8px;border-bottom:1px solid #ddd;padding-bottom:3px}
+h3{font-size:13px;margin:14px 0 6px} .meta{color:#555;font-size:11px}
+.box{background:#f7f7f7;border:1px solid #e2e2e2;padding:10px 12px;margin:10px 0}
+.warn{background:#fff8e6;border-color:#f0d78c} .ok{background:#eefaf0;border-color:#b7e0be}
+.bad{background:#fdeeee;border-color:#e8b0b0}
+table{border-collapse:collapse;width:100%;font-size:11px;margin:8px 0}
+th,td{border:1px solid #ccc;padding:4px 6px;text-align:left;vertical-align:top} th{background:#f0f0f0}
+code{font-family:ui-monospace,monospace;font-size:11px} ul{margin:6px 0 10px 18px}
+@page{margin:12mm}
+</style></head><body>
+<h1>Hubera — retour décorticage (26 octobre 2026)</h1>
+<p class="meta">Réponse à ton décorticage du PDF du 23 oct + cartographie repos + isolation comptes. Aucun secret.</p>
+
+<h2>1. Ce que voulait dire le PDF « Hubera — 23 octobre 2026 »</h2>
+
+<h3>Le 401 (contexte)</h3>
+<div class="box">
+<p>Des apps Cloudity/suite (Agenda, Mail, …) qui utilisent le <strong>client auth Hubera ID</strong> (<code>/auth/refresh</code>) affichaient une erreur quand le refresh token Redis n’était plus valide. Le correctif commun : si refresh → 401, appeler <code>/auth/session/renew</code> avec l’access token encore signé, sans redemander le mot de passe.</p>
+</div>
+
+<h3>« Pas ce client » (Music, Maps, Fuel, Jobs)</h3>
+<div class="box warn">
+<p><strong>Traduction claire :</strong> Music / Maps / Fuel / Jobs <em>ne passent pas</em> par le même petit client HTTP Hubera ID (<code>/auth/refresh</code>) que Agenda/Mail/Drive/Photos…</p>
+<ul>
+<li>Chacun a son propre mécanisme de session (cookie Music, JWT Fuel, SSO AccountManager Maps, auth Jobs, etc.).</li>
+<li>Donc le patch « renew après 401 refresh » du 23 oct <strong>ne les concernait pas</strong> : on ne les a pas rebuild juste pour ce bug-là.</li>
+<li>Maps/Fuel ce jour-là = retouches UI (paramètres / tiroir), <strong>pas</strong> une nouvelle version auth pour le 401.</li>
+</ul>
+<p>Ce n’est <em>pas</em> « ces apps n’ont pas d’auth ». C’est « ce correctif précis d’auth suite ne s’applique pas à leur stack ».</p>
+</div>
+
+<h3>« La suite » (À valider ≠ Fait)</h3>
+<div class="box">
+<ul>
+<li><strong>À valider</strong> = publié / vu en labo, <em>toi</em> (Paul) dois encore confirmer avant de passer en Fait. Règle Cockpit : on ne met pas Fait à ta place.</li>
+<li>Photos, Notes, Cook, Pass, Tasks, ID avaient reçu l’APK du fix 401 <strong>sans</strong> que l’agent ouvre chaque écran pour prouver la disparition de la ligne 401 → donc tâche reste À valider.</li>
+<li>« Le mail de ce récap n’a pas été envoyé » = bug SMTP / boîte non reliée ce jour-là ; le PDF était quand même déposé dans Docs. Ce n’est pas un oubli d’intention : l’envoi a échoué.</li>
+</ul>
+</div>
+
+<h3>Music 1.3.394 — est-ce que les tests Music = seulement les paroles du PDF ?</h3>
+<div class="box bad">
+<p><strong>Non, ce n’est pas « les seuls tests Music qui existent ».</strong> C’est le <em>seul point Music documenté dans ce récap du soir</em> : vérification visuelle des paroles (Samsung pause + Blackview sans lecture), tâche laissée en À valider, pas de rebuild Music après.</p>
+<p>Ça ne remplace pas : aléatoire, hors-ligne, OTA, login iOS page noire, shuffle, etc. Ces sujets sont (ou doivent être) des tâches séparées. Un récap PDF ≠ couverture de test complète de Music.</p>
+</div>
+
+<h2>2. Isolation comptes — production (critique)</h2>
+<div class="box ok">
+<p><strong>Objectif non négociable :</strong> Youen / tout autre utilisateur ne voit <em>jamais</em> tes contacts, adresses, mails, candidatures Jobs, véhicules/trajets Fuel, budgets, lieux Maps, photos, Drive, Pass, etc.</p>
+<ul>
+<li><strong>Cause Maps (25 sept → 26 oct)</strong> : seed public + UI owner + localStorage, pas un JWT serveur qui livrait tes contacts à Youen.</li>
+<li><strong>Correctif Maps 0.1.127</strong> : seed vide, purge e-mail owner sans token, login Hubera ID si non connecté, toast paul@ uniquement si session réelle.</li>
+<li><strong>Oui</strong> : il faut aussi des tests auto (API + Playwright + cas « appareil vierge » + seed public = [] / 401) pour <em>toutes</em> les apps, pas seulement Contacts.</li>
+<li>Côté serveur : JWT → <code>X-User-ID</code> → requêtes pinées <code>user_id</code> (déjà le modèle Cloudity contacts/notes/photos). À durcir partout + audits « cross-user ».</li>
+<li>« Spoof ARP/MAC/IP » : ce n’est pas la couche app ; rate-limit + lockout auth (ex. 4 échecs) + WAF/fail2ban VPS + allowlist admin. Tâche Cockpit sécurité plateforme.</li>
+</ul>
+</div>
+
+<h2>3. Hubera Cook — traduction</h2>
+<div class="box">
+<p>Aujourd’hui les recettes/aliments/instructions arrivent souvent EN/ES/autre → UX nulle. Cible :</p>
+<ol>
+<li>Détection auto de la langue source.</li>
+<li>Pivot anglais (normalisation).</li>
+<li>Traduction vers la langue Hubera ID de l’utilisateur.</li>
+<li><strong>Cook</strong> : traduction automatique (pas de confirmation à chaque fiche — flux cuisine).</li>
+<li><strong>Module réutilisable</strong> <code>platform/hubera-translate</code> : même API pour futur Hubera Books (là, confirmation avant traduire).</li>
+</ol>
+<p>Proposition Perplexity à intégrer dans ce module (detect → pivot → locale → cache). Tâche Cockpit prioritaire Cook + package commun.</p>
+</div>
+
+<h2>4. Hubera Photos = Google Photos (mobile)</h2>
+<div class="box">
+<p>Refonte mobile : grille Photos, long-press, sélection, albums, gestuelle, chrome bas — calquée Google Photos. Brancher sur le futur éditeur d’interfaces Hubera Admin (tokens/composants live web + OTA mobile).</p>
+</div>
+
+<h2>5. Hubera Office — sous-apps</h2>
+<div class="box">
+<p>Office n’est pas une seule app : <strong>Hubera Sheet</strong> (Excel/Sheets), <strong>Hubera Docs</strong> (document — distinct du Cockpit), <strong>Hubera Slide</strong> (Slides/PPT). Web + mobile + API chacune. Cockpit = pilotage Paul ; Docs Office = traitement de texte utilisateur.</p>
+</div>
+
+<h2>6. Hubera Admin — design &amp; fonctionnalités par app</h2>
+<div class="box">
+<p>Une interface Admin (web desktop prioritaire ; mobile Admin secondaire) pour éditer composants / écrans de chaque produit Hubera et publier un registry versionné. Web = live ; mobile = OTA non forcée. Remontées bug / erreur utilisateur + télémétrie auto à revoir app par app (formulaires + pipeline → tâches Cockpit).</p>
+</div>
+
+<h2>7. Matrice tests exigée (rappel)</h2>
+<table>
+<tr><th>Couche</th><th>Exigences</th></tr>
+<tr><td>API / UseCases</td><td>Auth, isolation user_id, seed public vide, cross-tenant 403</td></tr>
+<tr><td>Front / Playwright</td><td>Compte QA vierge ≠ Paul ; toast e-mail seulement session réelle</td></tr>
+<tr><td>Sécurité</td><td>JWT, rate-limit login, secrets, CORS, pas de hardcode owner UI</td></tr>
+<tr><td>Déploiement</td><td>Dev / préprod / prod ; dual APK ; forceUpdate false</td></tr>
+<tr><td>Données</td><td>Backup volumes ; migrations ; jamais down -v</td></tr>
+<tr><td>Régression</td><td>Guard known bugs ; smoke Music/Maps/Fuel prioritaire</td></tr>
+</table>
+
+<h2>8. État live au 26 oct (vérifié)</h2>
+<ul>
+<li>Maps <code>contacts-seed.json</code> = <code>[]</code> · VERSION <strong>0.1.127</strong></li>
+<li>Cockpit (ex-Docs) web + APK 0.2.50 Samsung/Blackview · Nothing ADB absent ce jour</li>
+<li>Tâches isolation / repos / Cook i18n / Photos / Office / sécurité / remontées bug → kanban Cockpit (À faire / En cours)</li>
+</ul>
+
+<p class="meta">Généré 2026-10-26 17:06 · Hubera Cockpit ops</p>
+</body></html>
