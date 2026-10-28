@@ -1,9 +1,13 @@
 package cloud.hubera.docs.ui.inbox
 
 import android.content.Context
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -405,6 +409,7 @@ private fun RemarkCard(row: RemarkRow, onClick: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AppKindFields(
     apps: Set<String>,
@@ -416,7 +421,7 @@ fun AppKindFields(
 ) {
     Text("Application", style = MaterialTheme.typography.labelMedium)
     Text(
-        "Une ou plusieurs applications.",
+        "Appui court = une app. Appui long = en ajouter / retirer.",
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -426,22 +431,37 @@ fun AppKindFields(
     ) {
         inboxApps.forEach { p ->
             val on = p in apps
-            OutlinedButton(
-                onClick = {
-                    val next = apps.toMutableSet()
-                    if (p in next) {
-                        if (next.size <= 1) return@OutlinedButton
-                        next.remove(p)
-                    } else {
-                        next.add(p)
+            val scheme = MaterialTheme.colorScheme
+            Box(
+                modifier = Modifier
+                    .border(
+                        width = 1.dp,
+                        color = if (on) scheme.primary else scheme.outline,
+                        shape = RoundedCornerShape(20.dp),
+                    )
+                    .combinedClickable(
+                        onClick = { onApps(setOf(p)) },
+                        onLongClick = {
+                            val next = apps.toMutableSet()
+                            if (p in next) {
+                                if (next.size <= 1) return@combinedClickable
+                                next.remove(p)
+                            } else {
+                                next.add(p)
+                            }
+                            onApps(next)
+                        },
+                    )
+                    .semantics {
+                        contentDescription = if (on) "Application $p cochée" else "Application $p"
                     }
-                    onApps(next)
-                },
-                modifier = Modifier.semantics {
-                    contentDescription = if (on) "Application $p cochée" else "Application $p"
-                },
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
             ) {
-                Text(if (on) "✓ $p" else p)
+                Text(
+                    if (on) "✓ $p" else p,
+                    color = if (on) scheme.primary else scheme.onSurface,
+                    style = MaterialTheme.typography.labelLarge,
+                )
             }
         }
     }

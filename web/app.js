@@ -129,18 +129,57 @@ function appChips(selected) {
 function bindApps(root) {
   const row = root.querySelector('.apps');
   if (!row) return;
+  const paint = () => {
+    row.querySelectorAll('[data-app]').forEach((b) => {
+      const on = b.classList.contains('on');
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      b.textContent = `${on ? '✓ ' : ''}${b.dataset.app}`;
+    });
+    const picked = [...row.querySelectorAll('[data-app].on')].map((b) => b.dataset.app);
+    row.dataset.value = parseApps(picked.join(',')).join(',');
+    if (row.closest('#fb')) persistInboxFields();
+  };
+  /** Clic court = une seule app. Appui long / clic droit = ajouter / retirer. */
   row.querySelectorAll('[data-app]').forEach((btn) => {
-    btn.onclick = () => {
+    let timer = 0;
+    let longFired = false;
+    const selectOnly = () => {
+      const app = btn.dataset.app;
+      row.querySelectorAll('[data-app]').forEach((b) => {
+        b.classList.toggle('on', b.dataset.app === app);
+      });
+      paint();
+    };
+    const toggleMulti = () => {
       const turningOff = btn.classList.contains('on');
       const onNow = [...row.querySelectorAll('[data-app].on')];
       if (turningOff && onNow.length <= 1) return;
-      const on = !turningOff;
-      btn.classList.toggle('on', on);
-      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-      btn.textContent = `${on ? '✓ ' : ''}${btn.dataset.app}`;
-      const picked = [...row.querySelectorAll('[data-app].on')].map((b) => b.dataset.app);
-      row.dataset.value = parseApps(picked.join(',')).join(',');
-      if (row.closest('#fb')) persistInboxFields();
+      btn.classList.toggle('on', !turningOff);
+      paint();
+    };
+    btn.onpointerdown = () => {
+      longFired = false;
+      clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        longFired = true;
+        toggleMulti();
+      }, 420);
+    };
+    const cancelLong = () => clearTimeout(timer);
+    btn.onpointerup = cancelLong;
+    btn.onpointerleave = cancelLong;
+    btn.onpointercancel = cancelLong;
+    btn.onclick = (e) => {
+      e.preventDefault();
+      if (longFired) {
+        longFired = false;
+        return;
+      }
+      selectOnly();
+    };
+    btn.oncontextmenu = (e) => {
+      e.preventDefault();
+      toggleMulti();
     };
   });
 }
@@ -1055,7 +1094,7 @@ function openSubtaskForm(parent, onDone) {
 
 function openNewTask() {
   const first = kanbanCols[0]?.id || 'todo';
-  const lastApp = readLs(LAST_APP_KEY, 'docs');
+  const lastApp = parseApps(readLs(LAST_APP_KEY, 'docs'))[0] || 'docs';
   openModal(`
     <h2>Nouvelle tâche</h2>
     <input id="ntitle" placeholder="Titre" required />
@@ -1308,7 +1347,7 @@ async function viewGantt() {
 }
 
 async function viewInbox() {
-  const lastApp = readLs(LAST_APP_KEY, 'docs');
+  const lastApp = parseApps(readLs(LAST_APP_KEY, 'docs'))[0] || 'docs';
   const draft = readLs(DRAFT_KEY, '');
   const kind = pendingInboxKind || readLs(KIND_KEY, 'retour');
   const savedTargets = readLs(TARGETS_KEY, '');
@@ -1341,7 +1380,7 @@ async function viewInbox() {
     <form id="fb" class="card">
       <label>Application</label>
       ${appChips(lastApp)}
-      <p class="lead">Une ou plusieurs applications.</p>
+      <p class="lead">Clic = une app. Appui long (ou clic droit) = en ajouter / retirer.</p>
       <label>Cible</label>
       ${targetChips(savedTargets)}
       <p class="lead">API, web, mobile, ou une combinaison.</p>
@@ -1402,7 +1441,7 @@ async function viewInbox() {
       <p class="meta">${esc(stampLine(r.created_at, r.updated_at))}</p>
       <label>Application</label>
       ${appChips(r.app)}
-      <p class="lead">Une ou plusieurs applications.</p>
+      <p class="lead">Clic = une app. Appui long (ou clic droit) = en ajouter / retirer.</p>
       <label>Cible</label>
       ${targetChips(r.targets)}
       <label>Type</label>
