@@ -17,3 +17,12 @@ android/dist/
 android/local.properties
 android/*.iml
 android/.idea/
+
+# Build OTA lab artifacts
+.ota-out/
+**/.ota-out/
+
+__pycache__/
+**/__pycache__/
+
+*.torrent
