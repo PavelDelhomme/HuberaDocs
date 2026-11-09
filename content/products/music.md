@@ -1,5 +1,7 @@
 # Hubera Music
 
+**30 oct ~17h.** API **p+1.3.411** : balayage jouabilité **auto ~45 min** (routes fraîches avant replace ; 403/no-stream re-tentés). APK encore **1.3.410**. Détail : [`../reports/2026-10-30-music-playability-auto.md`](../reports/2026-10-30-music-playability-auto.md).
+
 **19 oct ~20h.** Live téléphones **p+1.3.376** (code 10676) Samsung `R5CT7263YJL` et Blackview `EEA9700PRO0014587`, paquets `cloud.hubera.music` puis `ovh.delhomme.ytmusic`, `adb install -r`. OTA non forcée. Conteneur `ytmusic` inchangé depuis 18:32 (Paris), correctif de réparation (autre URL du même morceau, tous les comptes) toujours en place. Détail : [`../reports/2026-10-19-music-heal-fluidite.md`](../reports/2026-10-19-music-heal-fluidite.md).
 
 **DA vague 1 :** maquettes web/mobile (A/B/C, clair/sombre) → [`../design/labo-da-vague1.html`](../design/labo-da-vague1.html) · [`../design/README.md`](../design/README.md)

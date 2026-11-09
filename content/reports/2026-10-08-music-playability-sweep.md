@@ -17,7 +17,7 @@ Module `api/src/library/playabilitySweep.ts`, table SQLite `data/playability.db`
 
 ## Planning
 
-- **Cron dans le process API ytmusic** (`setInterval` 6 h, départ ~3 min après boot). Lots de ~40, concurrence 2, pause ~750 ms. **Pas de Cursor /loop.**
+- **Cron dans le process API ytmusic** (`setInterval` ~45 min depuis 1.3.411, départ ~90 s après boot). Lots de ~24, concurrence 2, pause ~750 ms. Transitoire → routes fraîches d’abord ; replace id seulement si vidéo morte. **Pas de Cursor /loop.** Voir [`2026-10-30-music-playability-auto.md`](./2026-10-30-music-playability-auto.md).
 - `POST /api/admin/playability/sweep` (auth admin) — limiter `limit` (max 40).
 - À la demande : URL morte sur `/api/stream` → recover debounce 60 s ; `POST /api/library/repair-playability` (« réparer »).
 - CLI conteneur : `npx tsx api/src/library/playabilitySweep.ts --once --limit 8`
