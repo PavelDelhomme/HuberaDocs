@@ -20,7 +20,7 @@ Stabiliser **Music → Maps → Fuel** (lecture, OTA, hors-ligne). Ne **pas** re
 
 | Produit | Chemin | Remote | Branche utile |
 |---|---|---|---|
-| Music | `products/music` → `YTMusic` | HuberaMusic | `dev` (merge depuis `feat/music-drawer-open-native`) |
+| Music | `products/music` → `YTMusic` | HuberaMusic | **`dev`** (merge OK `feat/music-drawer-open-native` @ 1.3.413, tag `music-1.3.413-ok`) |
 | Fuel | `products/fuel` → `GasoilTracking` | HuberaFuel | `prod` / `dev` |
 | Maps | `products/maps` → `Maps` | HuberaMaps | `main` |
 | Docs / Cockpit | `products/docs` | HuberaDocs | `main` |
